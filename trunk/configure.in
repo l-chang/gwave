@@ -237,16 +237,16 @@ AC_SUBST(ggtk_extra_loadpath)
 dnl doesn't work if prefix isn't specified.
 dnl AC_DEFINE_UNQUOTED(DATADIR,"${datadir}",Installation prefix for finding necessary guile code)
 
-AC_OUTPUT(Makefile 
+AC_OUTPUT(Makefile \
 src/Makefile spicefile/Makefile scheme/Makefile \
 src/app/Makefile \
 doc/Makefile  \
 remote/Makefile \
 utilities/Makefile \
 utilities/doc-split \
-utilities/guile-doc-snarf utilities/guile-func-name-check 
-utilities/gwave-doc-snarf
-gwave.spec 
+utilities/guile-func-name-check \
+utilities/gwave-doc-snarf \
+gwave.spec  \
 scheme/gwave-config.scm)
 
 
