@@ -298,8 +298,8 @@ void draw_labels(void)
 /*
  * redraw contents of all wavepanels
  */
-SCWM_PROC(wtable_redraw_x, "wtable-redraw!", 0, 0, 0, ())
-/** Redraw the waveforms in all wavepanels */
+SCM_DEFINE(wtable_redraw_x, "wtable-redraw!", 0, 0, 0, (),
+	   "Redraw the waveforms in all wavepanels")
 #define FUNC_NAME s_wtable_redraw_x
 {
 	int i;

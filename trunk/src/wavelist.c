@@ -20,6 +20,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.10  2000/08/08 01:08:58  sgt
+ * be more explicit about required pointer casting in wavefile_to_scm()
+ *
  * Revision 1.9  2000/05/18 07:03:26  sgt
  * draw.c: fix embarassing mistake in x2val; Log X scale now works
  * wavewin.c: add wtable-wavepanels and wavepanel-visiblewaves in the
@@ -83,14 +86,15 @@ void add_variables_to_list(GWDataFile *wdata);
 static gint wavelist_button_click(GtkWidget *widget,
 				  GdkEventButton *event, gpointer data);
 
-SCWM_HOOK(new_wavefile_hook,"new-wavefile-hook", 1);
-  /** This hook is invoked when a new waveform file is successfully loaded.
-   it is called with the new GWDataFile as its only argument */
-SCWM_HOOK(new_wavelist_hook,"new-wavelist-hook", 1);
-  /** This hook is invoked when the variable list window for a
+SCWM_HOOK(new_wavefile_hook,"new-wavefile-hook", 1,
+"This hook is invoked when a new waveform file is successfully loaded.
+it is called with the new GWDataFile as its only argument");
+
+SCWM_HOOK(new_wavelist_hook,"new-wavelist-hook", 1,
+"This hook is invoked when the variable list window for a
 GWDataFile is created.  The GWDataFile object is passed as an
 argument.  Note that variable-list windows can be created and
-destroyed many times during the life of a GWDataFile */
+destroyed many times during the life of a GWDataFile");
 
 /*
  * Load a waveform file, adding it to the list of files from which
@@ -142,11 +146,11 @@ load_wave_file(char *fname, char *ftype)
 	return 0;
 }
 
-SCWM_PROC(load_wavefile_x, "load-wavefile!", 1, 1, 0, (SCM file, SCM filetype))
-  /* Load waveform data from FILE into memory, and make it available for
-   * display.  If FILETYPE is specified, it indicates the format of the file
-   * and which wavefile reader to use, otherwise the format is inferred
-   * from the filename and file contents */
+SCM_DEFINE(load_wavefile_x, "load-wavefile!", 1, 1, 0, (SCM file, SCM filetype),
+"Load waveform data from FILE into memory, and make it available for
+display.  If FILETYPE is specified, it indicates the format of the file
+and which wavefile reader to use, otherwise the format is inferred
+from the filename and file contents")
 #define FUNC_NAME s_load_wavefile_x
 {
 	char *fname, *ftype;
@@ -192,10 +196,9 @@ delete_wave_file(GtkWidget *w, GWDataFile *wdata)
 	}
 }
 
-SCWM_PROC(datafile_delete_x, "wavefile-delete!", 1, 0, 0, 
-           (SCM obj))
-/** Delete from memory the waveform data from OBJ.
-*/
+SCM_DEFINE(datafile_delete_x, "wavefile-delete!", 1, 0, 0, 
+           (SCM obj),
+	   "Delete from memory the waveform data from OBJ.")
 #define FUNC_NAME s_datafile_delete_x
 {
 	GWDataFile *wdata;
@@ -266,10 +269,9 @@ reload_all_wave_files(GtkWidget *w)
 	g_list_foreach(wdata_list, reload_wave_file_w, NULL);
 }
 
-SCWM_PROC(reload_all_files_x, "reload-all-files!", 0, 0, 0, ())
-  /** Reload all files
-*/
-#define FUNC_NAME s_reload_all_files
+SCM_DEFINE(reload_all_files_x, "reload-all-files!", 0, 0, 0, (),
+	   "Reload all files")
+#define FUNC_NAME s_reload_all_files_x
 {
 	WaveFile *wf;
 	g_list_foreach(wdata_list, reload_wave_file_w, NULL);
@@ -277,11 +279,10 @@ SCWM_PROC(reload_all_files_x, "reload-all-files!", 0, 0, 0, ())
 }
 #undef FUNC_NAME
 
-SCWM_PROC(datafile_reload_x, "wavefile-reload!", 1, 0, 0, 
-           (SCM obj))
-/** Reread the data file for OBJ.  Useful for updating the display
-    after simulation has been rerun.
-*/
+SCM_DEFINE(datafile_reload_x, "wavefile-reload!", 1, 0, 0, 
+           (SCM obj),
+"Reread the data file for OBJ.  Useful for updating the display
+    after simulation has been rerun.")
 #define FUNC_NAME s_datafile_reload_x
 {
 	GWDataFile *wdata;
@@ -292,56 +293,6 @@ SCWM_PROC(datafile_reload_x, "wavefile-reload!", 1, 0, 0,
 	return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
-
-#if 0
-/*
- * callback triggered when OK is selected in file requester.
- */
-static void
-file_selection_ok(GtkWidget        *w,
-                   GtkFileSelection *fs)
-{
-	char *fname = gtk_file_selection_get_filename(GTK_FILE_SELECTION (fs));
-	/* note: filename only valid until GtkFileSelection widget is destroyed */
-	if(load_wave_file(fname, NULL) < 0)
-		return;
-
-	gtk_widget_destroy (GTK_WIDGET (fs));
-}
-
-
-/*
- * put up a filename requester, get a file, and load it.
- */
-void
-get_fname_load_file(GtkWidget *w, gpointer d)
-{
-	static GtkWidget *window = NULL;
-	
-	if (!window) {
-		window = gtk_file_selection_new ("file selection dialog");
-
-		gtk_file_selection_hide_fileop_buttons (GTK_FILE_SELECTION (window));
-		gtk_window_position (GTK_WINDOW (window), GTK_WIN_POS_MOUSE);
-
-		gtk_signal_connect (GTK_OBJECT (window), "destroy",
-				    GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-				    &window);
-		gtk_signal_connect (GTK_OBJECT(GTK_FILE_SELECTION(window)->ok_button),
-				    "clicked",
-				    GTK_SIGNAL_FUNC(file_selection_ok), window);
-		gtk_signal_connect_object (GTK_OBJECT (GTK_FILE_SELECTION (window)->cancel_button),
-					   "clicked", GTK_SIGNAL_FUNC(gtk_widget_destroy),
-					   GTK_OBJECT (window));
-	}
-
-	if (!GTK_WIDGET_VISIBLE (window))
-		gtk_widget_show (window);
-	else
-		gtk_widget_destroy (window);
-}
-
-#endif
 
 /*
  * Add a button for each variable in the file 
@@ -493,10 +444,10 @@ wavelist_button_click(GtkWidget *widget,
 	}
 }
 
-SCWM_PROC(wavefile_show_listwin_x, "wavefile-show-listwin!", 1, 0, 0,
-           (SCM obj))
-/** Displays the scrolling list of the variables in OBJ, from which they
-    can be dragged into a waveform display panel. */
+SCM_DEFINE(wavefile_show_listwin_x, "wavefile-show-listwin!", 1, 0, 0,
+           (SCM obj),
+"Displays the scrolling list of the variables in OBJ, from which they
+can be dragged into a waveform display panel.")
 #define FUNC_NAME s_wavefile_show_listwin_x
 {
 	GWDataFile *wdata;
@@ -512,9 +463,9 @@ SCWM_PROC(wavefile_show_listwin_x, "wavefile-show-listwin!", 1, 0, 0,
 #undef FUNC_NAME
 
 /* maybe I should just expose the GTkWindow itself, and destroy from guile */
-SCWM_PROC(wavefile_remove_listwin_x, "wavefile-remove-listwin!", 1, 0, 0,
-           (SCM obj))
-/** Removes the variable-list window for OBJ */
+SCM_DEFINE(wavefile_remove_listwin_x, "wavefile-remove-listwin!", 1, 0, 0,
+           (SCM obj),
+	   "Removes the variable-list window for OBJ")
 #define FUNC_NAME s_wavefile_remove_listwin_x
 {
 	GWDataFile *wdata;
@@ -529,11 +480,11 @@ SCWM_PROC(wavefile_remove_listwin_x, "wavefile-remove-listwin!", 1, 0, 0,
 
 /* Primitives for accessing GWDataFile info from scheme */
 
-SCWM_PROC(wavefile_file_name, "wavefile-file-name", 1, 0, 0,
-           (SCM obj))
-/** Returns the filename from which the GWDataFile OBJ was loaded. 
-    If OBJ is invalid because the datafile has been deleted,
-    #f is returned. */
+SCM_DEFINE(wavefile_file_name, "wavefile-file-name", 1, 0, 0,
+           (SCM obj),
+"Returns the filename from which the GWDataFile OBJ was loaded. 
+If OBJ is invalid because the datafile has been deleted,
+#f is returned.")
 #define FUNC_NAME s_wavefile_file_name
 {
 	GWDataFile *wdata;
@@ -547,10 +498,9 @@ SCWM_PROC(wavefile_file_name, "wavefile-file-name", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wavefile_tag, "wavefile-tag", 1, 0, 0,
-           (SCM obj))
-/** Returns the short identifying tag for the GWDataFile OBJ.
- */
+SCM_DEFINE(wavefile_tag, "wavefile-tag", 1, 0, 0,
+           (SCM obj),
+	   "Returns the short identifying tag for the GWDataFile OBJ.")
 #define FUNC_NAME s_wavefile_tag
 {
 	GWDataFile *wdata;
@@ -560,11 +510,10 @@ SCWM_PROC(wavefile_tag, "wavefile-tag", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wavefile_listwin_menubar, "wavefile-listwin-menubar", 1, 0, 0,
-           (SCM obj))
-/** Returns the GTK Menubar for the variable-list window of the
- * GWDataFile OBJ, or #f if the window doesn't exist.
- */
+SCM_DEFINE(wavefile_listwin_menubar, "wavefile-listwin-menubar", 1, 0, 0,
+           (SCM obj),
+"Returns the GTK Menubar for the variable-list window of the
+ * GWDataFile OBJ, or #f if the window doesn't exist.")
 #define FUNC_NAME s_wavefile_listwin_menubar
 {
 	GWDataFile *wdata;
@@ -595,8 +544,8 @@ glist2scm(GList *list, SCM (*toscm)(void*))
 	  return result;
 }
 
-SCWM_PROC(wavefile_list, "wavefile-list", 0, 0, 0, ())
-/** Returns a list containing all waveform data files */
+SCM_DEFINE(wavefile_list, "wavefile-list", 0, 0, 0, (),
+	   "Returns a list containing all waveform data files")
 #define FUNC_NAME s_wavefile_list
 {
 	return glist2scm(wdata_list, wavefile_to_scm);
@@ -639,9 +588,9 @@ print_GWDataFile(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
 	return 1;
 }
 
-SCWM_PROC(GWDataFile_p, "GWDataFile?", 1, 0, 0,
-           (SCM obj))
-     /** Returns #t if OBJ is a gwave data file object, otherwise #f. */
+SCM_DEFINE(GWDataFile_p, "GWDataFile?", 1, 0, 0,
+           (SCM obj),
+	   "Returns #t if OBJ is a gwave data file object, otherwise #f.")
 #define FUNC_NAME s_GWDataFile_p
 {
 	return SCM_BOOL_FromBool(GWDataFile_P(obj));

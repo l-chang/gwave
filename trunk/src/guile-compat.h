@@ -1,4 +1,4 @@
-/* $Id: guile-compat.h,v 1.1 2000-01-07 06:33:43 tell Exp $ */
+/* $Id: guile-compat.h,v 1.2 2000-08-08 06:41:23 sgt Exp $ */
 /*
  * Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
  *
@@ -62,8 +62,8 @@ SCM scm_parse_path (char *path, SCM tail);
 
 #ifdef HAVE_SCM_THE_LAST_STACK_FLUID
   /* from libguile/fluids.h --07/01/98 gjb */
-SCM scm_fluid_ref SCM_P ((SCM fluid));
-SCM scm_fluid_set_x SCM_P ((SCM fluid, SCM value));
+SCM scm_fluid_ref (SCM fluid);
+SCM scm_fluid_set_x (SCM fluid, SCM value);
 #define DEREF_LAST_STACK scm_fluid_ref(gh_cdr(scm_the_last_stack_fluid))
 #define SET_LAST_STACK(X) scm_fluid_set_x (gh_cdr (scm_the_last_stack_fluid), (X))
 

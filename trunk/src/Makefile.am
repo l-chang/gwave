@@ -18,9 +18,13 @@ gwave_LDFLAGS =  @GUILE_LDFLAGS@
 CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILEGTK_CFLAGS@ \
 	-DDATADIR=\"$(datadir)\" @ggtk_hack_cflags@
 
-guile_snarfs = cmd.x wavewin.x wavelist.x scwm_guile.x event.x draw.x print.x
+DOT_X_FILES = cmd.x wavewin.x wavelist.x scwm_guile.x event.x draw.x print.x
 
-BUILT_SOURCES=init_scheme_string.c scm_init_funcs.h $(guile_snarfs)
+DOT_DOC_FILES = cmd.doc wavewin.doc wavelist.doc scwm_guile.doc \
+	event.doc draw.doc print.doc
+
+BUILT_SOURCES=init_scheme_string.c scm_init_funcs.h \
+	$(DOT_X_FILES) $(DOT_DOC_FILES)
 
 init_scheme_string.c: $(top_srcdir)/scheme/minimal.scm
 	echo "char *init_scheme_string = \"\\" > $@
@@ -28,20 +32,29 @@ init_scheme_string.c: $(top_srcdir)/scheme/minimal.scm
 	echo >> $@
 	echo '";' >> $@
 
-SUFFIXES = .x
+SUFFIXES = .x .doc
 
-%.x: %.c
-	$(srcdir)/scwm-snarf $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $< > $@ \
+utils = $(top_srcdir)/utilities
+
+.c.x:
+	utildir=$(utils) $(utils)/guile-doc-snarf $< $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $< > $@ \
+	|| { rm $@; false; }
+.c.doc:
+	utildir=$(utils) $(utils)/guile-doc-snarf $< $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $< > /dev/null \
 	|| { rm $@; false; }
 
-scm_init_funcs.h: $(top_srcdir)/config.status $(guile_snarfs)
+gwave-procedures.txt: $(DOT_DOC_FILES)
+	cat $(DOT_DOC_FILES) > $@
+
+pkgdata_DATA = gwave-procedures.txt
+
+scm_init_funcs.h: $(top_srcdir)/config.status $(DOT_X_FILES)
 	@echo "Generating scm_init_funcs.h..."
-	@$(srcdir)/generate_scm_init_funcs $(guile_snarfs) > $@
+	@$(srcdir)/generate_scm_init_funcs $(DOT_X_FILES) > $@
 
 MOSTLYCLEANFILES = core *~
 CLEANFILES = core *~ $(BUILT_SOURCES)
 DISTCLEANFILES = core *~
 MAINTAINERCLEANFILES = core *~
 
-EXTRA_DIST=gwave.gtkrc scwm-snarf generate_scm_init_funcs
-
+EXTRA_DIST=gwave.gtkrc generate_scm_init_funcs

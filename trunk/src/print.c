@@ -4,7 +4,7 @@
  * Functions in this file implement exporting waveforms for printing
  * or incorporation into other documents.
  *
- * Copyright (C) 1998, 1999 Stephen G. Tell
+ * Copyright (C) 1998, 1999, 2000 Stephen G. Tell
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -102,12 +102,12 @@ export_graph_data(char *file, WavePanel *wp)
  * print/export a representation of what is shown on the screen.
  * Only a minimum of options are available so far.
  */
-SCWM_PROC(export_waveimage_x, "export-waveimage!", 2, 2, 0, 
-	  (SCM file, SCM format, SCM color, SCM landscape))
-  /** Export a picture of the current waveform display to FILE, using FORMAT.
-   * if COLOR is t, render the image in color.  If LANDSCAPE is t, the
-   * image will be sized for letter paper in landscape orientation,
-   * else portrait orientation */
+SCM_DEFINE(export_waveimage_x, "export-waveimage!", 2, 2, 0, 
+	   (SCM file, SCM format, SCM color, SCM landscape),
+"Export a picture of the current waveform display to FILE, using FORMAT.
+if COLOR is t, render the image in color.  If LANDSCAPE is t, the
+image will be sized for letter paper in landscape orientation,
+else portrait orientation")
 #define FUNC_NAME s_export_waveimage_x
 {
 	char *sfile;
@@ -232,23 +232,7 @@ SCWM_PROC(export_waveimage_x, "export-waveimage!", 2, 2, 0,
 
 	return SCM_UNSPECIFIED;
 }
-
-/* glue routines to gtk menus */
-#if 0
-void
-cmd_export_postscript(GtkWidget *w)
-{
-	cmd_print("gwave_out.ps", "ps", 0, 0);
-}
-
-void
-cmd_export_pnm(GtkWidget *w)
-{
-	cmd_print("gwave_out.pnm", "pnm", 0, 0);
-
-}
-#endif
-
+#undef FUNC_NAME
 
 /* guile initialization */
 void init_print()
