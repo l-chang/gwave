@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.15  2000/10/24 06:33:08  sgt
+ * cmd.c - make wavepanel-add-variable return the new VisibleWave
+ * wavelist.c - fix wavefile-variable.
+ *
  * Revision 1.14  2000/10/24 05:50:55  sgt
  * SMOBify WaveVar, and add most access methods needed for
  * restoring VisibleWave/Panel configurations
@@ -277,8 +281,8 @@ reload_wave_file(GtkWidget *w, GWDataFile *wdata)
 				      (GtkCallback) gtk_widget_destroy, NULL);
 		add_variables_to_list(wdata);
 	}
-	
-	g_free(old_wf);
+
+	wf_free(old_wf);
 }
 
 void
