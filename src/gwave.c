@@ -47,7 +47,7 @@ int v_flag;
 WaveTable *wtable;
 const int NWColors = 6;  /* # of wavecolorN styles expected in the .gtkrc */
 
-char *bg_color_name  = "grey15" ;  /* panel background color */
+char *bg_color_name  = "black" ;  /* panel background color */
 GdkColor bg_gdk_color;
 GdkGC *bg_gdk_gc;
 
@@ -90,10 +90,10 @@ static void usage(char *fmt, ...)
  * waves on black background
  */
 static const gchar *gwave_base_gtkrc = "
-style 'wavecolor0' { fg[NORMAL] = {0.4, 0.5, 1.0} }
-style 'wavecolor1' { fg[NORMAL] = {1.0, 0.0, 0.0} }
+style 'wavecolor0' { fg[NORMAL] = {1.0, 0.0, 0.0} }
+style 'wavecolor1' { fg[NORMAL] = {1.0, 1.0, 0.0} }
 style 'wavecolor2' { fg[NORMAL] = {0.0, 1.0, 0.0} }
-style 'wavecolor3' { fg[NORMAL] = {1.0, 1.0, 0.0} }
+style 'wavecolor3' { fg[NORMAL] = {0.4, 0.5, 1.0} }
 style 'wavecolor4' { fg[NORMAL] = {0.0, 1.0, 1.0} }
 style 'wavecolor5' { fg[NORMAL] = {1.0, 0.0, 1.0} }
 widget '*wavecolor0' style 'wavecolor0'
