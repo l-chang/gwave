@@ -19,9 +19,14 @@
 ; x-axis zoom in/zoom out zoom by this ammount
 (define x-zoom-fraction 2)
 
+;; Zoom the x axis to show the entire independent-variable
+;; range used by all displayed waveforms.
 (define-public (x-zoom-full!)
   (x-zoom! (wtable-min-xval) (wtable-max-xval)))
 
+;; Prompt the user to select a range along the x axis with the mouse,
+;; and then zoom in so that the selected range fills the entire displayed
+;; X axis.
 (define-public (x-zoom-area!)
   (select-range-x 
    (lambda (wp x1 x2)
@@ -31,6 +36,9 @@
 ;     (display x2) (newline)
      (x-zoom! (wavepanel-x2val wp x1) (wavepanel-x2val wp x2)))))
 
+;; Prompt the user to select with the mouse a range along the Y axis of
+;; a particular wavepanel, and then vertically zoom that wavepanel
+;; so that the selected range fills its entire displayed Y axis.
 (define-public (y-zoom-range!)
   (select-range-y 
    (lambda (wp y1 y2)
@@ -40,11 +48,14 @@
      (wavepanel-y-zoom! wp (wavepanel-y2val wp y1) (wavepanel-y2val wp y2))
 )))
 
-; 
-; Restore a WavePanel to display the full range of Y values,
-; and to automaticly rescale as VisibleWaves are added and deleted.
+ 
+;; Restore a WavePanel to display the full range of Y values,
+;; and to automaticly rescale as VisibleWaves are added and deleted.
 (define-public (y-zoom-fullauto! wp) (wavepanel-y-zoom! wp #f #f))
 
+;; Prompt the user to select a rectangular region of a WavePanel, and
+;; then zoom in both X and Y so that the selected area fills the whole
+;; window.
 (define-public (xy-zoom-area!)
   (select-range-xy 
    (lambda (wp x1 x2 y1 y2)
@@ -61,9 +72,9 @@
 (define (pow base power)
     (exp (* power (log base))))
 
-; zoom relative to current position.
-; if zoom factor > 1,  zooms in
-; if zoom factor < 1,  zooms out
+;; zoom the display's X axis relative to current configuration.
+;; if the zoom factor is greater than 1, we zoom in.
+;; if the zoom factor is less than 1, we zoom out.
 (define-public (x-zoom-relative! zf)
   (let ((sx (wtable-start-xval))
  	(ex   (wtable-end-xval)))
@@ -77,9 +88,9 @@
  	  (x-zoom! (/ center (pow width (/ 0.5 zf)))
  		   (* center (pow width (/ 0.5 zf))))))))
 
-; zoom X so that edges of displayed are where the vertical cursors are now.
-; If both vertical bar cursors aren't displayed, do nothing.
-;
+;; zoom X so that edges of displayed are where the vertical cursors are now.
+;; If both vertical bar cursors aren't displayed, do nothing.
+;;-
 ; FIXME:tell:
 ;  pop message somewhere if both cursors not displayed
 ;  zoom so that cursors are just visible at edges, say 5% in from edge.
@@ -133,10 +144,7 @@
     (if func (gtk-signal-connect btn "clicked" func))
     btn))
 
-;
-; create and show a top-level window 
-; with the "about" information
-;
+;; Create and show a top-level window with the "about" information
 (define-public (show-about-window!)
   (let* ((window (gtk-widget-new 'GtkWindow
 				 :type         'toplevel
@@ -171,9 +179,7 @@
     (make-button vbox "Close" (lambda () (gtk-widget-destroy window)))
     (gtk-widget-show window)))
 
-;
-; Dialog box to enter new axis limits (zoom setting) for a wavepanel.
-;
+;; Pop up a dialog box to enter new axis limits (zoom setting) for a wavepanel.
 (define-public (show-zoom-dialog! wp)
   (let* ((window (gtk-widget-new 'GtkWindow
 				 :type         'toplevel
@@ -307,11 +313,10 @@
     (gtk-widget-show window)
 ))
 
-;
-; Put up a file-selection dialog with title S.
+; Pop up a file-selection dialog with title S.
 ; When file seleted, run procedure P, passing it the name of the file.
-; Optionaly, a default suggested filename can be specified
-;
+; Optionaly, a default suggested filename can be specified using
+; keyword #:default.
 (define*-public (with-selected-filename s p #&key (default #f))
   (let* ((window (gtk-file-selection-new s))
          (button #f))
@@ -332,10 +337,9 @@
     (gtk-widget-show window)
 ))
 
-;
-; call set-visiblewave-measure! on all visiblewaves
-; to set the function for measurement number mno to mfunc.
-;
+
+;; Call set-visiblewave-measure! on all visiblewaves
+;; to set the function for measurement number MNO to MFUNC.
 (define-public (set-all-measurements! mno mfunc)
   (for-each (lambda (wp)
 	      (for-each (lambda (vw)
@@ -373,7 +377,8 @@
 (define-public (nth-wavepanel n)
   (list-ref (wtable-wavepanels) n))
 
-; return GWDataFile object for named file, or #f it there is no such file
+;; Given a filename, return the GWDataFile object associated with
+;; the data loaded from that file, or #f it there is no such file loaded.
 (define-public (find-wavefile name)
   (call-with-current-continuation
    (lambda (exit)
@@ -383,16 +388,17 @@
               (wavefile-list))
      #f)))
 
-; locate a already-loaded wavefile by name, and if that fails,
-; try to load it.  If that fails too, return #f.
+;; locate a already-loaded wavefile by name, and if that fails,
+;; try to load it.  If that fails too, return #f.
 (define-public (find-or-load-wavefile name)
   (let* ((df (find-wavefile name)))
     (if (not df)
 	(load-wavefile! name)
 	df)))
-;
-; Write out a guile script that when executed by a future gwave,
-; will restore the configuration of waves displayed from a particular datafile
+
+;; Write out a guile script that when executed by a future gwave,
+;; will restore the configuration of waves displayed from 
+;; one particular datafile.
 (define-public (write-filerestore-script df fname)
   (let ((p (open fname (logior O_WRONLY O_CREAT O_TRUNC) #o0777)))
     (with-output-to-port p 
@@ -403,7 +409,8 @@
 	))
     (close-port p)))
 
-; Similar, but writes configuration-restoring script for all datafiles
+;; Write out a guile script that when executed by a future gwave,
+;; will restore the configuration of all currently-displayed waves.
 (define-public (write-allrestore-script sname)
   (let ((p (open sname (logior O_WRONLY O_CREAT O_TRUNC) #o0777))
 	(mfs (eqv? 1 (length (wavefile-list)) )))
@@ -489,7 +496,7 @@
 	 (wavepanel-visiblewaves (car panels)))
 	(write-wfrp-lines df (cdr panels) (+ n 1)))))
 
-; execute guile script, ignoring errors.
+;; execute a guile script, ignoring any errors.
 (define-public (execute-script fname)
   (false-if-exception (load fname))
 )
@@ -498,7 +505,10 @@
 ; by apply-script-to-file.
 (define-public script-target-datafile #f)
 
-; execute a script, passing it a data file to operate on.
+;; execute a a guile script that was saved by a
+;; call to write-filerestore-script, 
+;; passing it the name of an alternate data file to load in place of the
+;; file specified in the script.
 (define-public (apply-script-to-file fname dfile)
   (set! script-target-datafile dfile)
   (false-if-exception (load fname))

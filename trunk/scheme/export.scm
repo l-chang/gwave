@@ -16,7 +16,8 @@
 ; (name dialog-builder-procedure do-plot-procedure)
 (define plot-list '())
 
-; modules will call this to register themselves.
+;; Register a new plot-filter module to appear in the plot dialog box.
+;; plot filter modules will call this to register themselves.
 (define-public (register-plotfilter name dproc eproc)
   (set! plot-list (cons 
 		  (list name dproc eproc #f)
@@ -31,15 +32,17 @@
 		(format #t " eproc=~s\n" (caddr exptype)))
 	      plot-list))
 
+;; Export the data from a list of visiblewaves to a named file.
 (define (export-variables-to-file f vwlist . ext)
  (let ((p (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777)))
-   (print "ext is " ext "\n");
+;  (print "ext is " ext "\n");
    (if (null? ext)
 	  (export-variables vwlist p)
 	  (export-variables vwlist p (car ext) (cadr ext)))
    (close-port p)
    ))
 
+;; Pop up the plotting dialog box
 (define-public (popup-export-dialog wvlist)
   (let* ((window (gtk-window-new 'toplevel))
 	 (vbox (gtk-vbox-new #f 0))
@@ -275,7 +278,7 @@
     (gtk-widget-show window)
 ))
 
-; run a command in a subprocess, redirecting its output to a named file.
+;; run a command in a subprocess, redirecting its output to a named file.
 (define-public (subprocess-to-file f cmd arglist)
   (let ((port (if f
 		  (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777)
