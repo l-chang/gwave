@@ -122,5 +122,3 @@
 
 /* define this if libguile has scm_c_read_string */
 #undef HAVE_SCM_C_READ_STRING
-
-

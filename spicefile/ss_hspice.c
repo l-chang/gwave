@@ -144,7 +144,7 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 		len = strlen(lbuf);
 		if(lineused + len + 1 > linesize) {
 			linesize *= 2;
-			if(linesize > 200000) {
+			if(linesize > 1050000) {
 				ss_msg(ERR, "rdhdr_ascii", "internal error - failed to find end of header\n; linesize=%d line=\n%.200s\n", linesize, line);
 				exit(4);
 			}

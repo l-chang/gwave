@@ -42,6 +42,7 @@ additional drawing styles
 	linestyles - dashed, etc.
 	symbols showing actual datapoints
 
+prevent switching to log-scale if the axis includes 0 or negative values.
 
 
 

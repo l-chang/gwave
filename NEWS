@@ -1,5 +1,14 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20021113
+- tiniest bugfix to accconfig.h: left some CVS-conflict junk behind
+- missing files src/xsnarf.h, src/xguile-snarf added
+- Now a useful snapshot, while 20020419 didn't quite work.
+
+New in 20020419:
+- minor bugfixes
+- better handling of really huge hspice files
+
 New in 20020122:
 - fix RPM building and other minor build issues
 
