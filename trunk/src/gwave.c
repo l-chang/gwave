@@ -151,6 +151,11 @@ int
 main(int argc, char **argv)
 {
 	void gwave_main(int argc, char **argv);
+	/* disable the deprecated warnings in guile 1.6; we can't clean them
+	   up until we drop support for guile older than 1.6 */
+	if (getenv("GUILE_WARN_DEPRECATED") == NULL)
+		putenv("GUILE_WARN_DEPRECATED=no");
+
 	gh_enter(argc, argv, gwave_main);
 	return 0;
 }
