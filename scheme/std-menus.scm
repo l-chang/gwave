@@ -14,6 +14,10 @@
 
 (display "std-menus.scm running\n")
 
+;(set! default-wavepanel-type 0)
+(define-public default-wavepanel-type 0)
+
+
 ;*****************************************************************************
 ;
 ; create a menuitem that calls proc when selected,
@@ -96,6 +100,11 @@
        (gtk-widget-show file-menu)
        (gtk-menu-item-set-submenu (add-menuitem mbar "File" #f) file-menu)
        (add-menuitem file-menu "About GWave" show-about-window!)
+       (add-menuitem file-menu "Read File..." prompt-name-load-file)
+       (add-menuitem file-menu "Export Postscript" 
+		     (lambda () (export-waveimage! "gwave_out.ps" "ps")))
+       (add-menuitem file-menu "Export PNM" 
+		     (lambda () (export-waveimage! "gwave_out.pnm" "pnm")))
        (add-menuitem file-menu "Read File..." prompt-name-load-file)
        (add-menuitem file-menu #f #f)
        (add-menuitem file-menu "Quit" (lambda () (gtk-main-quit)))

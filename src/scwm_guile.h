@@ -16,6 +16,13 @@
 #include "scwm-snarf.h"
 #include "validate.h"
 
+#ifndef False
+#define False 0
+#endif
+#ifndef True
+#define True (!False)
+#endif
+
 
 #ifdef HAVE_SCM_MAKE_HOOK
 #define SCWM_MAKE_HOOK(args) scm_permanent_object(scm_make_hook(gh_int2scm(args)))

@@ -14,7 +14,7 @@ gwave_LDFLAGS =  @GUILE_LDFLAGS@
 CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILEGTK_CFLAGS@ \
 	-DDATADIR=\"$(datadir)\" @ggtk_hack_cflags@
 
-guile_snarfs = cmd.x wavewin.x wavelist.x scwm_guile.x event.x draw.x
+guile_snarfs = cmd.x wavewin.x wavelist.x scwm_guile.x event.x draw.x print.x
 
 ##BUILT_SOURCES = init_scheme_string.c scm_init_funcs.h $(guile_snarfs)
 
