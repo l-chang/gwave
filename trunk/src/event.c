@@ -4,7 +4,7 @@
  * Some drawing things are here if they are related to mouse operations;
  * perhaps they should move.
  *
- * Copyright (C) 1998  University of North Carolina at Chapel Hill
+ * Copyright (C) 1998, 1999 Stephen G. Tell
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  1999/01/08 22:41:41  tell
+ * button-3 popup menu in wavepanel windows
+ *
  * Revision 1.1  1998/12/26 04:38:58  tell
  * Initial revision
  *
@@ -53,30 +56,12 @@
 
 #include <gtk/gtk.h>
 
-#include "reader.h"
 #include "gwave.h"
 
 
 void destroy_handler(GtkWidget *widget, gpointer data)
 {
 	gtk_main_quit();
-}
-
-/*
- * event handler called when variable gets dropped on a wavepanel
- */
-void
-wavepanel_dnd_drop (GtkWidget *button, GdkEvent *event, gpointer d)
-{
-	WavePanel *wp = (WavePanel *)d;
-	GWDnDData dd;
-
-	dd = *(GWDnDData *)(event->dropdataavailable.data);
-
-/*	printf("Drop data of type %s was: 0x%lx\n",
-	  event->dropdataavailable.data_type, dvar); */
-
-	add_var_to_panel(wp, dd.dv);
 }
 
 /* vw_wp_visit_update_labels -- called from g_list_foreach to update the
@@ -196,7 +181,7 @@ update_cursor(VBCursor *csp, double xval)
 	draw_cursor(csp);
 
 	/* update name/value label */
-	gtk_container_disable_resize(GTK_CONTAINER(win_main));
+/*	gtk_container_disable_resize(GTK_CONTAINER(win_main)); */
 	if(csp == wtable->cursor[0]) {
 		for(i = 0; i < wtable->npanels; i++) {
 			wp = wtable->panels[i];
@@ -220,7 +205,7 @@ update_cursor(VBCursor *csp, double xval)
 	}
 
 	gtk_label_set(GTK_LABEL(win_status_label), lbuf);
-	gtk_container_enable_resize(GTK_CONTAINER(win_main));
+/*	gtk_container_enable_resize(GTK_CONTAINER(win_main)); */
 }
 
 static void
