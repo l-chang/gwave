@@ -13,9 +13,10 @@
 (debug-enable 'debug)
 
 ; list of registered plot filters.  each entry is a 3-element list:
-; (name dialog-builder-procedure export-procedure)
+; (name dialog-builder-procedure do-plot-procedure)
 (define plot-list '())
 
+; modules will call this to register themselves.
 (define-public (register-plotfilter name dproc eproc)
   (set! plot-list (cons 
 		  (list name dproc eproc #f)
@@ -206,14 +207,29 @@
 		       (label (gtk-label-new (car exptype))))
 		  (gtk-notebook-append-page notebook panel label)
 		  
-		  ; TODO extract these based on the current
-		  ; notebook tab when go button clicked
+		  ; associate options-procedure with plot-procedure so we can
+		  ; look up the right one based on the active
+		  ; notebook tab when the go button is clicked
 		  (set! oproc-assoc (assoc-set! oproc-assoc plotproc optproc))
 
 		  (set! options-procedure optproc)
 		  (set! plot-procedure plotproc)))
 	      plot-list)
- ;    (format #t "oproc-assoc: ~s\n" oproc-assoc)
+
+    ; put up somthing helpful if there are no plot modules registered
+    (if (= 0 (length plot-list))
+	(let ((vbox (gtk-vbox-new #f 0))
+	      (label1 (gtk-label-new "No plot backend"))
+	      (label2 (gtk-label-new "No plot filter modules have been loaded"))	      (label3 (gtk-label-new "by .gwaverc or system.gwaverc"))
+)
+	  (gtk-widget-show vbox)
+	  (gtk-widget-show label1)
+	  (gtk-widget-show label2)
+	  (gtk-widget-show label3)
+	  (gtk-box-pack-start vbox label2 #t #t 0)
+	  (gtk-box-pack-start vbox label3 #t #t 0)
+	  (gtk-notebook-append-page notebook vbox label1)))
+
     (gtk-widget-show notebook)
 
     ; general options
@@ -240,7 +256,9 @@
     (gtk-signal-connect export-btn "clicked" 
 			(lambda ()
 			  (let* ((n (gtk-notebook-get-current-page notebook))
-				 (pp (caddr (list-ref plot-list n)))
+				 (pp (if (>= 0 n)
+					 (caddr (list-ref plot-list n))
+					 #f))
 				 (op (assoc-ref oproc-assoc pp))
 				 (optlist (if (procedure?  op) (op) (list))))
 ;			    (format #t "plot filter ~d ~s ~s\n" n op pp)
@@ -251,6 +269,8 @@
 				 plist optlist
 				(gtk-toggle-button-active tmpfcheck))))
 			  (gtk-widget-destroy window)))
+    (if (= 0 (length plot-list))
+	(gtk-widget-set-sensitive export-btn #f))
     (gtk-widget-show export-btn)
     
     (gtk-widget-set-flags export-btn '(can-default))
@@ -260,18 +280,21 @@
 
 ; run a command in a subprocess, redirecting its output to a named file.
 (define-public (subprocess-to-file f cmd arglist)
-  (let ((port (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777))
+  (let ((port (if f
+		  (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777)
+		  #f))
 	(null (open "/dev/null" O_RDONLY 0)))
     ;(format #t "subprocess-to-file ~a ~s\n" cmd arglist)
     (flush-all-ports)
-    ; TODO: stat cmd to make sure its executable.
+    ; TODO: search for and stat cmd to make sure it exists and is executable.
     (let ((p (primitive-fork)))
       (cond ((< p 0)
 	     ; error
 	     (error "fork"))
 	    ((eq? 0 p)
 	     ; child
-	     (redirect-port port (current-output-port))
+	     (if port
+		 (redirect-port port (current-output-port)))
 	     (redirect-port null (current-input-port))
 	     (close-all-ports-except (current-input-port) 
 				     (current-output-port) 
@@ -283,7 +306,8 @@
 	     )
 	    (else 
 	     ; parent
-	     (close port)
+	     (if port
+		 (close port))
 	     
 	     (format #t "child process ~d started for ~a ~s\n" p cmd arglist)
 	     (reap-child)

@@ -68,9 +68,8 @@
 	 (not gwave-no-std-toolbar))
     (use-modules (app gwave std-toolbar)))
 
-(use-modules (app gwave export))
-(use-modules (app gwave export-gnugraph))
 (use-modules (app gwave export-gnuplot))
+(use-modules (app gwave export-gnugraph))
 
 (dbprint "gwave-startup.scm done\n")
 

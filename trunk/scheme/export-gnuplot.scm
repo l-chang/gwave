@@ -28,7 +28,9 @@
 	 (opt-format "postscript")
 	 (format-optmenu (build-option-menu 
 			  (lambda (f) (set! opt-format f))
-			  (list '("Computer Graphics Metafile" . "cgm")
+			  (list 
+				'("Postscript" . "postscript")
+				'("Computer Graphics Metafile" . "cgm")
 				'("Drawing Exchange Format" . "dxf")
 				'("Fig" . "fig")
 				'("GPIC" . "gpic")
@@ -42,46 +44,56 @@
 				'("Plain TeX Picture \Specials" . "pstex")
 				'("Portable Anymap" . "pbm")
 				'("Portable Network Graphics" . "png")
-				'("Postscript" . "postscript")
+				'("Postscript EPS" . "postscript eps")
 				'("Scalable Vector Graphics" . "svg")
-				'("X11" . "x11")
+;				'("X11" . "x11")
 				)))
 
 	 (landscape-hbox (gtk-hbox-new #f 0))
 	 (opt-landscape #f)
-	 (landscape-rbtns (build-radiobutton-box 
-			   landscape-hbox
-			   (lambda (v) (set! opt-landscape v))
-			   (list '("Portrait" . #f)
-				 '("Landscape" . #t))))
+; landscape option to gnuplot doesn't seem to do anything 
+;	 (landscape-rbtns (build-radiobutton-box 
+;			   landscape-hbox
+;			   (lambda (v) (set! opt-landscape v))
+;			   (list '("Portrait" . #f)
+;				 '("Landscape" . #t))))
 	 (opt-color #f)
 	 (color-rbtns (build-radiobutton-box 
 		       (gtk-hbox-new #f 0)
 		       (lambda (v) (set! opt-color v))
 		       (list '("Greyscale" . #f)
 			     '("Color" . #t) )))
+
+	 (multiplot-check (gtk-check-button-new-with-label "Multiplot"))
 	 )
 						  
     (gtk-container-border-width frame 10)
-    (gtk-widget-set-usize frame 200 150)
+;    (gtk-widget-set-usize frame 200 150)
     (gtk-widget-show frame)
     (gtk-container-add frame vbox)
     (gtk-box-pack-start vbox format-optmenu #f #f 0)
-    (gtk-widget-show vbox)
 
-    (gtk-box-pack-start vbox landscape-rbtns #f #f 0)
-    (gtk-widget-show landscape-rbtns)
+;    (gtk-box-pack-start vbox landscape-rbtns #f #f 0)
+;    (gtk-widget-show landscape-rbtns)
     (gtk-box-pack-start vbox color-rbtns #f #f 0)
     (gtk-widget-show color-rbtns)
+    (gtk-box-pack-start vbox multiplot-check #f #f 0)
+    (gtk-widget-show multiplot-check)
+    (gtk-toggle-button-set-state multiplot-check #t)
+    (gtk-widget-show vbox)
 
     ; return list containing top-level frame and procedure
     (list frame
+	  ; options-procedure returns a list consisting of a fixed-length
+	  ; set of booleans followed by any number of strings that become
+	  ; the preamble for the gnuplot script
 	  (lambda ()
-;	    (format #t "opt-landscape=~s\n" opt-landscape)
-	    (append (list (format #f "set terminal ~a~a" opt-format
-				  (if opt-color " color" "")))
-;		    (if opt-landscape (list "--rotation" "90") '())
-		    )))
+	    (append (list 
+		     (gtk-toggle-button-active multiplot-check)
+		     (format #f "set terminal ~a~a" opt-format
+				  (if opt-color " color" "")
+;				  (if opt-landscape " landscape" "")
+				  )))))
 ))
 
 ; export a wavepanel's data in the format needed by gnu graph's 
@@ -103,60 +115,57 @@
 ; the formatting backend.
 ;
 (define (plot-wavepanels fname panellist options keeptmp)
-  (let* ((args (append (list-copy options) ))
+  (let* ((multiplot (car options))
+	 (preamble (append (list-copy (cdr options)) ))
 	 (shfile (format #f "~a.gnuplot" (filter-metachars fname)))
 	 (tmpbase (filter-metachars fname))
 	 (tmpfilelist (list shfile))
-	 (ngraphs (length panellist))
+	 (npanels (length panellist))
 	 (minx (wtable-start-xval))
 	 (maxx (wtable-end-xval))
-	 (idx 0))
+	 (pidx 0)
+	 (widx 0))
 
     (with-output-to-file shfile
       (lambda ()
-	(display (join "\n" options))	(display "\n")
-		
-;    (set! args (append args (list "--height-of-plot" (format #f "~f" (- (/ 0.9 ngraphs) 0.05)))))
-;    (set! args (append args '("--toggle-round-to-next-tick" "X" "--font-size" "0.03" "--grid-style" "3")))
-	
+	(format #t "~a\n" (join "\n" preamble))
 	(format #t "set output \"~a\"\n" fname)
+	(if multiplot
+	    (format #t "set multiplot\nset size 1,~f\n" (/ 1 npanels)))
+		
 	(if (wtable-xlogscale?)
 	    (display "set logscale x"))
+	(display "\n")
 	(for-each 
 	 (lambda (wp)
-;		(if (> idx 0)
-;		    (set! args (append args (list "--reposition" "0"
-;				(format #f "~f" (* idx (/ 0.9 ngraphs)))
-;				 "1"))))
-;		(if (wavepanel-ylogscale? wp)
-;		    (set! args (append args '("-l" "Y"))))
-	   (display "plot")
-	   (for-each 
-	    (lambda (vw)
-	      (let* ((f (format #f "~a.~s" tmpbase idx))
-		     (p (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777)))
-		(export-variables (cons vw '()) p minx maxx)
-		(format #t " \"~a\" using 1:2 with lines, \\\n" f)
-		(set! tmpfilelist (cons fname tmpfilelist))
-		(close-port p)
-		(set! idx (+ 1 idx))))
-		(wavepanel-visiblewaves wp))
-	   (display "\n")
-	   
-;	 (if (wavepanel-ylogscale? wp)
-;	     (set! args (append args '("-l" "Y"))))
-	 		 	
+	   (if multiplot
+	       (format #t "set origin 0,~f\n" (* (- (- npanels 1) pidx) (/ 1 npanels))))
+	   (if (wavepanel-ylogscale? wp)
+	       (display "set logscale y\n")
+	       (display "set nologscale y\n"))
+	   (let ((plotlines '()))
+	     (for-each 
+	      (lambda (vw)
+		(let* ((f (format #f "~a.~s" tmpbase widx))
+		       (p (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777)))
+		  (export-variables (cons vw '()) p minx maxx)
+		  (set! plotlines (append plotlines (list
+			(format #f " \"~a\" using 1:2 title \"~a\" with lines"
+				f  (visiblewave-varname vw) ))))
+		  (set! tmpfilelist (cons f tmpfilelist))
+		  (close-port p)
+		  (set! widx (+ 1 widx))))
+	      (wavepanel-visiblewaves wp))
+	     (format #t "plot ~a\n\n" (join ", \\\n" plotlines))
+	     )
+	   (set! pidx (+ 1 pidx))
 	   )
 	 panellist)
-    
-	(if (not keeptmp)
+    	(if (not keeptmp)
 	    (format #t "! rm -f ~a\n" (join " " tmpfilelist)))
 	))
-    ; finally we have the arglist and tmpfilelist
-    (format #t "plot-gnuplot cmdfile=~s tmpfilelist=~s\n"
-	    shfile tmpfilelist)
-; (format #t "running sh -C ~a\n" shfile)
-    (subprocess-to-file fname "gnuplot" (list "gnuplot" shfile))
+;   (format #t "plot-gnuplot cmdfile=~s tmpfilelist=~s\n" shfile tmpfilelist)
+    (subprocess-to-file #f "gnuplot" (list "gnuplot" shfile))
 ))
 
 (register-plotfilter "GNUPlot" 

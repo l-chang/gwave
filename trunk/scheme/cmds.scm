@@ -149,7 +149,7 @@
 		 (string-append "Gwave version " gwave-version-string))))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
-    (let ((llab (gtk-label-new "Copyright 2001 Steve Tell")))
+    (let ((llab (gtk-label-new "Copyright 2001-2003 Steve Tell")))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
 

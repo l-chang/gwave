@@ -16,4 +16,4 @@ dist-hook:
 # build RPMs - but only on a redhat system
 rpm:	$(distdir).tar.gz
 	cp gwave.spec $(distdir).tar.gz /usr/src/redhat/SOURCES
-	cd /usr/src/redhat/SOURCE; rpm -ba gwave.spec
+	cd /usr/src/redhat/SOURCES; rpmbuild -ba gwave.spec
