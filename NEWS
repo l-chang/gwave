@@ -1,5 +1,15 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20001004:
+- Major improvements to handling of binary files produced by HSPICE.
+- Overhaul of input of spice3/ngspice raw files; more robust and tolerant
+  of complex numbers.
+- User interface improvements: tooltips added.  User's .gwaverc no longer
+  required to do lots of standard setup.  system.gwaverc can be copied
+  to $HOME/.gwaverc and edited to taste.
+- sp2sp utility included for converting any spice file readable by gwave into
+  a convenient tabular ascii format.
+
 New in 20000518:
 - Logarithmic scales working on both X and Y axis.
 

@@ -5,11 +5,7 @@ sorts of of analog data.
 by:
 
 Steve Tell 
-Microelectronic Systems Laboratory
-University of North Carolina at Chapel Hill
-CB 3175 Sitterson Hall
-Chapel Hill, NC 27599-3175
-tell@cs.unc.edu
+tell@cs.unc.edu or steve@telltronics.org
 
 Installation:
 	See the INSTALL file
@@ -62,11 +58,10 @@ tries all file formats until one succedes.
 
 Details on using Gwave with the output of various simulators:
 
-Berkeley Spice3F5.
+Berkeley Spice3F5 and ng-spice.
 Gwave can only read the "ascii" variant form of the spice "rawfile" output,
 not the default binary rawfile format.  Select the ascii form by setting
 the environment variable SPICE_ASCIIRAWFILE to "1" before running spice3.
-This comment may apply to ng-spice also.
 
 ACS (Al's Circuit Simulator, http://www.geda.seul.org/tools/acs/index.html)
 Gwave should identify and read ACS output files, generated with the '>'
@@ -104,9 +99,30 @@ contains whitespace-seperated fields naming the variables.  The result
 is that gwave thinks the independent variable name is "#Time," but
 don't let that bother you.
 
+----------------------------------------------------------------------
 
+The sp2sp utility.  
 
+In addition to gwave, I've included a utility program called "sp2sp"
+(for spice-to-spice).  It uses the same spicefile reaer code to
+convert among some of the goofy raw file formats output by spice-like
+simulators.  Its primary output format is the simple "ascii" format,
+consisting of one line per step, with whitespace-seperated columns.
+This format can be read by gwave, but is also ideal for feeding to
+awk, perl, or gnuplot.
 
+A complete manual page for sp2sp is provided and installed, but here are
+a few hints:
+
+Unlike gwave itself, sp2sp does not autodetect the file format.  Use
+the -t option to specify the input file format.
+
+sp2sp can produce arbitrarily long output lines.  This can cause
+trouble with very old versions of some unix utilities.
+
+Example sp2sp usage:
+
+	sp2sp -t hspice aoi.W.tr0
 
 ----------------------------------------------------------------------
 This tool is far from complete. Partial contents of the To Do list:
