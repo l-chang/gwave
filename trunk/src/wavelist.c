@@ -1,8 +1,27 @@
 /*
  * wavelist.c - part of gwave
- * routines to handle the list of potentialy-displayable waveforms 
+ * routines to handle the scrolling list of potentialy-displayable waveforms
+ *
+ * Copyright (C) 1998  University of North Carolina at Chapel Hill
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  1998/08/31 20:58:56  tell
+ * Initial revision
+ *
  */
 
 #include <ctype.h>
@@ -32,7 +51,6 @@ dnd_drag_request (GtkWidget *button, GdkEvent *event, gpointer d)
 {
 	DVar *dvar = (DVar *)d;
 
-/*	printf("drag-request 0x%lx\n", dvar); */
 	gtk_widget_dnd_data_set (button, event, 
 				 (gpointer)&dvar, sizeof(gpointer));
 }
@@ -115,11 +133,6 @@ cmd_show_wave_list(GtkWidget *widget)
 			DVar *dv = waveData->df->dv[i];
 			button = gtk_button_new_with_label(dv->d.name);
 
-/*		gtk_signal_connect (GTK_OBJECT (button), 
-				    "clicked", 
-				    GTK_SIGNAL_FUNC(buttons[i].func),
-				    NULL);
-				    */		
 			gtk_box_pack_start (GTK_BOX (box2), button, TRUE, TRUE, 0);
 			gtk_widget_show (button);
 
