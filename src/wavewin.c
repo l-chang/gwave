@@ -3,7 +3,7 @@
  *
  * Functions in this file set up the main waveform window GUI.
  *
- * Copyright (C) 1998  University of North Carolina at Chapel Hill
+ * Copyright (C) 1998, 1999 Stephen G. Tell.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,23 +19,6 @@
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.4  1999/01/08 22:40:24  tell
- * substantial changes and modularization in support of wavepanel add/delete
- * create right-button popup menu for wavepanels
- *
- * Revision 1.3  1998/09/30 21:55:39  tell
- * Add menu items for new zoom commands
- * add signal handlers to support dragging of cursors and cmd_zoom_window
- *
- * Revision 1.2  1998/09/17 18:28:22  tell
- * Added pulldown menus, removed redundant toolbar buttons.
- * Added support for multiple files.
- * Finally got y-axis labels right-justfied by putting them in hboxes.
- *
- * Revision 1.1  1998/09/01 21:27:24  tell
- * Initial revision
- *
  */
 
 #include <ctype.h>
@@ -49,7 +32,9 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <gtk/gtk.h>
-#include "gwave.h"
+
+#include <config.h>
+#include <gwave.h>
 
 GtkWidget *var_list_submenu;
 
@@ -192,8 +177,9 @@ vw_get_label_string(char *buf, int buflen, VisibleWave *vw)
 	if(vw->var->wv_iv->wds->min <= xval && xval <= vw->var->wv_iv->wds->max) {
 
 		dval = wv_interp_value(vw->var, xval);
-		sprintf(buf, "%s: %.*s %.3f",
-			gdf->ftag, l, vw->varname, dval);
+		sprintf(buf, "%s: %.*s %s",
+			gdf->ftag, l, vw->varname, 
+			val2txt(dval));
 	} else {
 		/* should keep track of label state (name vs. name+val)
 		 * and only re-do this if necessary */
@@ -250,6 +236,13 @@ GtkWidget *create_toolbar()
 	gtk_signal_connect (GTK_OBJECT (btn), "clicked",
 			    GTK_SIGNAL_FUNC(cmd_delete_selected_waves), NULL);
 	gtk_widget_show (btn);
+
+	btn = gtk_button_new_with_label ("Reload All");
+	gtk_container_add (GTK_CONTAINER(bbox), btn);
+	gtk_signal_connect (GTK_OBJECT (btn), "clicked",
+			    GTK_SIGNAL_FUNC(reload_all_wave_files), NULL);
+	gtk_widget_show (btn);
+
 	gtk_widget_show(bbox);
 	return bbox;
 }
@@ -328,12 +321,9 @@ void setup_wave_panel(WavePanel *wp)
 	gtk_signal_connect(
 		GTK_OBJECT(wp->drawing), "motion_notify_event", 
 		(GtkSignalFunc)motion_handler, (gpointer)wp);
-	
-	gtk_signal_connect (GTK_OBJECT (wp->drawing), 
-			    "drop_data_available_event",
-			    GTK_SIGNAL_FUNC(wavepanel_dnd_drop),
-			    (gpointer)wp);
-	
+
+	dnd_setup_target(wp->drawing, wp);
+
 	gtk_widget_set_events(wp->drawing, 
 			      GDK_EXPOSURE_MASK|GDK_BUTTON_RELEASE_MASK|
 			      GDK_BUTTON_PRESS_MASK|
@@ -392,6 +382,7 @@ wavewin_build_table()
 			 1, 2, wtable->npanels+1, wtable->npanels+2,
 			 GTK_EXPAND|GTK_FILL, GTK_FILL, 0, 0);
 
+#ifndef GTK_V12
 	/* can't set up dnd_drop on wavepanel drawing areas until it
 	 * is connected to a window and realized so that it has
 	 * an X-window.  At least I think that's the deal. */
@@ -403,6 +394,7 @@ wavewin_build_table()
 		gtk_widget_dnd_drop_set (wp->drawing, TRUE,
 					 accepted_drop_types, 1, FALSE);
 	}
+#endif
 }
 
 /*
