@@ -57,7 +57,7 @@ char *val2txt(double val, int mode)
 
 	switch(mode) {
 	case 1:
-		sprintf(buf, "% .4g", val);
+		sprintf(buf, "% .5g", val);
 		break;
 	case 0:
 	default:
@@ -97,11 +97,11 @@ char *val2txt(double val, int mode)
 		}
 		asval = fabs(sval);
 		if(1.0 <=  asval && asval < 10.0) 
-			ddigits = 3;
+			ddigits = 4;
 		else if(10.0 <=  asval && asval < 100.0) 
-			ddigits = 2;
+			ddigits = 3;
 		else 
-			ddigits = 1;
+			ddigits = 2;
 		sprintf(buf, "% .*f%c", ddigits, sval, suffix);
 		break;
 	}	
