@@ -81,7 +81,7 @@ dnl This checks (roughly) if the guile lib is a sufficiently recent snapshot
 dnl to have a scm_eval_string that is safe against re-entry by continuations. 
 dnl I was to lazy to write a real test macro so I just check for a function
 dnl that was added soon after.
-AC_CHECK_LIB(guile, scm_done_malloc, AC_DEFINE(HAVE_SAFE_SCM_EVAL_STRING), ,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_done_malloc, AC_DEFINE(HAVE_SAFE_SCM_EVAL_STRING),  ,$GUILE_LDFLAGS)
 
 dnl This checks if the new printer functions are available, and should 
 dnl be used instead of the old ones.
@@ -103,13 +103,13 @@ AC_CHECK_LIB(guile, scm_parse_path, AC_DEFINE(HAVE_SCM_PARSE_PATH), ,$GUILE_LDFL
 
 AC_CHECK_LIB(guile, scm_internal_select, AC_DEFINE(HAVE_SCM_INTERNAL_SELECT), ,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_internal_cwdr, AC_DEFINE(HAVE_SCM_INTERNAL_CWDR), ,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_internal_cwdr, AC_DEFINE(HAVE_SCM_INTERNAL_CWDR),,$GUILE_LDFLAGS)
 
 AC_CHECK_LIB(guile, scm_internal_stack_catch, AC_DEFINE(HAVE_SCM_INTERNAL_STACK_CATCH), ,$GUILE_LDFLAGS)
 
 AC_CHECK_LIB(guile, scm_internal_parse_path, AC_DEFINE(HAVE_SCM_INTERNAL_PARSE_PATH), ,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_load_startup_files, AC_DEFINE(HAVE_SCM_LOAD_STARTUP_FILES), ,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_load_startup_files, AC_DEFINE(HAVE_SCM_LOAD_STARTUP_FILES), ancient_guile=yes,$GUILE_LDFLAGS)
 
 AC_CHECK_LIB(guile, scm_make_hook, AC_DEFINE(HAVE_SCM_MAKE_HOOK), ,$GUILE_LDFLAGS)
 
@@ -117,9 +117,13 @@ AC_CHECK_LIB(guile, scm_create_hook, AC_DEFINE(HAVE_SCM_CREATE_HOOK), ,$GUILE_LD
 
 AC_CHECK_LIB(guile, scm_hook_empty_p, AC_DEFINE(HAVE_SCM_HOOK_EMPTY_P), ,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_make_smob_type_mfpe, AC_DEFINE(HAVE_SCM_MAKE_SMOB_TYPE_MFPE), ,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_make_smob_type_mfpe, AC_DEFINE(HAVE_SCM_MAKE_SMOB_TYPE_MFPE), ancient_guile=yes, $GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_strport_to_string, AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING), ,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_strport_to_string, AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING), ancient_guile=yes, $GUILE_LDFLAGS)
+
+if test "$ancient_guile" = "yes"; then
+	AC_ERROR(Your guile is too old; Guile-1.3.4 or later is required)
+fi
 
 dnl check for scm_the_last_fluid in place of scm_the_last_stack_var
 
