@@ -2,16 +2,16 @@
 ;
 ; system.gwaverc: default standard startup configuration for gwave.
 ;
-; Gwave configuration and scripting is done in guile; the  GNU
-; extension language, which is an implementation of the scheme language.
-; see http://www.gnu.ai.mit.edu/software/guile/guile.html
+; Gwave configuration and scripting is done in guile; the GNU extension 
+; language, which is an implementation of the scheme dialect of lisp.
+; see http://www.gnu.org/software/guile/
 ; for generic information on Guile.
 ;
 ; To personalize gwave, copy this system.gwaverc file to
 ; $HOME/.gwaverc, and edit as appropriate.
 ;
 
-;  this message is printed only when debug messages are enabled with -x option.
+;  dbprint messages are printed only when debug is enabled with -x option.
 (dbprint "in system.gwaverc\n")
 
 (debug-enable 'debug)
@@ -21,10 +21,12 @@
 ;(gtk-tooltips-disable gwave-tooltips)
 
 ; An example of loading an additional module of guile code.
-; this particular one creates another pullown menu, with some debugging items.
 ;(use-modules 
-; (app gwave extra-menus)
-;)
+; this particular one creates another pullown menu, with some debugging items.
+;   (app gwave extra-menus)
+; modules can also be created that contain additional hardcopy-plot backends
+;   (app gwave export-myplotter)
+; )
 
 ; Number of initial wave panels to create.
 (set! initial-panels 2)
