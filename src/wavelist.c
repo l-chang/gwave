@@ -20,6 +20,13 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.20  2003/05/22 05:03:09  sgt
+ * Add C-level primitive export-variables, for use in writing new
+ * plot/export features.
+ * update TODO list
+ * add info about GNU plotutils breakage and patch
+ * bump version number.
+ *
  * Revision 1.19  2002/04/19 17:21:33  sgt
  * Add configure check for scm_c_read_string, and finish ifdeffing in gwave.c
  * so that we build and run properly on 1.3.4 again.
@@ -121,6 +128,8 @@
 
 #define WAVELIST_IMPLEMENTATION
 #include <wavelist.h>
+
+#include <wavewin.h>
 
 GList *wdata_list = NULL;
 static char file_tag_chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -733,7 +742,7 @@ XSCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
 	/* validate varlist and count elements */
 	for (l = varlist; SCM_NNULLP(l); l = SCM_CDR (l)) {
                 v = SCM_CAR(l);
-		VALIDATE_ARG_WaveVar_COPY(1,v,wv);
+		VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,v,wv);
 		if(iv == NULL)
 			iv = wv->wv_iv;
 		else if(iv != wv->wv_iv) {
@@ -754,7 +763,7 @@ XSCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
 		scm_puts(buf, port);
 		for (l = varlist; SCM_NNULLP(l); l = SCM_CDR (l)) {
 			v = SCM_CAR(l);
-			VALIDATE_ARG_WaveVar_COPY(1,v,wv);
+			VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,v,wv);
 			y = wds_get_point(&wv->wds[0], i);
 			sprintf(buf, " %g", y); 
 			scm_puts(buf, port);

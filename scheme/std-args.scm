@@ -6,7 +6,7 @@
   :use-module (ice-9 getopt-long)
   :use-module (ice-9 common-list)
   :use-module (app gwave cmds)
-;  :use-module (app gwave options)
+  :use-module (app gwave export)
 )
 
 (debug-enable 'debug)
