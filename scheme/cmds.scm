@@ -313,7 +313,7 @@
 ; When file seleted, run procedure P, passing it the name of the file.
 ; Optionaly, a default suggested filename can be specified
 ;
-(define*-public (with-selected-filename s p #&key default)
+(define*-public (with-selected-filename s p #&key (default #f))
   (let* ((window (gtk-file-selection-new s))
          (button #f))
     (gtk-signal-connect
@@ -327,7 +327,7 @@
      (gtk-file-selection-cancel-button window)
      "clicked" (lambda () (gtk-widget-destroy window)))
 
-    (if (bound? default)
+    (if (string? default)
 	(gtk-file-selection-set-filename window default))
     (gtk-file-selection-hide-fileop-buttons window)
     (gtk-widget-show window)
