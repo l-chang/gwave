@@ -72,6 +72,7 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 	int got_values = 0;
 	int dtype_complex = 0;
 	int binary = 0;
+	char *vnum, *vname, *vtypestr;
 	int i;
 	
 	while(fread_line(fp, &line, &linesize) != EOF) {
@@ -124,14 +125,20 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 			sf = ss_new(fp, name, nvars-1, 0);
 			sf->ncols = 1;
 			sf->ntables = 1;
+			/* first variable may be described on the same line
+			 * as "Variables:" keyword
+			 */
+			vnum = strtok(NULL, " \t\n");
+
 			for(i = 0; i < nvars; i++) {
-				char *vnum, *vname, *vtypestr;
-				if(fread_line(fp, &line, &linesize) == EOF) {
-					ss_msg(ERR, msgid, "%s:%d: Unexpected EOF in \"Variables:\" at var %d", name, lineno, i);
-					goto err;
+				if(i || !vnum) {
+					if(fread_line(fp, &line, &linesize) == EOF) {
+						ss_msg(ERR, msgid, "%s:%d: Unexpected EOF in \"Variables:\" at var %d", name, lineno, i);
+						goto err;
+					}
+					lineno++;
+					vnum = strtok(line, " \t\n");
 				}
-				lineno++;
-				vnum = strtok(line, " \t\n");
 				vname = strtok(NULL, " \t\n");
 				vtypestr = strtok(NULL, " \t\n");
 				if(!vnum || !vname || !vtypestr) {
