@@ -18,6 +18,10 @@
  *
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.9  1998/09/17 18:36:56  tell
+ * Changed default "blue" color for better contrast.
+ * Support for multiple files.
+ *
  * Revision 1.8  1998/09/01 21:27:43  tell
  * Move most all functions out into seperate, more managably-sized files
  *
@@ -69,7 +73,7 @@
 
 /* globals */
 char *prog_name = "gwave";
-char *prog_version = "0.3";
+char *prog_version = "0.0.4";
 int colors_initialized = 0;
 int x_flag, v_flag;
 WaveTable *wtable;
@@ -185,11 +189,11 @@ int main(int argc, char **argv)
 	wtable->panels = g_new0(WavePanel, npanels);
 	wtable->cursor[0] = g_new0(VBCursor, 1);
 	wtable->cursor[1] = g_new0(VBCursor, 1);
+	wtable->srange = g_new0(SelRange, 1);
 
 	/* manualy set up the waves into specific WavePanels
 	* Now that the gui allows (re)configuration of the wave/panel setup,
-	* I've made this optional.  A few bugs in that stuff remain, 
-	* and this might aid testing.
+	* this doesn't have much use except for quicker testing things.
 	*/
 	if(fillpanels) {
 		GWDataFile *wdata = g_list_nth_data(wdata_list, 0);
