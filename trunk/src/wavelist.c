@@ -15,27 +15,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Library General Public
+ * You should have received a copy of the GNU General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Log: not supported by cvs2svn $
- * Revision 1.5  1999/01/08 22:41:13  tell
- * when loading file, defer generating wavelist window if main window
- * isn't present yet.  Attempt nicer placement of wavelist windows.
- *
- * Revision 1.4  1998/11/09 20:29:53  tell
- * always display variable-select list after loading file
- *
- * Revision 1.3  1998/09/17 18:38:29  tell
- * Added load_wave_file function and other stuff for multiple files.
- * Change variable box packing so it looks better (no fill/expand).
- *
- * Revision 1.2  1998/09/01 21:29:04  tell
- * add copyright notice, misc cleanup
- *
- * Revision 1.1  1998/08/31 20:58:56  tell
- * Initial revision
  *
  */
 
@@ -51,12 +33,8 @@
 #include <sys/time.h>
 
 #include <gtk/gtk.h>
-
-#include "gwave.h"
-#include "gtkmisc.h"
-
-char *possible_drag_types[] = {"x-gwave/dvar"};
-char *accepted_drop_types[] = {"x-gwave/dvar"};
+#include <config.h>
+#include <gwave.h>
 
 GList *wdata_list = NULL;
 static char file_tag_chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -65,6 +43,9 @@ static int next_file_tagno = 0;
 
 static GtkWidget *create_wavelist_menu(GWDataFile *wdata);
 void add_variables_to_list(GWDataFile *wdata);
+static gint wavelist_button_click(GtkWidget *widget,
+				  GdkEventButton *event, gpointer data);
+
 /*
  * Load a waveform file, adding it to the list of files from which
  * variables can be chosed to add to the display.
@@ -150,8 +131,8 @@ reload_wave_file(GtkWidget *w, GWDataFile *wdata)
 	}
 	old_wf = wdata->wf;
 	wdata->wf = new_wf;
-/*	printf("reload_wave_file(%s) old=%lx new=%lx\n", */
-	       wdata->wf->wf_filename, old_wf, new_wf);
+/*	printf("reload_wave_file(%s) old=%lx new=%lx\n",
+	       wdata->wf->wf_filename, old_wf, new_wf); */
 	for(i = 0; i < wdata->wf->wf_ndv; i++) {
 		WaveVar *dv = &wdata->wf->dv[i];
 		dv->udata = wdata;
@@ -167,6 +148,25 @@ reload_wave_file(GtkWidget *w, GWDataFile *wdata)
 	}
 	
 	g_free(old_wf);
+}
+
+void
+reload_wave_file_w(gpointer p, gpointer d)
+{ 
+	GWDataFile *wdata = (GWDataFile *)p;
+	reload_wave_file(NULL, wdata);
+} 
+
+/*
+ * Reload all files.
+ * plan: replace this with update_all_wave_files(), which checks
+ * file dates/sizes and only reloads those that need it.
+ */
+void
+reload_all_wave_files(GtkWidget *w)
+{
+	WaveFile *wf;
+	g_list_foreach(wdata_list, reload_wave_file_w, NULL);
 }
 
 /*
@@ -216,18 +216,6 @@ get_fname_load_file(GtkWidget *w, gpointer d)
 		gtk_widget_destroy (window);
 }
 
-static void
-dnd_drag_request (GtkWidget *button, GdkEvent *event, gpointer d)
-{
-	WaveVar *dv = (WaveVar *)d;
-	GWDnDData dd;
-
-	dd.dv = dv;
-
-	gtk_widget_dnd_data_set (button, event, 
-				 (gpointer)&dd, sizeof(GWDnDData));
-}
-
 /*
  * Add a button for each variable in the file 
  * to the win_wlist box for it.  
@@ -246,20 +234,12 @@ add_variables_to_list(GWDataFile *wdata)
 		
 		gtk_box_pack_start (GTK_BOX (wdata->wlist_box), button, FALSE, FALSE, 0);
 		gtk_widget_show (button);
+		dnd_setup_source(wdata->wlist_win, button, dv);
 
-		/*
-		 * currently (Gtk+ 1.0.4), the widget has to be 
-		 * realized to set dnd on it. According to coments
-		 * in testgtk.c, likely to change in future Gtk+...
-		 */
-		gtk_widget_realize (button);
-		gtk_signal_connect (GTK_OBJECT (button),
-				    "drag_request_event",
-				    GTK_SIGNAL_FUNC(dnd_drag_request),
-				    dv);
-		gtk_widget_dnd_drag_set (button,
-					 TRUE, possible_drag_types, 1);
-		
+		gtk_signal_connect (GTK_OBJECT(button), "button-press-event",
+			    GTK_SIGNAL_FUNC(wavelist_button_click), 
+			    (gpointer) dv);
+
 	}
 }
 
@@ -278,9 +258,6 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 	GtkWidget *menubar;
 	int i;
 
-	static GtkWidget *drag_icon = NULL;
-	static GtkWidget *drop_icon = NULL;
-
 	if(!wdata) {
 		fprintf(stderr, "cmd_show_wave_list: wdata is NULL");
 		return;
@@ -288,31 +265,7 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 
 	if(!wdata->wlist_win) {
 		char buf[256];
-		GdkPoint icon_hotspot = {5,5};
-		if (!drag_icon) {
-			drag_icon = shape_create_icon_d (drag_no_xpm,
-					 440, 140, 0,0, GTK_WINDOW_POPUP);
-	  
-			gtk_signal_connect (GTK_OBJECT (drag_icon), "destroy",
-				    GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-				    &drag_icon);
-			gtk_widget_hide (drag_icon);
-		}
-		if (!drop_icon)	{
-			drop_icon = shape_create_icon_d (wave_drag_ok_xpm,
-					 440, 140, 0,0, GTK_WINDOW_POPUP);
-	  
-			gtk_signal_connect (GTK_OBJECT (drop_icon), "destroy",
-				    GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-				    &drop_icon);
-			gtk_widget_hide (drop_icon);
-		}
-
-		gdk_dnd_set_drag_shape(drag_icon->window,
-				       &icon_hotspot,
-				       drop_icon->window,
-				       &icon_hotspot);
-
+		
 		wdata->wlist_win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 		gtk_widget_set_name(wdata->wlist_win, "data list window");
 		sprintf(buf, "gwave: %.64s", wdata->wf->wf_filename);
@@ -373,11 +326,19 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 
 		wdata->wlist_box = gtk_vbox_new (FALSE, 0);
 		gtk_container_border_width (GTK_CONTAINER (wdata->wlist_box), 10);
-		gtk_container_add (GTK_CONTAINER(scrolled_window), wdata->wlist_box);
-		gtk_container_set_focus_vadjustment(GTK_CONTAINER (wdata->wlist_box),
-						    gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window)));
+#ifdef GTK_V12
+		gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_window),
+						      wdata->wlist_box);
+#else
+		gtk_container_add (GTK_CONTAINER(scrolled_window),
+				   wdata->wlist_box);
+#endif
+		gtk_container_set_focus_vadjustment(
+			GTK_CONTAINER (wdata->wlist_box),
+			gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window)));
 		gtk_widget_show (wdata->wlist_box);
 
+		dnd_init(wdata->wlist_win);
 		add_variables_to_list(wdata);
 	}
 
@@ -388,7 +349,7 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 }
 
 /*
- * Create menu bar wavefile window.
+ * Create menu bar for wavefile window.
  */
 static GtkWidget *
 create_wavelist_menu(GWDataFile *wdata)
@@ -411,3 +372,19 @@ create_wavelist_menu(GWDataFile *wdata)
 	return menubar;
 }
 
+/*
+ * Called for all button presses on wavelist button.
+ * If it is a doubleclick, add variable to the "current" wavepanel immediately.
+ */
+static gint
+wavelist_button_click(GtkWidget *widget, 
+		      GdkEventButton *bevent, 
+		      gpointer data)
+{
+	WaveVar *dv = (WaveVar *)data;
+	if(bevent->type == GDK_2BUTTON_PRESS) {
+/*		printf("doubleclicked %s %s\n", dv->wfile->ss->filename,
+		       dv->sv->name); */
+		add_var_to_panel(NULL, dv);
+	}
+}
