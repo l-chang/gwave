@@ -20,6 +20,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  1998/09/17 18:28:22  tell
+ * Added pulldown menus, removed redundant toolbar buttons.
+ * Added support for multiple files.
+ * Finally got y-axis labels right-justfied by putting them in hboxes.
+ *
  * Revision 1.1  1998/09/01 21:27:24  tell
  * Initial revision
  *
@@ -128,6 +133,10 @@ create_gwave_menu()
 	menu = create_menu("View", menubar);
 	create_menuitem("Zoom Full", menu, 
 			GTK_SIGNAL_FUNC(cmd_zoom_full), NULL);
+	create_menuitem("Zoom Cursors", menu, 
+			GTK_SIGNAL_FUNC(cmd_zoom_cursors), NULL);
+	create_menuitem("Zoom Window", menu, 
+			GTK_SIGNAL_FUNC(cmd_zoom_window), NULL);
 	var_list_submenu = create_menu("Variable List", menu);
 
 	g_list_foreach(wdata_list, 
@@ -303,8 +312,15 @@ void setup_waveform_window(void)
 			GTK_OBJECT(wp->drawing), "expose_event", 
 			(GtkSignalFunc)expose_handler, (gpointer)wp);
 		gtk_signal_connect(
+			GTK_OBJECT(wp->drawing), "button_press_event", 
+			(GtkSignalFunc)button_press_handler, (gpointer)wp);
+		gtk_signal_connect(
 			GTK_OBJECT(wp->drawing), "button_release_event", 
-			(GtkSignalFunc)click_handler, (gpointer)wp);
+			(GtkSignalFunc)button_release_handler, (gpointer)wp);
+		gtk_signal_connect(
+			GTK_OBJECT(wp->drawing), "motion_notify_event", 
+			(GtkSignalFunc)motion_handler, (gpointer)wp);
+		wtable->button_down = -1;
 
 		gtk_signal_connect (GTK_OBJECT (wp->drawing), 
 			  "drop_data_available_event",
@@ -312,7 +328,9 @@ void setup_waveform_window(void)
 			  (gpointer)wp);
 
 		gtk_widget_set_events(wp->drawing, 
-		      GDK_EXPOSURE_MASK|GDK_BUTTON_RELEASE_MASK);
+		        GDK_EXPOSURE_MASK|GDK_BUTTON_RELEASE_MASK|
+			GDK_BUTTON_PRESS_MASK|
+			GDK_BUTTON1_MOTION_MASK|GDK_BUTTON2_MOTION_MASK);
 	}
 	
 	for(i = 0; i < wtable->npanels; i++) {
