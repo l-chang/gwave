@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl ## Initialize autoconf ##
 
 AC_INIT(src/gwave.c)
-AM_INIT_AUTOMAKE(gwave, 20010922)
+AM_INIT_AUTOMAKE(gwave, 20011021)
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
 
@@ -20,7 +20,7 @@ AC_SUBST(PERL)
 # TODO: make this find GNU graph only, not tradional berkeley/sysv graph
 # this will fail on linux where /usr/bin/graph is GNU graph.
 AC_ARG_WITH(graph, full pathname to GNU graph for postscript plotting)
-AC_MSG_RESULT(with_graph is $with_graph)
+dnl AC_MSG_RESULT(with_graph is $with_graph)
 if test "$with_graph" != no; then
 	if test "$with_graph" != yes && test ! -z "$with_graph" ; then
 		AC_DEFINE_UNQUOTED(PROG_GRAPH, "$with_graph")

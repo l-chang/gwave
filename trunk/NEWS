@@ -1,5 +1,10 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20011021:
+- better measurement: value at both cursors or difference in values at cursors
+- enhanced handling of log scales
+- yet more file-reading improvements and general bug fixes
+
 New in 20001123:
 - Saving wave and panel configuration as guile scripts.
 - Executing guile scripts from menu or command line (-s <script> option)

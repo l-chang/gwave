@@ -10,6 +10,12 @@
 (debug-enable 'debug)
 (read-enable 'positions)
 
+(define startup-error-flag #f)
+(add-hook! 
+ error-hook
+ (lambda (a b c d e)
+   (set! startup-error-flag #t)))
+
 ; print list if debug flag is set
 (define (dbprint . l)
   (if gwave-debug
@@ -58,3 +64,13 @@ order in which they appear in HOOK-LIST"
 ; Do setup and find a .gwaverc
 (load-from-path "app/gwave/gwave-startup.scm")
 
+(dbprint "minimal.scm load done flag=" startup-error-flag "\n")
+
+; this next expression must be the last one, returning #t or #f, which becomes
+; the return value of the call to scwm_safe_eval_str() in gwave.c
+(if startup-error-flag
+    (begin
+      (display "gwave: Error(s) in gwave-startup.scm or other startup files\n")
+      (display "gwave: %load-path was ")(display %load-path)(newline)
+      #f)
+    #t)
