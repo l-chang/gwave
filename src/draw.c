@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  1998/09/17 18:33:39  tell
+ * Only draw portion of wave for which there is actually data - with multiple
+ * files loaded, can scroll off the end of one.
+ *
  * Revision 1.1  1998/09/01 21:28:09  tell
  * Initial revision
  *
@@ -106,10 +110,26 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 	int w = wp->drawing->allocation.width;
 	int h = wp->drawing->allocation.height;
 
-	if(vw->gc == NULL) {  /* lingering bug */
-		fprintf(stderr, "visit_draw: vw=%s (0x%lx) wp=0x%lx has null GC\n", vw->var->d.name, vw, wp);
-		return;
+	if(!vw->gc) {
+		if(!vw->label) {
+			fprintf(stderr, "visit_draw(%s): label=NULL\n",
+				vw->var->d.name);
+			return;
+			
+		}
+		if(!gdk_color_alloc(win_colormap, 
+				    &vw->label->style->fg[GTK_STATE_NORMAL])) {
+			fprintf(stderr, 
+				"visit_draw(%s): gdk_color_alloc failed\n",
+				vw->var->d.name);
+			return;
+		}
+		vw->gc = gdk_gc_new(wp->drawing->window);
+		gdk_gc_set_foreground(vw->gc,
+				      &vw->label->style->fg[GTK_STATE_NORMAL]);
 	}
+	g_assert(vw->gc != NULL);
+
 	xstep = (wp->end_xval - wp->start_xval)/w;
 
 	x1 = 0;
@@ -138,8 +158,7 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 	if(wp->pixmap == NULL)
 		return;
 
-	gdk_draw_rectangle(
-		wp->pixmap, bg_gdk_gc, TRUE, 0,0, w,h);
+	gdk_draw_rectangle(wp->pixmap, bg_gdk_gc, TRUE, 0,0, w,h);
 
 	/* draw waves */
 	g_list_foreach(wp->vwlist, (GFunc)vw_wp_visit_draw, wp); 
@@ -156,6 +175,9 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 			}
 		}
 	}
+	/* draw select-range line, if in this WavePanel */
+	if(wtable->srange->drawn && wtable->srange->wp == wp)
+		draw_srange(wtable->srange);
 
 	if(event) {
 	  /* Draw the exposed portions of the pixmap in its window. */
@@ -208,7 +230,7 @@ void alloc_colors(GtkWidget *widget)
 	for(i = 0; i < 2; i++) {
 		VBCursor *csp = wtable->cursor[i];
 		gdk_color_alloc(win_colormap, &csp->gdk_color);
-			csp->gdk_gc = gdk_gc_new(widget->window);
+		csp->gdk_gc = gdk_gc_new(widget->window);
 		if(!csp->gdk_gc) {
 			fprintf(stderr, "couldn't allocate cursor %d gc\n", i);
 			exit(2);
@@ -231,6 +253,7 @@ void setup_colors(WaveTable *wt)
 {
 	int i;
 
+	/* cursors */
 	wt->cursor[0]->color_name = "white";
 	wt->cursor[1]->color_name = "yellow";
 	for(i = 0; i < 2; i++) {
@@ -239,6 +262,12 @@ void setup_colors(WaveTable *wt)
 			fprintf(stderr, "failed to parse cursor %d color\n", i);
 			exit(1);
 		}
+	}
+
+	/* range-select line */
+	if(!gdk_color_parse("white", &wt->srange->gdk_color)) {
+		fprintf(stderr, "failed to parse selrange color\n");
+		exit(1);
 	}
 
 	/* waveform background */
