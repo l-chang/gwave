@@ -22,6 +22,15 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  1998/12/26 04:38:06  tell
+ * Initial revision
+ *
+ * Revision 1.3  1998/09/30 21:54:39  tell
+ * Restructure zoom commands, creating cmd_zoom_absolute and cmd_zoom_relative
+ * to factor out common code.  Add cmd_zoom_cursor and cmd_zoom_window.
+ * Add supress_redraw hook for use in update_wavetable to keep things from
+ * getting redrawn before we're ready when adding first wave.
+ *
  * Revision 1.2  1998/09/17 18:31:58  tell
  * Fixed longstanding bug deleting multiple waves.
  * update scrollbar if min_xval/max_xval change.
@@ -164,7 +173,7 @@ gint cmd_delete_selected_waves(GtkWidget *widget)
 	 * during its g_list_foreach is apparently a no-no.
 	 */
 	for(i = 0; i < wtable->npanels; i++) {
-		WavePanel *wp = &wtable->panels[i];
+		WavePanel *wp = wtable->panels[i];
 		g_list_foreach(wp->vwlist, vw_wp_list_if_selected, wp);
 	}
 	while((vdi = g_list_nth_data(vw_delete_list, 0)) != NULL) {
@@ -308,7 +317,9 @@ wavetable_update_data()
 	wtable->min_xval = G_MAXDOUBLE;
 	wtable->max_xval = G_MINDOUBLE;
 	for(i = 0; i < wtable->npanels; i++) {
-		wp = &wtable->panels[i];
+		wp = wtable->panels[i];
+		if(wp == NULL)
+			continue; /* deleted panel */
 		if(wp->vwlist == NULL)
 			continue; /* no waves? min/max for panel are bogus */
 
