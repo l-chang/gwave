@@ -355,18 +355,14 @@ void setup_waveform_window(void)
 	wtable->xlhbox = create_xlabel_hbox(wtable);
 
 	/* scrollbar */
-	{
-		double dwidth;
-		dwidth = wtable->max_xval - wtable->min_xval;
 	win_hsadj = (GtkAdjustment *)
-		gtk_adjustment_new(wtable->start_xval, /* value */
-				   wtable->min_xval, /* lower */
-				   wtable->max_xval, /* upper */
-				   dwidth/100,	/* step increment = 1% */
-				   dwidth/2, 	/* page increment = 50% */
-				   dwidth	/* page_size */
+ 		gtk_adjustment_new(0.0, /* value */
+ 				   0.0, /* lower */
+ 				   1.0, /* upper */
+ 				   1.0/100.,	/* step increment = 1% */
+ 				   1.0/2., 	/* page increment = 50% */
+ 				   1.0		/* page_size */
 			);
-	}
 	win_hsbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(win_hsadj));
 	gtk_range_set_update_policy (GTK_RANGE (win_hsbar), 
 			       GTK_UPDATE_CONTINUOUS);

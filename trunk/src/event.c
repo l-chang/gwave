@@ -21,6 +21,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.13  2001/03/20 06:36:45  sgt
+ * Change wavepanel measurements to use new MeasureBtn code.
+ *
  * Revision 1.12  2001/03/20 05:53:19  sgt
  * create "measure button" abstraction, and use it for cursor values
  *
@@ -382,10 +385,16 @@ gint scroll_handler(GtkWidget *widget)
 	int i;
 	WavePanel *wp;
 
-	owidth = wtable->end_xval - wtable->start_xval;
-
-	wtable->start_xval = hsadj->value;
-	wtable->end_xval = hsadj->value + owidth;
+ 	if (!wtable->logx) {
+ 		wtable->start_xval = hsadj->value
+ 			* ( wtable->max_xval - wtable->min_xval ) + wtable->min_xval;
+ 		wtable->end_xval   = ( hsadj->value + hsadj->page_size )
+ 			* ( wtable->max_xval - wtable->min_xval ) + wtable->min_xval;
+ 	} else {
+ 		wtable->start_xval = wtable->min_xval * pow( wtable->max_xval / wtable->min_xval, hsadj->value );
+ 		wtable->end_xval   = wtable->min_xval * pow( wtable->max_xval / wtable->min_xval,
+ 			hsadj->value + hsadj->page_size );
+ 	}
 
 	draw_labels();
 
