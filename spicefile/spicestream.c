@@ -19,8 +19,8 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-#define _FILE_OFFSET_BITS 64
 
+#include "ssintern.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -100,10 +100,9 @@ ss_open(char *filename, char *format)
 {
 	FILE *fp;
 
-	fp = fopen(filename, "r");
+	fp = fopen64(filename, "r");
 	if(fp == NULL) {
-		fprintf(stderr, "fopen(\"%s\": %s\n", filename, strerror(errno));
-		/*perror(filename); */
+		fprintf(stderr, "fopen(\"%s\"): %s\n", filename, strerror(errno));
 		return NULL;
 	}
 

@@ -4,7 +4,7 @@ EXTRA_DIST=README
 
 noinst_LIBRARIES = libspicefile.a
 
-libspicefile_a_SOURCES = spicestream.c ss_cazm.c ss_hspice.c ss_spice3.c ss_spice2.c spicestream.h wavefile.c wavefile.h spice2.h
+libspicefile_a_SOURCES = spicestream.c ss_cazm.c ss_hspice.c ss_spice3.c ss_spice2.c spicestream.h wavefile.c wavefile.h spice2.h ssintern.h
 
 CFLAGS = @GTK_CFLAGS@
 

@@ -19,9 +19,7 @@
  *
  */
 
-/* map fopen to fopen64, etc. */
-#define _FILE_OFFSET_BITS 64
-
+#include "ssintern.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -108,7 +106,7 @@ WaveFile *wf_read(char *name, char *format)
 	unsigned int tried = 0; /* bitmask of formats. */
 
 	g_assert(NFormats <= 8*sizeof(tried));
-	fp = fopen(name, "r");
+	fp = fopen64(name, "r");
 	if(fp == NULL) {
 		perror(name);
 		return NULL;

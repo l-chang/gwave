@@ -20,7 +20,7 @@
  *
  */
 
-#define _FILE_OFFSET_BITS 64
+#include "ssintern.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -202,7 +202,7 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 	sf->lineno = lineno;
 	sf->linebuf = line;
 	sf->lbufsize = linesize;
-	ss_msg(DBG, msgid, "Done with header at offset 0x%lx\n", (long) ftello(sf->fp));
+	ss_msg(DBG, msgid, "Done with header at offset 0x%lx\n", (long) ftello64(sf->fp));
 	
 	return sf;
 err:
@@ -315,17 +315,17 @@ sf_readrow_s3raw(SpiceStream *sf, double *ivar, double *dvars)
 static int
 sf_getval_s3bin(SpiceStream *sf, double *dval)
 {
-	long pos;
+	off64_t pos;
 	double val;
 	int i;
 
 	if(sf->read_vals >= sf->expected_vals) {
-		pos = ftello(sf->fp);
+		pos = ftello64(sf->fp);
 		ss_msg(DBG, "sf_getval_s3bin", "past last expected value offset 0x%lx", (long) pos);
 		return 0;
 	}
 	if(fread(&val, sizeof(double), 1, sf->fp) != 1) {
-		pos = ftello(sf->fp);
+		pos = ftello64(sf->fp);
 		ss_msg(ERR, "sf_getval_s3bin", "unexepected EOF in data at offset 0x%lx", (long) pos);
 		return -1;
 	}
