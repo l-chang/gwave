@@ -22,6 +22,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  1998/09/01 21:28:02  tell
+ * Initial revision
+ *
  */
 
 #include <ctype.h>
@@ -109,15 +112,25 @@ gint cmd_zoom_full(GtkWidget *widget)
 	return 0;
 }
 
+typedef struct {
+	WavePanel *wp;
+	VisibleWave *vw;
+} VWListItem;
+
+static GList *vw_delete_list;
+
 static void
-vw_wp_delete_if_selected(gpointer p, gpointer d)
+vw_wp_list_if_selected(gpointer p, gpointer d)
 {
 	VisibleWave *vw = (VisibleWave *)p;
 	WavePanel *wp = (WavePanel *)d;
 	GtkToggleButton *btn = GTK_TOGGLE_BUTTON(vw->button);
 	
 	if(btn->active) {
-		remove_wave_from_panel(wp, vw);
+		VWListItem *vdi = g_new(VWListItem, 1);
+		vdi->wp = wp;
+		vdi->vw = vw;
+		vw_delete_list = g_list_append(vw_delete_list, vdi);
 	}
 }
 
@@ -127,15 +140,23 @@ vw_wp_delete_if_selected(gpointer p, gpointer d)
 gint cmd_delete_selected_waves(GtkWidget *widget)
 {
 	int i;
+	VWListItem *vdi;
+
+	/* 
+	 * Have to build a special list while traversing, and then do the
+	 * deletes, because removing elements from the wp->vwlist 
+	 * during its g_list_foreach is apparently a no-no.
+	 */
 	for(i = 0; i < wtable->npanels; i++) {
 		WavePanel *wp = &wtable->panels[i];
-		g_list_foreach(wp->vwlist, vw_wp_delete_if_selected, wp);
+		g_list_foreach(wp->vwlist, vw_wp_list_if_selected, wp);
 	}
-
-	/* BUG: only first selected wave gets deleted,
-	 * because removing elements from the list 
-	 * during a g_list_foreach is a no-no.
-	 */
+	while((vdi = g_list_nth_data(vw_delete_list, 0)) != NULL) {
+		remove_wave_from_panel(vdi->wp, vdi->vw);
+		vw_delete_list = g_list_remove(vw_delete_list, vdi);
+		g_free(vdi);
+	}
+	
 	return 0;
 }
 
@@ -153,8 +174,8 @@ remove_wave_from_panel(WavePanel *wp, VisibleWave *vw)
 /* BUG: things appear to work OK, but I get gtk runtime error messages when
    removing/destroying widgets.  Somthing subtle must be wrong here.
 */
-	gtk_container_remove(GTK_CONTAINER(wp->lvbox), vw->button);
-/*	gtk_widget_destroy(vw->button); */
+/*	gtk_container_remove(GTK_CONTAINER(wp->lvbox), vw->button); */
+	gtk_widget_destroy(vw->button);
 
 	gdk_gc_destroy(vw->gc);
 	g_free(vw);
@@ -268,6 +289,10 @@ wavetable_update_data()
 {
 	int i;
 	WavePanel *wp;
+	double old_min_x, old_max_x;
+	old_min_x = wtable->min_xval;
+	old_max_x = wtable->max_xval;
+
 	wtable->min_xval = G_MAXDOUBLE;
 	wtable->max_xval = G_MINDOUBLE;
 	for(i = 0; i < wtable->npanels; i++) {
@@ -292,6 +317,16 @@ wavetable_update_data()
 	if(fabs(wtable->end_xval - wtable->start_xval) < DBL_EPSILON &&
 		win_hsadj != NULL) {
 		cmd_zoom_full(NULL);
+	} else if((wtable->min_xval != old_min_x 
+		  || wtable->max_xval != old_max_x) && win_hsadj) {
+
+		/* min/max changed, might have added first (or removed last)
+		 * wave from a file with different range.
+		 * Keep start/end the same, but update scrollbar.
+		 */
+		win_hsadj->lower = wtable->min_xval;
+		win_hsadj->upper = wtable->max_xval;
+		gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "changed");
 	}
 }
 
