@@ -32,10 +32,10 @@
 #include <gtk/gtk.h>
 #include <config.h>
 #include <scwm_guile.h>
-#include <guile-compat.h>
+#include "guile-compat.h"
 #include <scm_init_funcs.h>
-
 #include <gwave.h>
+
 #include <wavelist.h>
 #include <wavewin.h>
  
@@ -85,7 +85,6 @@ static void usage(char *fmt, ...)
 	fprintf(stderr, " options:\n");
 	fprintf(stderr, " -p N     Start up with N panels\n");
 	fprintf(stderr, "(%s version %s)\n", prog_name, prog_version);
-	exit(EXIT_FAILURE);
 }
 
 /* if we don't set up some colors, users without a gwave.gtkrc get black
@@ -158,7 +157,7 @@ void gwave_main(int argc, char **argv)
 	}
 	if(errflg) {
 		usage(NULL);
-		exit(1);
+/*		exit(1); */
 	}
 	gtk_rc_parse_string(gwave_base_gtkrc);
 	gtk_rc_parse("gwave.gtkrc");

@@ -48,19 +48,17 @@
 #define WAVEPANEL_STD_HEIGHT 100
 #define WAVEPANEL_JGE_HEIGHT 25
 
-SCWM_HOOK(new_wavewin_hook,"new-wavewin-hook", 0);
-  /** This hook is invoked with no arguments as the main waveform
+SCWM_HOOK(new_wavewin_hook,"new-wavewin-hook", 0,
+"This hook is invoked with no arguments as the main waveform
 window is created.
 The main purpose of this hook is to create the menu and tool items
-and add them to the menu/tool bars.
-*/
+and add them to the menu/tool bars.");
 
-SCWM_HOOK(new_wavepanel_hook,"new-wavepanel-hook", 1);
-  /** This hook is invoked with one WavePanel argument when the
-WavePanel is created.
-The main purpose of this hook is to create the popup menu
-and other event bindings for the wavepanel.
-*/
+SCWM_HOOK(new_wavepanel_hook,"new-wavepanel-hook", 1,
+"This hook is invoked with one WavePanel argument when the
+WavePanel is first created.
+The main purpose of this hook is to allow support creation of 
+the popup menus and other event bindings for the wavepanel.");
 
 SCM wavepanel_mouse_binding[6];
 
@@ -273,45 +271,44 @@ void destroy_wave_panel(WavePanel *wp)
 
 /* global wtable: GtkTable widget for the main window. */
 
-SCWM_PROC(wtable_startval_xval, "wtable-start-xval", 0, 0, 0, ())
-  /** return the X coordinate represented by the left edge of the
-displayed portion of the waveforms */
+SCM_DEFINE(wtable_start_xval, "wtable-start-xval", 0, 0, 0, (),
+"Return the X coordinate represented by the left edge of the
+displayed portion of the waveforms")
 #define FUNC_NAME s_wtable_start_xval
 {
 	return gh_double2scm(wtable->start_xval);
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wtable_end_xval, "wtable-end-xval", 0, 0, 0, ())
-  /** return the X coordinate represented by the right edge of the
-displayed portion of the waveforms */
+SCM_DEFINE(wtable_end_xval, "wtable-end-xval", 0, 0, 0, (),
+"Return the X coordinate represented by the right edge of the
+displayed portion of the waveforms")
 #define FUNC_NAME s_wtable_end_xval
 {
 	return gh_double2scm(wtable->end_xval);
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wtable_min_xval, "wtable-min-xval", 0, 0, 0, ())
-  /** return the X coordinate represented by the left edge of the
-displayed portion of the waveforms */
+SCM_DEFINE(wtable_min_xval, "wtable-min-xval", 0, 0, 0, (),
+"return the X coordinate represented by the left edge of the
+displayed portion of the waveforms")
 #define FUNC_NAME s_wtable_min_xval
 {
 	return gh_double2scm(wtable->min_xval);
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wtable_max_xval, "wtable-max-xval", 0, 0, 0, ())
-  /** return the X coordinate represented by the right edge of the
-displayed portion of the waveforms */
+SCM_DEFINE(wtable_max_xval, "wtable-max-xval", 0, 0, 0, (),
+"return the X coordinate represented by the right edge of the
+displayed portion of the waveforms")
 #define FUNC_NAME s_wtable_max_xval
 {
 	return gh_double2scm(wtable->max_xval);
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wtable_vcursor, "wtable-vcursor", 1, 0, 0, (cur))
-/** return the X coordinate where vertical bar cursor N is located
- */
+SCM_DEFINE(wtable_vcursor, "wtable-vcursor", 1, 0, 0, (SCM cur),
+	   "return the x coordinate where vertical bar cursor CUR is located")
 #define FUNC_NAME s_wtable_vcursor
 {
 	int icno;
@@ -418,28 +415,25 @@ wavewin_finish_table_rebuild()
 	gtk_widget_unref(win_hsbar);
 }
 
-SCWM_PROC(get_wavewin, "get-wavewin", 0, 0, 0, ())
-  /** return the GtkWindow object for the main waveform window 
-*/
+SCM_DEFINE(get_wavewin, "get-wavewin", 0, 0, 0, (),
+	   "Return the GtkWindow object for the main waveform window.")
 #define FUNC_NAME s_get_wavewin
 {
 	return sgtk_wrap_gtkobj(GTK_OBJECT(win_main));
 }
 #undef FUNC_NAME
 
-SCWM_PROC(get_wavewin_toolbar, "get-wavewin-toolbar", 0, 0, 0, ())
-  /** return the GtkHBox object for horizontal box to contain
-function buttons or icons in the main waveform window 
-*/
+SCM_DEFINE(get_wavewin_toolbar, "get-wavewin-toolbar", 0, 0, 0, (),
+"Return the GtkHBox object for horizontal box to contain
+function buttons or icons in the main waveform window")
 #define FUNC_NAME s_get_wavewin_toolbar
 {
 	return sgtk_wrap_gtkobj(GTK_OBJECT(win_main_toolbar));
 }
 #undef FUNC_NAME
 
-SCWM_PROC(get_wavewin_menubar, "get-wavewin-menubar", 0, 0, 0, ())
-  /** return the GtkMenuBar object for menubar in the main waveform window 
-*/
+SCM_DEFINE(get_wavewin_menubar, "get-wavewin-menubar", 0, 0, 0, (),
+	   "return the GtkMenuBar object for menubar in the main waveform window")
 #define FUNC_NAME s_get_wavewin_menubar
 {
 	return sgtk_wrap_gtkobj(GTK_OBJECT(win_main_menubar));
@@ -630,13 +624,12 @@ wavewin_delete_panel(WavePanel *dwp)
 	wavewin_finish_table_rebuild();
 }
 
-SCWM_PROC(wtable_insert_panel_x, "wtable-insert-panel!", 2, 1, 0, 
-	   (SCM wp, SCM minheight, SCM showlabels))
-/** Add a new panel after the existing panel WP, or
- * at the end if WP is #f.
- * The new panel has minimum height MINHEIGHT and has visible y-labels
- * unless SHOWLABELS is #f 
- */
+SCM_DEFINE(wtable_insert_panel_x, "wtable-insert-panel!", 2, 1, 0, 
+	   (SCM wp, SCM minheight, SCM showlabels),
+"Add a new panel after the existing panel WP, or
+at the end if WP is #f.
+The new panel has minimum height MINHEIGHT and has visible y-labels
+unless SHOWLABELS is #f")
 #define FUNC_NAME s_wtable_insert_panel_x
 {
 	WavePanel *cwp;
@@ -653,8 +646,8 @@ SCWM_PROC(wtable_insert_panel_x, "wtable-insert-panel!", 2, 1, 0,
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wtable_delete_panel_x, "wtable-delete-panel!", 1, 0, 0, (SCM wp))
-/** Delete panel WP from the waveform display */
+SCM_DEFINE(wtable_delete_panel_x, "wtable-delete-panel!", 1, 0, 0, (SCM wp),
+"Delete panel WP from the waveform display")
 #define FUNC_NAME s_wtable_delete_panel_x
 {
 	WavePanel *cwp;
@@ -666,9 +659,9 @@ SCWM_PROC(wtable_delete_panel_x, "wtable-delete-panel!", 1, 0, 0, (SCM wp))
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wtable_set_xlogscale_x, "wtable-set-xlogscale!", 1, 0, 0,
-	  (SCM xlogscale))
-/** Set scaling for all X axes; logarithmic if XLOGSCALE is #t, else linear */
+SCM_DEFINE(wtable_set_xlogscale_x, "wtable-set-xlogscale!", 1, 0, 0,
+	   (SCM xlogscale),
+	   "Set scaling for all X axes; logarithmic if XLOGSCALE is #t, else linear")
 #define FUNC_NAME s_wtable_set_xlogscale_x
 {
 	int logx;
@@ -689,9 +682,9 @@ SCWM_PROC(wtable_set_xlogscale_x, "wtable-set-xlogscale!", 1, 0, 0,
 #undef FUNC_NAME
 
 
-SCWM_PROC(wtable_wavepanels, "wtable-wavepanels", 0, 0, 0,
-	  (SCM xlogscale))
-/** Return list of WavePanels that are currently displayed */
+SCM_DEFINE(wtable_wavepanels, "wtable-wavepanels", 0, 0, 0,
+	   (),
+	   "Return list of WavePanels that are currently displayed")
 #define FUNC_NAME s_wtable_wavepanels
 {
 	int i;
@@ -705,12 +698,11 @@ SCWM_PROC(wtable_wavepanels, "wtable-wavepanels", 0, 0, 0,
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wavepanel_x2val, "wavepanel-x2val", 2, 0, 0,
-	  (SCM wavepanel, SCM xpixel))
-/** Given an XPIXEL coordinate in WAVEPANEL, 
- return the value of the independent variable at that position
- in the waveform.
-*/
+SCM_DEFINE(wavepanel_x2val, "wavepanel-x2val", 2, 0, 0,
+	   (SCM wavepanel, SCM xpixel),
+"Given an XPIXEL coordinate in WAVEPANEL, 
+return the value of the independent variable at that position
+in the waveform.")
 #define FUNC_NAME s_wavepanel_x2val
 {
 	WavePanel *wp;
@@ -723,12 +715,11 @@ SCWM_PROC(wavepanel_x2val, "wavepanel-x2val", 2, 0, 0,
 }
 #undef FUNC_NAME
 
-SCWM_PROC(set_wavepanel_minheight_x, "set-wavepanel-minheight!", 2, 0, 0,
-	  (SCM wavepanel, SCM height))
-/** Set the minimum height of WAVEPANEL to HEIGHT pixels.  Adding multiple
- * VisibleWaves to the wavepanel can cause the actual height to increase
- * beyond this minimum, but it will never be smaller.
- */
+SCM_DEFINE(set_wavepanel_minheight_x, "set-wavepanel-minheight!", 2, 0, 0,
+	   (SCM wavepanel, SCM height),
+"Set the minimum height of WAVEPANEL to HEIGHT pixels.  Adding multiple
+VisibleWaves to the wavepanel can cause the actual height to increase
+beyond this minimum, but it will never be smaller.")
 #define FUNC_NAME s_set_wavepanel_minheight_x
 {
 	WavePanel *wp;
@@ -744,13 +735,12 @@ SCWM_PROC(set_wavepanel_minheight_x, "set-wavepanel-minheight!", 2, 0, 0,
 }
 #undef FUNC_NAME
 
-SCWM_PROC(set_wavepanel_ylabels_visible_x, "set-wavepanel-ylabels-visible!", 2, 0, 0,
-	  (SCM wavepanel, SCM show))
-/** If SHOW is #t, make the Y-axis labels on the left side of WAVEPANEL
- * visible.  If show is #f, hide the labels.  Hiding the labels allows
- * shrinking WAVEPANEL's height a little further.  This is useful when you have
- * a lot of panels, for example with digital circuits.
- */
+SCM_DEFINE(set_wavepanel_ylabels_visible_x, "set-wavepanel-ylabels-visible!", 2, 0, 0,
+	   (SCM wavepanel, SCM show),
+"If SHOW is #t, make the Y-axis labels on the left side of WAVEPANEL
+visible.  If show is #f, hide the labels.  Hiding the labels allows
+shrinking WAVEPANEL's height a little further.  This is useful when you have
+a lot of panels, for example with digital circuits.")
 #define FUNC_NAME s_set_wavepanel_ylabels_visible_x
 {
 	WavePanel *wp;
@@ -769,11 +759,10 @@ SCWM_PROC(set_wavepanel_ylabels_visible_x, "set-wavepanel-ylabels-visible!", 2, 
 }
 #undef FUNC_NAME
 
-SCWM_PROC(set_wavepanel_ylogscale_x, "set-wavepanel-ylogscale!", 2, 0, 0,
-	  (SCM wavepanel, SCM logscale))
-/** If LOGSCALE is #t, The Y-axis of WAVEPANEL is set to have
- * Logarithmic scaling.  Otherwise, scaling is linear.
- */
+SCM_DEFINE(set_wavepanel_ylogscale_x, "set-wavepanel-ylogscale!", 2, 0, 0,
+	   (SCM wavepanel, SCM logscale),
+"If LOGSCALE is #t, The Y-axis of WAVEPANEL is set to have
+Logarithmic scaling.  Otherwise, scaling is linear.")
 #define FUNC_NAME s_set_wavepanel_ylogscale_x
 {
 	WavePanel *wp;
@@ -793,10 +782,9 @@ SCWM_PROC(set_wavepanel_ylogscale_x, "set-wavepanel-ylogscale!", 2, 0, 0,
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wavepanel_ylogscale_p, "wavepanel-ylogscale?", 1, 0, 0,
-	  (SCM wavepanel))
-/** If WAVEPANEL is set to Logarithmic scaling, return #t. 
- */
+SCM_DEFINE(wavepanel_ylogscale_p, "wavepanel-ylogscale?", 1, 0, 0,
+	   (SCM wavepanel),
+	   "If WAVEPANEL is set to Logarithmic scaling, return #t.")
 #define FUNC_NAME s_wavepanel_ylogscale_p
 {
 	WavePanel *wp;
@@ -817,10 +805,9 @@ wavepanel_to_scm(WavePanel *wp)
 	return wp->smob;
 }
 
-SCWM_PROC(wavepanel_visiblewaves, "wavepanel-visiblewaves", 1, 0, 0,
-	  (SCM wavepanel))
-/** Return a list of the VisibleWaves contained in WAVEPANEL.
- */
+SCM_DEFINE(wavepanel_visiblewaves, "wavepanel-visiblewaves", 1, 0, 0,
+	   (SCM wavepanel),
+	   "Return a list of the VisibleWaves contained in WAVEPANEL.")
 #define FUNC_NAME s_wavepanel_visiblewaves
 {
 	WavePanel *wp;
@@ -838,11 +825,10 @@ SCWM_PROC(wavepanel_visiblewaves, "wavepanel-visiblewaves", 1, 0, 0,
  * But the scheme interface here isn't too far from what that would implement,
  * and this simple thing lets us get the rest of the old menus into guile.
  */
-SCWM_PROC(wavepanel_bind_mouse, "wavepanel-bind-mouse", 2, 0, 0,
-           (SCM button, SCM proc))
-     /** binds a mouse BUTTON to the procedure PROC in all wavepanels. 
-      *  PROC is called with 1 argument, the wavepanel that the mouse was in
-      */
+SCM_DEFINE(wavepanel_bind_mouse, "wavepanel-bind-mouse", 2, 0, 0,
+           (SCM button, SCM proc),
+"binds a mouse BUTTON to the procedure PROC in all wavepanels. 
+PROC is called with 1 argument, the wavepanel that the mouse was in.")
 #define FUNC_NAME s_wavepanel_bind_mouse
 {
 	int bnum;
@@ -900,9 +886,9 @@ print_WavePanel(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
 	return 1;
 }
 
-SCWM_PROC(WavePanel_p, "WavePanel?", 1, 0, 0,
-           (SCM obj))
-     /** Returns #t if OBJ is a gwave data file object, otherwise #f. */
+SCM_DEFINE(WavePanel_p, "WavePanel?", 1, 0, 0,
+           (SCM obj),
+	   "Returns #t if OBJ is a gwave data file object, otherwise #f.")
 #define FUNC_NAME s_WavePanel_p
 {
 	return SCM_BOOL_FromBool(WavePanel_P(obj));
@@ -945,9 +931,9 @@ print_VisibleWave(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
 	return 1;
 }
 
-SCWM_PROC(VisibleWave_p, "VisibleWave?", 1, 0, 0,
-           (SCM obj))
-     /** Returns #t if OBJ is a gwave data file object, otherwise #f. */
+SCM_DEFINE(VisibleWave_p, "VisibleWave?", 1, 0, 0,
+           (SCM obj),
+	   "Returns #t if OBJ is a gwave data file object, otherwise #f.")
 #define FUNC_NAME s_VisibleWave_p
 {
 	return SCM_BOOL_FromBool(VisibleWave_P(obj));

@@ -40,11 +40,10 @@
 #include <wavelist.h>
 #include <wavewin.h>
 
-SCWM_HOOK(new_visiblewave_hook, "new-visiblewave-hook", 1);
-  /** This hook is invoked with one VisibleWave argument
+SCWM_HOOK(new_visiblewave_hook, "new-visiblewave-hook", 1,
+"This hook is invoked with one VisibleWave argument
 when the VisibleWave is created.   The main purpose of this hook 
-will be to create the button and menus attached to the VisibleWave.
-*/
+will be to create the button and menus attached to the VisibleWave.");
 
 gint cmd_zoom_absolute(double start, double end)
 {
@@ -74,9 +73,8 @@ gint cmd_zoom_absolute(double start, double end)
 	return 0;
 }
 
-SCWM_PROC(x_zoom_x, "x-zoom!", 2, 0, 0, (SCM start, SCM end))
-  /** return the GtkWindow object for the main waveform window 
-*/
+SCM_DEFINE(x_zoom_x, "x-zoom!", 2, 0, 0, (SCM start, SCM end),
+	   "return the GtkWindow object for the main waveform window")
 #define FUNC_NAME s_x_zoom_x
 {
 	double dstart, dend;
@@ -114,11 +112,10 @@ vw_wp_list_if_selected(gpointer p, gpointer d)
 	}
 }
 
-SCWM_PROC(delete_selected_waves_x, "delete-selected-waves!", 0, 0, 0, ())
-  /** Remove from panels any VisibleWaves that have been
-selected by clicking on their label-buttons.
-*/
-#define FUNC_NAME s_delete_selected_waves
+SCM_DEFINE(delete_selected_waves_x, "delete-selected-waves!", 0, 0, 0, (),
+  "Remove from panels any VisibleWaves that have been
+selected by clicking on their label-buttons.")
+#define FUNC_NAME s_delete_selected_waves_x
 {
 	int i;
 	VWListItem *vdi;
@@ -490,8 +487,8 @@ wavetable_update_data()
 
 /* access routines for VisibleWave */
 
-SCWM_PROC(visiblewave_delete_x, "visiblewave-delete!", 1, 0, 0, (SCM vw))
-/** Delete VisibleWave VW from its WavePanel */
+SCM_DEFINE(visiblewave_delete_x, "visiblewave-delete!", 1, 0, 0, (SCM vw),
+	   "Delete VisibleWave VW from its WavePanel")
 #define FUNC_NAME s_visiblewave_delete_x
 {
 	VisibleWave *cvw;
@@ -503,8 +500,8 @@ SCWM_PROC(visiblewave_delete_x, "visiblewave-delete!", 1, 0, 0, (SCM vw))
 }
 #undef FUNC_NAME
 
-SCWM_PROC(visiblewave_file, "visiblewave-file", 1, 0, 0, (SCM vw))
-/** Given a VisibleWave VW, return the DataFile the waveform comes from */
+SCM_DEFINE(visiblewave_file, "visiblewave-file", 1, 0, 0, (SCM vw),
+	   "Given a VisibleWave VW, return the DataFile the waveform comes from")
 #define FUNC_NAME s_visiblewave_file
 {
 	VisibleWave *cvw;
@@ -521,8 +518,8 @@ SCWM_PROC(visiblewave_file, "visiblewave-file", 1, 0, 0, (SCM vw))
 }
 #undef FUNC_NAME
 
-SCWM_PROC(visiblewave_varname, "visiblewave-varname", 1, 0, 0, (SCM vw))
-/** Given a VisibleWave VW, return the DataFile the waveform comes from */
+SCM_DEFINE(visiblewave_varname, "visiblewave-varname", 1, 0, 0, (SCM vw),
+	   "Given a VisibleWave VW, return wave's variable name as found in the original data file")
 #define FUNC_NAME s_visiblewave_varname
 {
 	VisibleWave *cvw;
@@ -536,9 +533,8 @@ SCWM_PROC(visiblewave_varname, "visiblewave-varname", 1, 0, 0, (SCM vw))
 }
 #undef FUNC_NAME
 
-SCWM_PROC(visiblewave_panel, "visiblewave-panel", 1, 0, 0, (SCM vw))
-/** Given a VisibleWave VW, return the WavePanel the waveform
- * is displayed in */
+SCM_DEFINE(visiblewave_panel, "visiblewave-panel", 1, 0, 0, (SCM vw),
+	   "Given a VisibleWave VW, return the WavePanel the waveform is displayed in")
 #define FUNC_NAME s_visiblewave_panel
 {
 	VisibleWave *cvw;
@@ -553,11 +549,10 @@ SCWM_PROC(visiblewave_panel, "visiblewave-panel", 1, 0, 0, (SCM vw))
 }
 #undef FUNC_NAME
 
-SCWM_PROC(visiblewave_button, "visiblewave-button", 1, 0, 0, (SCM vw))
-/** Given a VisibleWave VW, return the Gtk button associated with the
- * wave.  Since the button already has a label, all you can do is
- * add events to the button.
- */
+SCM_DEFINE(visiblewave_button, "visiblewave-button", 1, 0, 0, (SCM vw),
+"Given a VisibleWave VW, return the Gtk button associated with the
+wave.  Since the button already has a label, all you can do is
+add events to the button.")
 #define FUNC_NAME s_visiblewave_button
 {
 	VisibleWave *cvw;
@@ -571,8 +566,8 @@ SCWM_PROC(visiblewave_button, "visiblewave-button", 1, 0, 0, (SCM vw))
 }
 #undef FUNC_NAME
 
-SCWM_PROC(visiblewave_color, "visiblewave-color", 1, 0, 0, (SCM vw))
-/** Given a VisibleWave VW, return color number it is currently drawn with */
+SCM_DEFINE(visiblewave_color, "visiblewave-color", 1, 0, 0, (SCM vw),
+	   "Given a VisibleWave VW, return color number it is currently drawn with")
 #define FUNC_NAME s_visiblewave_color
 {
 	VisibleWave *cvw;
@@ -585,8 +580,8 @@ SCWM_PROC(visiblewave_color, "visiblewave-color", 1, 0, 0, (SCM vw))
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wavevar_min, "wavevar-min", 1, 0, 0, (SCM wv))
-/** Given a VisibleWave or WaveVar VW, return its minimum value */
+SCM_DEFINE(wavevar_min, "wavevar-min", 1, 0, 0, (SCM wv),
+	   "Given a VisibleWave or WaveVar VW, return its minimum value")
 #define FUNC_NAME s_wavevar_min
 {
 	VisibleWave *cvw;
@@ -600,8 +595,8 @@ SCWM_PROC(wavevar_min, "wavevar-min", 1, 0, 0, (SCM wv))
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wavevar_max, "wavevar-max", 1, 0, 0, (SCM wv))
-/** Given a VisibleWave or WaveVar VW, return its minimum value */
+SCM_DEFINE(wavevar_max, "wavevar-max", 1, 0, 0, (SCM wv),
+	   "Given a VisibleWave or WaveVar VW, return its minimum value")
 #define FUNC_NAME s_wavevar_max
 {
 	VisibleWave *cvw;
@@ -614,8 +609,8 @@ SCWM_PROC(wavevar_max, "wavevar-max", 1, 0, 0, (SCM wv))
 }
 #undef FUNC_NAME
 
-SCWM_PROC(set_visiblewave_color_x, "set-visiblewave-color!", 2, 0, 0, (SCM vw, SCM num))
-/** Change VW so that it is drawn with color NUM */
+SCM_DEFINE(set_visiblewave_color_x, "set-visiblewave-color!", 2, 0, 0, (SCM vw, SCM num),
+	 "Change VW so that it is drawn with color NUM")
 #define FUNC_NAME s_set_visiblewave_color_x
 {
 	VisibleWave *cvw;

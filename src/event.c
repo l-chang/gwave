@@ -21,6 +21,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2000/04/27 06:14:38  tell
+ * Implement logarithmic axis scaling.
+ * Working well for Y, needs fixing for X.
+ *
  * Revision 1.7  2000/01/07 06:33:43  tell
  * Merged in the guile and guile-gtk stuff
  *
@@ -111,14 +115,13 @@ set_all_wp_cursors(int cnum)
  * selecting a subset of the visible part of the X axis by dragging
  * with button 1.
  */
-SCWM_PROC(select_range_x, "select-range-x", 1, 0, 0,
-           (SCM proc))
-     /** Prompt the user to select a range of the visible X axis using 
-      * button 1 of the mouse.  
-      * When finished, PROC is called with 3 arguments, the
-      * WavePanel where the range is located, and the
-      * begining and ending X pixel value of the selection.
-      */
+SCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
+           (SCM proc),
+"Prompt the user to select a range of the visible X axis using 
+button 1 of the mouse.  
+When finished, PROC is called with 3 arguments, the
+WavePanel where the range is located, and the
+begining and ending X pixel value of the selection.")
 #define FUNC_NAME s_select_range_x
 {
 	VALIDATE_ARG_PROC(1, proc);

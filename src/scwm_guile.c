@@ -44,19 +44,18 @@
 
 int fDocumentPrimitiveFormals = 0;
 
-SCWM_HOOK(error_hook, "error-hook", 5);
-  /** Called on all kinds of errors and exceptions.
+SCWM_HOOK(error_hook, "error-hook", 5,
+"Called on all kinds of errors and exceptions.
 Whenever an error or other uncaught throw occurs on any callback,
 whether a hook, a mouse binding, a key binding, a menu entry, a file
 being processed, or anything else, error-hook will be invoked. Each
 procedure in the hook will be called with the throw arguments; these
-will generally include information about the nature of the error. 
-*/
+will generally include information about the nature of the error. ");
 
-SCWM_HOOK(load_processing_hook,"load-processing-hook",1);
-  /** This hook is invoked for every several top-level s-exps in the startup file.
+SCWM_HOOK(load_processing_hook,"load-processing-hook",1,
+"This hook is invoked for every several top-level s-exps in the startup file.
 The hook procedures are invoked with one argument, the count of the
-s-expressions evaluated thus far. See also `set-load-processing-hook-frequency!'. */
+s-expressions evaluated thus far. See also `set-load-processing-hook-frequency!'.");
 
 struct scwm_body_apply_data {
   SCM proc;
@@ -632,13 +631,13 @@ scwm_handle_error (void *ARG_IGNORE(data), SCM tag, SCM throw_args)
 }
 
 
-SCWM_PROC(safe_load, "safe-load", 1, 0, 0,
-           (SCM fname))
-     /** Load file FNAME while trapping and displaying errors.
+SCM_DEFINE(safe_load, "safe-load", 1, 0, 0,
+           (SCM fname),
+"Load file FNAME while trapping and displaying errors.
 Each individual top-level-expression is evaluated separately and all
 errors are trapped and displayed.  You should use this procedure if
 you need to make sure most of a file loads, even if it may contain
-errors. */
+errors.")
 #define FUNC_NAME s_safe_load
 {
   SCM_STACKITEM stack_item;
@@ -662,10 +661,10 @@ SCM scwm_safe_eval_str (char *string)
 				     &stack_item);
 }
 
-SCWM_PROC(set_load_processing_frequency_x, "set-load-processing-frequency!", 1, 0, 0,
-          (SCM num_lines))
-     /** Invoke hooks on `load-processing-hook' every NUM-LINES lines. 
-Returns the old value. */
+SCM_DEFINE(set_load_processing_frequency_x, "set-load-processing-frequency!", 1, 0, 0,
+	   (SCM num_lines),
+"Invoke hooks on `load-processing-hook' every NUM-LINES lines. 
+Returns the old value")
 #define FUNC_NAME s_set_load_processing_frequency_x
 {
   int i = clnsProcessingHook;
@@ -674,6 +673,7 @@ Returns the old value. */
 }
 #undef FUNC_NAME
 
+#if 0
 SCM
 scwm_make_gsubr(const char *name, int req, int opt, int var, SCM (*fcn)(), char 
 *szArgList)
@@ -692,7 +692,7 @@ scwm_make_gsubr(const char *name, int req, int opt, int var, SCM (*fcn)(), char
   return p;
   }
 }
-
+#endif
 
 void init_scwm_guile()
 {
