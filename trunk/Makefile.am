@@ -9,8 +9,8 @@ EXTRA_DIST=autogen.sh
 # or install in them
 dist-hook:
 	mkdir $(distdir)/doc
-	cp -p doc/* $(distdir)/doc
+	rsync -C -p doc/* $(distdir)/doc
 	mkdir $(distdir)/examples
-	cp -p examples/* $(distdir)/examples
-	mkdir $(distdir)/iconwork
-	cp -p iconwork/* $(distdir)/iconwork
+	rsync -C -p examples/* $(distdir)/examples
+	mkdir $(distdir)/icons
+	rsync -C -p icons/* $(distdir)/icons

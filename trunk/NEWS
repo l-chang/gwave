@@ -1,5 +1,10 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20000108:
+- Merged in guile and guile-gtk; the GUI is mostly written in guile now.
+- Some additional improvements to reading of HSPICE input.  Reading partial
+files from simulations still in progress works for ascii .tr0 files now.
+
 New in 1990716:
 Improved handling of HSPICE ascii format in libspicefile - tested on files
 from 98.4 on HP-UX and Solaris.
