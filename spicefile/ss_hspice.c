@@ -92,7 +92,7 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 	char lbuf[256];
 	char nbuf[16];
 	char *cp;
-	int maxlines = 500;	/* should calculate based on # of columns */
+	int maxlines;
 
 	if(fgets(lbuf, sizeof(lbuf), fp) == NULL)
 		return NULL;
@@ -123,7 +123,8 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 	if(ntables == 0)
 		ntables = 1;
 	lineno++;
-	
+
+	maxlines = nauto + nprobe + nsweepparam + 100;
 	/* lines making up a fixed-field structure with variable-types and
 	 * variable names.
 	 * variable names can get split across lines! so we remove newlines,
@@ -144,7 +145,7 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 		if(lineused + len + 1 > linesize) {
 			linesize *= 2;
 			if(linesize > 200000) {
-				ss_msg(ERR, "rdhdr_ascii", "internal error - failed to find end of header\n; linesize=%d line=\n%s\n", linesize, line);
+				ss_msg(ERR, "rdhdr_ascii", "internal error - failed to find end of header\n; linesize=%d line=\n%.200s\n", linesize, line);
 				exit(4);
 			}
 				
