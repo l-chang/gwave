@@ -104,3 +104,10 @@
 /* Define this if your libguile has scm_strport_to_string
    (added sometime after guile-1.3) */
 #undef HAVE_SCM_STRPORT_TO_STRING
+
+/* Define this if you have the readline library */
+#undef HAVE_READLINE
+
+/* Define this if your readline also has add_history() */
+#undef HAVE_HISTORY
+

@@ -1,7 +1,7 @@
 # -*- mode: Makefile -*-
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS=spicefile utilities src scheme doc 
+SUBDIRS=spicefile utilities src scheme doc remote
 
 EXTRA_DIST=autogen.sh
 

@@ -228,6 +228,8 @@ void gwave_main(int argc, char **argv)
 	setup_colors(wtable);
 	setup_waveform_window();
 
+	xg_init(NULL);
+
 	gtk_main();
 	exit(0);
 }
