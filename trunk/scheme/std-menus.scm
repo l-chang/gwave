@@ -6,6 +6,7 @@
   :use-module (gtk gtk)
   :use-module (gtk gdk)
   :use-module (app gwave cmds)
+  :use-module (app gwave globals)
 )
 
 (debug-enable 'debug)
@@ -142,7 +143,20 @@
 		      (lambda () (wtable-set-xlogscale! #t))))
 	 (gtk-menu-item-set-submenu 
 	  (add-menuitem menu "X Axis Scale" #f) lxmenu))
+
+       (let ((submenu (gtk-menu-new))
+	     (group #f))
+	 (gtk-widget-show submenu)
+	 (set! group (add-radio-menuitem 
+		      submenu group "On"
+		      (lambda () (gtk-tooltips-enable gwave-tooltips))))
+	 (set! group (add-radio-menuitem 
+		      submenu group "Off"
+		      (lambda () (gtk-tooltips-disable gwave-tooltips))))
+	 (gtk-menu-item-set-submenu 
+	  (add-menuitem menu "ToolTips" #f) submenu))
        )
+
 )))
 
 ;

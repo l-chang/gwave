@@ -4,15 +4,18 @@
 
 (define-module (app gwave std-toolbar)
   :use-module (gtk gtk)
-  :use-module (app gwave cmds))
+  :use-module (app gwave cmds)
+  :use-module (app gwave globals))
 
 (dbprint "std-toolbar.scm running\n")
 
-(define (button label proc)
+(define (button label tip proc)
   (let ((item (gtk-button-new-with-label label)))
     (gtk-widget-show item)
     (if proc
 	(gtk-signal-connect item "clicked" proc))
+    (if tip
+	(gtk-tooltips-set-tip gwave-tooltips item tip ""))
     item))
 
 (add-hook! 
@@ -20,13 +23,15 @@
  (lambda ()
 ;   (display "in std-toolbar new-wavewin-hook") (newline)
    (let ((tbar (get-wavewin-toolbar)))
-     (gtk-container-add tbar (button "Zoom In" 
+     (gtk-container-add tbar (button "Zoom In" #f
 				     (lambda () (x-zoom-relative! 2))))
-     (gtk-container-add tbar (button "Zoom Out" 
+     (gtk-container-add tbar (button "Zoom Out"  #f
 				     (lambda () (x-zoom-relative! 0.5))))
-     (gtk-container-add tbar (button "Delete" 
+     (gtk-container-add tbar (button "Delete" "Delete selected waves"
 				     (lambda () (delete-selected-waves!))))
-     (gtk-container-add tbar (button "Reload All" reload-all-files!))
+     (gtk-container-add tbar (button "Reload All" 
+				     "Reread all waveform data files"
+				     reload-all-files!))
 )))
 
 (dbprint "std-toolbar.scm done\n")
