@@ -523,6 +523,32 @@ wavetable_update_data()
 
 /* access routines for VisibleWave */
 
+XSCM_DEFINE(visiblewave_on_top_x, "visiblewave-on-top!", 1, 0, 0, (SCM vw),
+	   "Make VisibleWave VW the topmost one drawn in its WavePanel")
+#define FUNC_NAME s_visiblewave_on_top_x
+{
+	VisibleWave *cvw;
+	WavePanel *wp;
+	int old_row;
+	VALIDATE_ARG_VisibleWave_COPY(1,vw,cvw);
+	wp = cvw->wp;
+	/* remove from the middle of the list and add to the end */
+	wp->vwlist = g_list_remove(wp->vwlist, (gpointer)cvw);
+	wp->vwlist = g_list_append(wp->vwlist, (gpointer)cvw);
+	if(wp->drawing && (wtable->suppress_redraw == 0)) {
+		draw_wavepanel(wp->drawing, NULL, wp);
+	}
+	/* move label & measurements to the top of the table, if not already there */
+	old_row = gtk_table_get_child_row(wp->lmtable, cvw->button);
+	printf("visible-wave-on-top moving from row %d\n", old_row);
+	if(old_row > 0) {
+		gtk_table_rotate_rows(wp->lmtable, old_row, 0);
+	}
+
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 XSCM_DEFINE(visiblewave_delete_x, "visiblewave-delete!", 1, 0, 0, (SCM vw),
 	   "Delete VisibleWave VW from its WavePanel")
 #define FUNC_NAME s_visiblewave_delete_x
