@@ -8,6 +8,7 @@
   :use-module (app gwave globals))
 
 (dbprint "std-toolbar.scm running\n")
+(set! gwave-std-toolbar-loaded #t)
 
 (define (button label tip proc)
   (let ((item (gtk-button-new-with-label label)))

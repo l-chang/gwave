@@ -37,11 +37,9 @@
         (cdr a)
         #f)))
 
-(define npanels
-  (let ((a (assq 'panels opts)))
+(let ((a (assq 'panels opts)))
     (if a
-        (string->number (cdr a))
-        2)))
+        (set! initial-panels (string->number (cdr a)))))
 
 (define cmdline-files (pick string? (assq '() opts)))
 
@@ -70,7 +68,7 @@
 	     cmdline-files)
 
    ; add the initial set of panels
-   (do ((i 0 (+ i 1))) ((>= i npanels))
+   (do ((i 0 (+ i 1))) ((>= i initial-panels))
      (wtable-insert-typed-panel! #f default-wavepanel-type))
 ))
 

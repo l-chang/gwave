@@ -1,26 +1,23 @@
 ;-*- mode: scheme -*-
 
-; message printed only debug messages enabled with -x option.
+; message printed only when debug messages are enabled with -x option.
 (dbprint "in system.gwaverc\n")
 
 (debug-enable 'debug)
 (read-enable 'positions)
 
-; can't get backtrace when using use-gwave-modules.
 (use-modules 
- (gtk gtk)
  (app gwave std-menus)
  (app gwave std-args)
  (app gwave std-toolbar)
- (app gwave cmds)
  (app gwave visiblewave-ops)
 )
+
+; Number of initial wave panels to create.
+(set! initial-panels 2)
 
 ; wavepanel type: 0=original, tall, with min/max labels.  Good for analog.
 ;                 1=short, no extra labels. Fit more panels for digital.
 ; 0 is the default.
-; BUG: setting it here affects the panel-creating menu items fine,
-; but doesn't reset the state of the Options/DefaultPanelType radio-menu items.
-
 (set! default-wavepanel-type 0)
 

@@ -54,20 +54,7 @@ order in which they appear in HOOK-LIST"
   (set! %load-path (cons gwave-guiledir %load-path)))
 
 (dbprint "%load-path=" %load-path "\n")
-;
-; Find a .gwaverc file to load, loading only the first one found.
-; I'm not sure this is quite the model I want:
-; since the program is pretty useless without getting a bunch of things loaded,
-; perhaps they all should be loaded, allowing things to append and override.
-; That requires figuring out how to make the stuff in system.gwaverc more
-; flexibile though.
-;
-(let ((home-gwaverc (string-append (getenv "HOME") "/.gwaverc"))
-      (system-gwaverc (string-append gwave-datadir
-				     "/guile/app/gwave/system.gwaverc")))
-  (if (access? "./.gwaverc" R_OK)
-      (safe-load "./.gwaverc")
-      (if (access? home-gwaverc R_OK)
-	  (safe-load home-gwaverc)
-	  (if (access? system-gwaverc R_OK)
-	      (safe-load system-gwaverc)))))
+
+; Do setup and find a .gwaverc
+(load-from-path "app/gwave/gwave-startup.scm")
+
