@@ -98,13 +98,18 @@
        (gtk-widget-show file-menu)
        (gtk-menu-item-set-submenu (add-menuitem mbar "File" #f) file-menu)
        (add-menuitem file-menu "About GWave" show-about-window!)
-       (add-menuitem file-menu "Read File..." prompt-name-load-file)
+       (add-menuitem file-menu "Read File..." 
+		     (lambda () (with-selected-filename "Datafile to load"
+				 (lambda (fn) (load-wavefile! fn)))))
        (add-menuitem file-menu "Export Postscript" 
 		     (lambda () (export-waveimage! "gwave_out.ps" "ps")))
        (add-menuitem file-menu "Export PNM" 
 		     (lambda () (export-waveimage! "gwave_out.pnm" "pnm")))
-       (add-menuitem file-menu "Read File..." prompt-name-load-file)
        (add-menuitem file-menu #f #f)
+       (add-menuitem file-menu "Save Configuration as script"
+		     (lambda () (with-selected-filename "Scriptfile to write"
+				 (lambda (fn) (write-allrestore-script fn))
+				 #:default "gwave.gw")))
        (add-menuitem file-menu "Execute Guile Script..." 
 		     (lambda () (with-selected-filename 
 				 "Guile script to run" load)))
@@ -212,10 +217,11 @@
 		     (lambda () 
 		       (wavefile-delete! df)
 		       (rebuild-varlist-submenu!)))
-       (add-menuitem menu "Write Wave Config"
-		     (lambda () (with-selected-filename
-				 "Name of config-restore script"
-				 (lambda (fn) (write-waverestore-script df fn))))) 
+       (add-menuitem menu "Save Configuration as script"
+		     (lambda () (with-selected-filename "Scriptfile to write"
+				 (lambda (fn) (write-filerestore-script df fn))
+				 #:default (string-append 
+					    (wavefile-file-name df) ".gw"))))
        (add-menuitem menu #f #f)
        (add-menuitem menu "Close"
 		 (lambda () (wavefile-remove-listwin! df)))
