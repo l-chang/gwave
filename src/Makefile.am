@@ -6,6 +6,7 @@ SUBDIRS=app
 INCLUDES=-I$(top_srcdir)/spicefile
 
 bin_PROGRAMS = gwave
+noinst_SCRIPTS = xguile-snarf
 
 gwave_SOURCES = cmd.c wavewin.c draw.c gwave.c event.c \
 	gtkmisc.c pixmaps.c wavelist.c dnd.c \
