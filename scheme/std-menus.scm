@@ -8,6 +8,7 @@
   :use-module (app gwave cmds)
   :use-module (app gwave export)
   :use-module (app gwave globals)
+  :use-module (app gwave utils)
 )
 
 (debug-enable 'debug)
@@ -191,30 +192,18 @@
 
 ;
 ; new-wavefile hook: add item to the variable-list menu for the file.
-; TODO: work out a way to remove the item when the file goes away.
-; possible implmentations:
-;   a. add a deleting-wavefile hook
-;   b. move the wavelist window (or at least its menu) into scheme,
-;     so we can do the delete from its menu
-;   c. make this menu dynamic (can gtk+ do that?) so it gets created
-;     correctly each time.
-;   d. design a nicer GUI for selecting wave files and variables for display;
-;     something that takes into account multiple sweeps would be nice.
-;     One of the gtk tree lists might be nice. 
-;     But guile-gtk can't do them yet.
-;
-; B has been implemented.
 ;
 (add-hook! 
  new-wavefile-hook
  (lambda (df)
    (dbprint "in std-menus new-wavefile-hook " df "\n")
+
    (add-menuitem var-list-submenu 
 		 (string-append (wavefile-tag df)
 				": "
 				(wavefile-file-name df))
 		 (lambda () (wavefile-show-listwin! df)))
-))
+) #t )
 
 (add-hook!
  new-wavelist-hook

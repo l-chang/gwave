@@ -48,9 +48,17 @@ prevent switching to log-scale if the axis includes 0 or negative values.
 Accept drag-and-drop from a file manager to add files, run scripts
 Allow drag-and-drop from one wavepanel to another to move wave
 
-Improve notion of a current wavepanel
-	draw highlighted outline
-	procedure (current-wavepanel) to retrieve it
+Improve notion of a current/selected wavepanel
+	draw highlighted outline			inprog, needs work
+
+Alternate ways of getting wavevars into panels
+	selected-panel notion helps, but double-click not intuitive enough
+	selected-list of wavevars
+	wavevar toolbar with "add" button adds selected wavevars to selected panel
+	
+hook to choose better short-tags for files
+	example based on regular expression on filename
+
 
 -----------------------------------------------------------------------------
 tasks list items finished:

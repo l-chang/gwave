@@ -29,7 +29,12 @@
        (add-menuitem menu "list panels" 
 		     (lambda () 
 		       (display "panel-list:") (newline)
-		       (display (wtable-wavepanels))
+		       (for-each (lambda (wp)
+				   (display wp)
+				   (if (wavepanel-selected? wp)
+				       (display "[selected]"))
+				   (newline))
+				 (wtable-wavepanels))
 		       (newline)))
 
        (add-menuitem menu "list visiblewaves" 

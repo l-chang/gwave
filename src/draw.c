@@ -112,7 +112,7 @@ char *val2txt(double val, int mode)
 double y2val(WavePanel *wp, int y)
 {
 	int h = wp->drawing->allocation.height;
-	double frac = - (double)(y - h + 2) / (double)(h - 4);
+	double frac = - (double)(y - h + 3) / (double)(h - 6);
 	
 	if(wp->logy) {
 		double a;
@@ -143,7 +143,7 @@ int val2y(WavePanel *wp, double val)
 		frac = (val - bot ) / (top - bot);
 	}
 
-	return h - ((h-4) * frac) - 2;
+	return h - ((h-6) * frac) - 3;
 }
 
 /* convert pixmap X coordinate to user independent-variable value */
@@ -273,7 +273,19 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 
 	gdk_draw_rectangle(wp->pixmap, bg_gdk_gc, TRUE, 0,0, w,h);
 
-	/* draw horizontal line at y=zero */
+	if(wp->selected) {
+/*		gdk_draw_line(wp->pixmap, hl_gdk_gc, 0,   0,  w-1, 0);
+		gdk_draw_line(wp->pixmap, hl_gdk_gc, w-1, 0,  w-1, h-1);
+		gdk_draw_line(wp->pixmap, hl_gdk_gc, w-1, h-1,  0, h-1);
+		gdk_draw_line(wp->pixmap, hl_gdk_gc, 0,   h-1,  0, 0);
+*/
+		gdk_draw_line(wp->pixmap, hl_gdk_gc, 1,   1,  w-2, 1);
+		gdk_draw_line(wp->pixmap, hl_gdk_gc, w-2, 1,  w-2, h-2);
+		gdk_draw_line(wp->pixmap, hl_gdk_gc, w-2, h-2,  1, h-2);
+		gdk_draw_line(wp->pixmap, hl_gdk_gc, 1,   h-2,  1, 1);
+
+	}
+	/* draw horizontal line at y=zero.  future: do real graticule here */
 	if(wp->start_yval < 0 && wp->end_yval > 0) {
 		y = val2y(wp, 0);
 		gdk_draw_line(wp->pixmap, pg_gdk_gc, 0, y, w, y);
@@ -405,6 +417,15 @@ void alloc_colors(GtkWidget *widget)
 			exit(2);
 	}
 	gdk_gc_set_foreground(pg_gdk_gc, &pg_gdk_color);
+
+	/* panel highlight */
+	gdk_colormap_alloc_color(win_colormap, &hl_gdk_color, FALSE, TRUE);
+	hl_gdk_gc = gdk_gc_new(widget->window);
+	if(!hl_gdk_gc) {
+			fprintf(stderr, "couldn't allocate highlight gc\n");
+			exit(2);
+	}
+	gdk_gc_set_foreground(hl_gdk_gc, &hl_gdk_color);
 }
 
 
@@ -445,6 +466,13 @@ void setup_colors(WaveTable *wt)
 	if(pg_color_name) {
 		if(!gdk_color_parse(pg_color_name, &pg_gdk_color)) {
 			fprintf(stderr, "failed to parse panel graticule color\n");
+			exit(1);
+		}
+	}
+	/* waveform panel axis lines or graticule */
+	if(hl_color_name) {
+		if(!gdk_color_parse(hl_color_name, &hl_gdk_color)) {
+			fprintf(stderr, "failed to parse highlight color\n");
 			exit(1);
 		}
 	}

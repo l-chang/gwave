@@ -61,6 +61,10 @@ char *pg_color_name  = "grey30" ;  /* panel graticule */
 GdkColor pg_gdk_color;
 GdkGC *pg_gdk_gc;
 
+char *hl_color_name  = "white" ;  /* panel highlight: select-outline */
+GdkColor hl_gdk_color;
+GdkGC *hl_gdk_gc;
+
 GdkColormap *win_colormap; /* colormap for main waveform window */
 
 /* TODO: make these members of the global wtable structure instead of

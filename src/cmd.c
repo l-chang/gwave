@@ -326,8 +326,7 @@ XSCM_DEFINE(wavepanel_add_variable_x, "wavepanel-add-variable!", 2, 0, 0,
 
 /*
  * Add a new waveform to a WavePanel, creating a new VisibleWave.
- * If no wavepanel is specified, try to use the "current" wavepanel,
- * defined for now to be the last one where a signal was dropped.
+ * If no wavepanel is specified, try to use the first "selected" wavepanel,
  * This is the only place that VisibleWave structures are created.
  */
 SCM
@@ -336,11 +335,11 @@ add_var_to_panel(WavePanel *wp, WaveVar *dv)
 	VisibleWave *vw;
 
 	if(wp == NULL) {
-		if(last_drop_wavepanel)
-			wp = last_drop_wavepanel;
-		else return;
-	} else {
-		last_drop_wavepanel = wp;
+		wp = first_selected_wavepanel();
+		if(wp == NULL) {
+			if(v_flag) printf("add_var_to_panel: no default found\n");
+			return;
+		}
 	}
 
 	vw = g_new0(VisibleWave, 1);

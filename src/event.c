@@ -21,6 +21,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.18  2003/12/03 03:58:16  sgt
+ * clean up string literals containing newlines, all in documentation
+ * strings.
+ * Modify xsnarf.h to get document-extraction working again
+ *
  * Revision 1.17  2002/03/28 06:35:21  sgt
  * Snarfing overhaul to make it guile-version-independent
  * now compiles and runs under guile-1.5.6
@@ -371,6 +376,15 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 	WavePanel *wp = (WavePanel *)data;
 	GdkCursor *cursor;
 
+	if(wtable->mstate == M_NONE) {
+		if(wavepanel_mouse_binding[event->button]) {
+			scwm_safe_call2(
+				wavepanel_mouse_binding[event->button],
+				wp->smob,
+				sgtk_boxed2scm (event, &sgtk_gdk_event_info, 1));
+		} 
+	}
+
 	switch(event->button) {
 	case 1:
 	case 2:
@@ -407,15 +421,6 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 		}
 		break;
 	case 3:
-		if(wtable->mstate == M_NONE) {
-			if(wavepanel_mouse_binding[event->button]) {
-				scwm_safe_call2(
-					wavepanel_mouse_binding[event->button],
-					wp->smob,
-					sgtk_boxed2scm (event, &sgtk_gdk_event_info, 1));
-			} 
-		}
-		break;
 	default:
 		break;
 	}
