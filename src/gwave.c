@@ -224,7 +224,7 @@ void gwave_main(int argc, char **argv)
 			scm_display(res, scm_cur_outp);
 			printf("\n"); fflush(stdout);
 		}
-                if(! SCM_EQ_P (res, SCM_BOOL_T)) {
+                if(! scm_eq_p (res, SCM_BOOL_T)) {
                         fprintf(stderr, "gwave: aborting due to errors.\n");
                         exit(1);
                 }
