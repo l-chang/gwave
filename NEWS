@@ -1,6 +1,11 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
 New in 20001004:
+- Spice3/Ngspice rawfile improvements: binary files now work!
+- Other minor file-reading improvements.
+- spice source code to examples for which I could still find it.
+
+New in 20001004:
 - Major improvements to handling of binary files produced by HSPICE.
 - Overhaul of input of spice3/ngspice raw files; more robust and tolerant
   of complex numbers.

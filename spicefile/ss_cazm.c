@@ -234,12 +234,21 @@ sf_readrow_ascii(SpiceStream *sf, double *ivar, double *dvars)
 	if(!tok) {
 		return 0;  /* blank line can indicate end of data */
 	}
+
+	/* check to see if it is numeric: ascii format is so loosly defined
+	 * that we might read a load of garbage otherwise. */
+	    
+	if(strspn(tok, "0123456789eE+-.") != strlen(tok)) {
+		ss_msg(ERR, "sf_readrow_ascii", "%s:%d: expected number; maybe this isn't an ascii data file at all?", sf->filename, sf->lineno, i);
+		return -1;
+	}
+
 	*ivar = atof(tok);
 	
 	for(i = 0; i < sf->ncols-1; i++) {
 		tok = strtok(NULL, " \t\n");
 		if(!tok) {
-			ss_msg(ERR, "sf_readrow_cazm", "%s:%d data field %d missing", sf->filename, sf->lineno, i);
+			ss_msg(ERR, "sf_readrow_ascii", "%s:%d: data field %d missing", sf->filename, sf->lineno, i);
 			return -1;
 		}
 		dvars[i] = atof(tok);

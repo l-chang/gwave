@@ -58,10 +58,15 @@ tries all file formats until one succedes.
 
 Details on using Gwave with the output of various simulators:
 
-Berkeley Spice3F5 and ng-spice.
-Gwave can only read the "ascii" variant form of the spice "rawfile" output,
-not the default binary rawfile format.  Select the ascii form by setting
-the environment variable SPICE_ASCIIRAWFILE to "1" before running spice3.
+Berkeley Spice3F5 and ng-spice.  Gwave can read both the the ascii and
+binary forms of the spice "rawfile" output.  If difficulty is
+encountered with the binary format, Try selecting the ascii form by
+setting the environment variable SPICE_ASCIIRAWFILE to "1" before
+running spice3. 
+
+Reading of binary rawfiles has only been tested with both ng-spice and
+gwave running on a little-endian machine.  Your mileage may vary.
+
 
 ACS (Al's Circuit Simulator, http://www.geda.seul.org/tools/acs/index.html)
 Gwave should identify and read ACS output files, generated with the '>'
@@ -78,7 +83,8 @@ in your input file if you have troubles.
 
 Tanner Research T-Spice.
 It has been a while since I tried tspice, but gwave should read the output,
-at least from transient analysis runs.
+at least from transient analysis runs.  Tspice output is in a variant of the
+cazm format, not surprising since Tanner bought the rights to cazm from MCNC.
 
 
 Your own custom waveforms:
@@ -127,8 +133,13 @@ Example sp2sp usage:
 ----------------------------------------------------------------------
 This tool is far from complete. Partial contents of the To Do list:
 
+- better handling of datafiles containing complex numbers.  Currently, 
+  these files are read, but only the real part can be displayed.  
+  Workaround: Sp2sp prints out both the real and imaginary parts; convert
+  the file to generic ascii format using sp2sp.
+
 - Send feedback and error messages from loading of files to a popup window
-  or status line instead of to stdout.
+  or status line instead of to stdout or stderr.
 - Drag-and-drop to move waveform from one panel to another
 - Speed up redraws and minimize flashing, especialy flashing 
   of waveform name/value labels when moving cursors.
