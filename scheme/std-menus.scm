@@ -102,9 +102,15 @@
 		     (lambda () (with-selected-filename "Datafile to load"
 				 (lambda (fn) (load-wavefile! fn)))))
        (add-menuitem file-menu "Export Postscript" 
-		     (lambda () (export-waveimage! "gwave_out.ps" "ps")))
+		     (lambda () (with-selected-filename 
+				 "Postscript file name"
+				 (lambda (fn) (export-waveimage! fn "ps"))
+				 #:default "gwave_out.ps")))
        (add-menuitem file-menu "Export PNM" 
-		     (lambda () (export-waveimage! "gwave_out.pnm" "pnm")))
+		     (lambda () (with-selected-filename 
+				 "PNM file name"
+				 (lambda (fn) (export-waveimage! fn "pnm"))
+				 #:default "gwave_out.pnm")))
        (add-menuitem file-menu #f #f)
        (add-menuitem file-menu "Save Configuration as script"
 		     (lambda () (with-selected-filename "Scriptfile to write"
