@@ -12,7 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
+ * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
@@ -31,17 +31,23 @@
 
 #include <gtk/gtk.h>
 #include <config.h>
-#include "gwave.h"
+#include <scwm_guile.h>
+#include <guile-compat.h>
+#include <scm_init_funcs.h>
 
+#include <gwave.h>
+#include <wavelist.h>
+#include <wavewin.h>
+ 
 /* globals */
 char *prog_name = PACKAGE;
 char *prog_version = VERSION;
 int colors_initialized = 0;
-int x_flag, v_flag;
+int v_flag;
 WaveTable *wtable;
 const int NWColors = 6;  /* # of wavecolorN styles expected in the .gtkrc */
 
-char *bg_color_name  = "black" ;  /* panel background color */
+char *bg_color_name  = "grey15" ;  /* panel background color */
 GdkColor bg_gdk_color;
 GdkGC *bg_gdk_gc;
 
@@ -49,7 +55,6 @@ char *pg_color_name  = "grey30" ;  /* panel graticule */
 GdkColor pg_gdk_color;
 GdkGC *pg_gdk_gc;
 
-GtkWidget *win_main;
 GdkColormap *win_colormap; /* colormap for main waveform window */
 
 /* TODO: make these members of the global wtable structure instead of
@@ -109,7 +114,15 @@ void fe_show_wave_list(GWDataFile *wdata)
 	cmd_show_wave_list(NULL, wdata);
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
+{
+	void gwave_main(int argc, char **argv);
+	scwm_gh_enter(argc, argv, gwave_main);
+	return 0;
+}
+
+void gwave_main(int argc, char **argv)
 {
 	int c;
 	extern int optind;
@@ -118,15 +131,28 @@ int main(int argc, char **argv)
 	int errflg = 0;
 	int fillpanels = 0;
 	int npanels = 2;
+	int nobacktrace = 0;
 	int i;
 
+	SCM_REDEFER_INTS;
+	init_scwm_guile();
+	init_cmd();
+	init_wavewin();
+	init_wavelist();
+	init_event();
+	init_draw();
+	gh_allow_ints();
+	
 	gtk_init(&argc, &argv);
 
 	prog_name = argv[0];
-	while ((c = getopt (argc, argv, "fp:t:vx")) != EOF) {
+	while ((c = getopt (argc, argv, "fnp:t:vx")) != EOF) {
 		switch(c) {
 		case 'f':
 			fillpanels = 1;
+			break;
+		case 'n':
+			nobacktrace = 1;
 			break;
 		case 'p':
 			npanels = atoi(optarg);
@@ -137,9 +163,6 @@ int main(int argc, char **argv)
 		case 'v':
 			v_flag = 1;
 			break;
-		case 'x':
-			x_flag = 1;
-			break;
 		default:
 			errflg = 1;
 			break;
@@ -149,31 +172,54 @@ int main(int argc, char **argv)
 		usage(NULL);
 		exit(1);
 	}
-
 	gtk_rc_parse_string(gwave_base_gtkrc);
 	gtk_rc_parse("gwave.gtkrc");
+	SCWM_VAR_READ_ONLY(, "gwave-version-string",  gh_str02scm(VERSION));
 
-	/* spicestream library messages need more cleanup before this is
-	 * anything but annoying.
-	 * ss_error_hook = create_message_window; 
-	 */
-	for(; optind < argc; optind++) {
-		if(load_wave_file(argv[optind], filetype) < 0) {
-			fprintf(stderr, "unable to read data file: %s\n", argv[optind]);
-		}
-	}
-	if(npanels > 8)
-		npanels = 8;
+/*	if(v_flag) fprintf(stderr, "patching environment\n"); */
+	/* TODO: environment variable to override this */
+	SCWM_VAR_READ_ONLY(, "gwave-datadir",  gh_str02scm(DATADIR));
+#ifdef GUILE_GTK_EXTRA_LOADPATH
+	gh_eval_str("(set! %load-path (cons \"" GUILE_GTK_EXTRA_LOADPATH "\" %load-path))");
+#endif
+
+	/* the default for this seems to have changed between guile-1.3
+	   and guile-1.3.2;  only the first clause is needed when 
+	   we drop support for guile-1.3.2 */
+	if (!nobacktrace) {
+		gh_eval_str("(debug-enable 'debug)(debug-enable 'backtrace) (read-enable 'positions)");
+	} /* else {
+ 		gh_eval_str("(debug-disable 'debug)(read-disable 'positions)");
+		}*/
+
+
+	/* the compiled-in initial scheme code comes from minimal.scm,
+	   built into init_scheme_string.c by the Makefile
+	   Among other things, it finds and loads system and user .gwaverc
+	   files.
+	*/
+	{ /* scope */
+		extern char *init_scheme_string;
+		if(v_flag) {fprintf(stderr, "running init_scheme_string\n");}
+		scwm_safe_eval_str(init_scheme_string);
+	} /* end scope */
 
 	wtable = g_new0(WaveTable, 1);
-	wtable->npanels = npanels;
-	wtable->panels = g_new0(WavePanel*, npanels);
-	for(i = 0; i < npanels; i++) {
-		wtable->panels[i] = g_new0(WavePanel, 1);
-	}
 	wtable->cursor[0] = g_new0(VBCursor, 1);
 	wtable->cursor[1] = g_new0(VBCursor, 1);
 	wtable->srange = g_new0(SelRange, 1);
+
+#if 1
+	wtable->npanels = 0;
+	wtable->panels = NULL;
+#else
+	if(npanels > 8)
+		npanels = 8;
+	wtable->npanels = npanels;
+	wtable->panels = g_new0(WavePanel*, npanels);
+	for(i = 0; i < npanels; i++) {
+		wtable->panels[i] = new_wave_panel();
+	}
 
 	/* manualy set up the waves into specific WavePanels
 	* Now that the gui allows (re)configuration of the wave/panel setup,
@@ -190,7 +236,7 @@ int main(int argc, char **argv)
 	}
 	wtable->start_xval = wtable->min_xval;
 	wtable->end_xval = wtable->max_xval;
-
+#endif
 	setup_colors(wtable);
 	setup_waveform_window();
 
@@ -203,85 +249,10 @@ int main(int argc, char **argv)
 	g_list_foreach(wdata_list, 
 		       (GFunc)fe_show_wave_list, NULL);
 	gtk_main();
-	return EXIT_SUCCESS;
+	exit(0);
 }
 
 void
 create_about_window()
 {
-	GtkWidget *win, *box, *label, *btn;
-	char buf[256];
-
-	sprintf(buf, "About %s", PACKAGE);
-
-	win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_widget_set_name(win, "About GWave");
-	gtk_window_set_title(GTK_WINDOW(win), "About Gwave");
-	gtk_widget_set_usize(win, 200, 100);
-
-	box = gtk_vbox_new(FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(win), box);
-	gtk_widget_show(box);
-
-	sprintf(buf, "%s version %s", PACKAGE, VERSION);
-	label = gtk_label_new(buf);
-	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-	gtk_widget_show(label);
-	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
-
-	label = gtk_label_new("By Steve Tell");
-	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-	gtk_widget_show(label);
-	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
-
-	label = gtk_label_new("tell@cs.unc.edu");
-	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-	gtk_widget_show(label);
-	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
-
-	btn = gtk_button_new_with_label ("Close");
-	gtk_box_pack_end(GTK_BOX(box), btn, FALSE, TRUE, 0);
-	gtk_signal_connect_object (GTK_OBJECT (btn), "clicked",
-                                 GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                                 GTK_OBJECT (win));
-	gtk_widget_show (btn);
-
-	gtk_widget_show(win);
-}
-
-/*
- * pop up a window with an information or error message.
- * window stays up until the Close button is clicked.
- */
-void
-create_message_window(char *s)
-{
-	GtkWidget *win, *box, *label, *btn;
-	char buf[256];
-
-	sprintf(buf, "%s message", PACKAGE);
-
-	win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_widget_set_name(win, buf);
-	gtk_window_set_title(GTK_WINDOW(win), buf);
-	gtk_widget_set_usize(win, 200, 100);
-
-	box = gtk_vbox_new(FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(win), box);
-	gtk_widget_show(box);
-
-	label = gtk_label_new(s);
-	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-	gtk_widget_show(label);
-	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
-
-	btn = gtk_button_new_with_label ("Close");
-	gtk_box_pack_end(GTK_BOX(box), btn, FALSE, TRUE, 0);
-	gtk_signal_connect_object (GTK_OBJECT (btn), "clicked",
-                                 GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                                 GTK_OBJECT (win));
-	gtk_widget_show (btn);
-
-	gtk_widget_show(win);
-
 }

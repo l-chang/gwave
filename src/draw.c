@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
+ * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
@@ -34,7 +34,8 @@
 
 #include <gtk/gtk.h>
 
-#include "gwave.h"
+#include <gwave.h>
+#include <wavewin.h>
 
 /* convert double value to printable text.
  * Two modes:
@@ -45,9 +46,6 @@
  *
  * 1: use scientific notation, printf %g format.
  *    maximum field width appears to be 10 characters
- *
- * FIXME:tell   for each caller of this routine, provide a mechanism
- *  for the user to specify which style to use.
  */
 char *val2txt(double val, int mode)
 {
@@ -136,7 +134,7 @@ int val2x(WavePanel *wp, double val)
  * gets data value and draws a line for every pixel.
  * will exhibit aliasing if data has samples at higher frequency than
  * the screen has pixels.
- * We know how to do this right, but working on other things has taken
+ * We know how to do this right, but working on other things have taken
  * precedence.
  * ALSO TODO: smarter partial redraws on scrolling, expose, etc.
  */
@@ -206,9 +204,7 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 
 	gdk_draw_rectangle(wp->pixmap, bg_gdk_gc, TRUE, 0,0, w,h);
 
-	/* draw horizontal line at y=zero 
-	 * someday: a real graticule 
-	 */
+	/* draw horizontal line at y=zero */
 	if(wp->min_yval < 0 && wp->max_yval > 0) {
 		y = val2y(0, wp->max_yval, wp->min_yval, h);
 		gdk_draw_line(wp->pixmap, pg_gdk_gc, 0, y, w, y);
@@ -259,6 +255,24 @@ void draw_labels(void)
 	gtk_label_set(GTK_LABEL(win_xlabel_right), val2txt(wtable->end_xval, 0));
 }
 
+/*
+ * redraw contents of all wavepanels
+ */
+SCWM_PROC(wtable_redraw_x, "wtable-redraw!", 0, 0, 0, ())
+/** Redraw the waveforms in all wavepanels */
+#define FUNC_NAME s_wtable_redraw_x
+{
+	int i;
+	WavePanel *wp;
+	wtable->suppress_redraw = 0;
+	for(i = 0; i < wtable->npanels; i++) {
+		wp = wtable->panels[i];
+		draw_wavepanel(wp->drawing, NULL, wp);
+	}
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 /* Color allocation and related stuff for waveform drawing area
  * background and cursors, done on first expose event.
  * Actually, we do it all on the first expose of the first drawing area,
@@ -279,26 +293,43 @@ void alloc_colors(GtkWidget *widget)
 		bg_gdk_color = widget->style->bg[GTK_WIDGET_STATE(widget)];
 		bg_gdk_gc = widget->style->bg_gc[GTK_WIDGET_STATE(widget)];
 	}
+	if(v_flag)
+		fprintf(stderr, "panel background pixel=0x%x rgb=%d,%d,%d\n",
+			bg_gdk_color.pixel,
+			bg_gdk_color.red,
+			bg_gdk_color.green,
+			bg_gdk_color.blue);
 
 	/* vertical bar cursors */
 	for(i = 0; i < 2; i++) {
+		GdkColor tmp_color;
 		VBCursor *csp = wtable->cursor[i];
-		gdk_color_alloc(win_colormap, &csp->gdk_color);
+		if(!gdk_colormap_alloc_color(win_colormap, &csp->gdk_color, FALSE, TRUE)) {
+			fprintf(stderr, "gdk_color_alloc failed for cursor %d\n", i);
+			exit(2);
+		}
 		csp->gdk_gc = gdk_gc_new(widget->window);
 		if(!csp->gdk_gc) {
 			fprintf(stderr, "couldn't allocate cursor %d gc\n", i);
 			exit(2);
 		}
-		gdk_gc_set_foreground(csp->gdk_gc, &csp->gdk_color);
-		/* FIX: the GDK_XOR gcs don't work right unless
-		   background color is explicitly set to "black",
-		   but sometimes it happens to at least be visible */
-		gdk_gc_set_background(csp->gdk_gc, &bg_gdk_color);
+		/* compute pixel to draw so XOR makes it come out right
+		 * on the background.
+		 */
+		tmp_color.pixel = csp->gdk_color.pixel ^ bg_gdk_color.pixel;
+		gdk_gc_set_foreground(csp->gdk_gc, &tmp_color);
 		gdk_gc_set_function(csp->gdk_gc, GDK_XOR);
+
+		if(v_flag)
+			fprintf(stderr, "cursor[%d] pixel=0x%x drawpix=0x%x rgb=%d,%d,%d\n",
+				i, csp->gdk_color.pixel, tmp_color.pixel,
+				csp->gdk_color.red,
+				csp->gdk_color.green,
+				csp->gdk_color.blue);
 	}
 
-	/* graticule */
-	gdk_color_alloc(win_colormap, &pg_gdk_color);
+	/* graticule or zero-line */
+	gdk_colormap_alloc_color(win_colormap, &pg_gdk_color, FALSE, TRUE);
 	pg_gdk_gc = gdk_gc_new(widget->window);
 	if(!pg_gdk_gc) {
 			fprintf(stderr, "couldn't allocate graticule gc\n");
@@ -340,7 +371,7 @@ void setup_colors(WaveTable *wt)
 		}
 	}
 
-	/* waveform panel graticule */
+	/* waveform panel axis lines or graticule */
 	if(pg_color_name) {
 		if(!gdk_color_parse(pg_color_name, &pg_gdk_color)) {
 			fprintf(stderr, "failed to parse panel graticule color\n");
@@ -349,3 +380,12 @@ void setup_colors(WaveTable *wt)
 	}
 }
 
+/* guile initialization */
+
+void init_draw()
+{
+
+#ifndef SCM_MAGIC_SNARFER
+#include "draw.x"
+#endif
+}

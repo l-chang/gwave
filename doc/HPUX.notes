@@ -1,0 +1,104 @@
+
+Notes on trying to make guile-gtk work on HP-UX.
+dynlink/libguiledlopenhelper loses bigtime.
+
+Errors the old way:
+
+rukbat;gwave-guile; gwave.go
+in minimal.scm
+in .gwaverc
+in gwave-guile/scheme/dynlink.scm
+
+;;; WARNING (Cannot find library libguilegtk-1.2)
+
+46  [dynamic-wind #<procedure ()> #<procedure ()> #<procedure ()>]
+47* [#<procedure ()>]
+48* [primitive-load "/usr/local/contrib/moderated/share/guile/gtk-1.2/gtk.scm"]
+49* [merge-compiled-code "sgtk_init_gtk_gtk_glue" "libguilegtk-1.2"]
+50  (let* ((module #) (interface #)) (module-use! module interface) ...)
+    ...
+51  [dynamic-wind #<procedure ()> #<procedure ()> #<procedure ()>]
+52* [#<procedure ()>]
+53* (let* (# # # #) (if # # #))
+54* (if modinfo (caddr modinfo) ...)
+55  (or (dlopen-libtool-library libname) (error "can't open library" libname))
+56* [dlopen-libtool-library "libguilegtk-1.2"]
+57  (cond (gtkconf-libtool-is-winning (let* # # #)) (#t (let* # # #)))
+58  (let* ((path #) (full-name #)) (init-dlopen-funcs) ...)
+59* [init-dlopen-funcs]
+60  (if (not #) (save-module-excursion #))
+    ...
+61  [dynamic-wind #<procedure ()> #<procedure ()> #<procedure ()>]
+62* [#<procedure ()>]
+63* (let ((full-name #)) (set-current-module this-module) ...)
+64  [dynamic-call sgtk_dlopenhelper_init ...
+65* [gsubr-apply #<primitive-procedure dynamic-link> ...]
+
+/home/msl/tell/proj/gwave/gwave-guile/gtk/dynlink.scm:208:26: In procedure gsubr-apply in expression (dynamic-link full-name):
+/home/msl/tell/proj/gwave/gwave-guile/gtk/dynlink.scm:208:26: dynamic linking failed
+
+0* (append-hook! new-wavewin-hook (lambda () (let* # # #)))
+
+./.gwaverc:17:1: In expression (append-hook! new-wavewin-hook (lambda () #)):
+./.gwaverc:17:1: Unbound variable: append-hook!
+
+
+
+
+|Date: 08 Nov 1999 22:28:02 +0100
+|From: Marius Vollmer <mvo@zagadka.ping.de>
+|To: Stephen Tell <tell@cs.unc.edu>
+|Cc: Guile-Gtk List <guile-gtk@sourceware.cygnus.com>
+|Subject: Re: guile-gtk without dlopen (HP-UX)
+|
+|Yes, dynamic linking is weird with guile-gtk in general, and I'm sorry
+|you have to suffer.
+|
+|However, in recent releases of Guile, dynamic-link uses RTLD_GLOBAL by
+|default and thus libguiledlopenhelper is not needed at all (on dlopen
+|platforms).  You might have to check the HPUX support of Guile if it
+|behaves correctly, tho.  You could try to hack gtk/dynlink.scm so that
+|it doesn't use the %sgtk-* functions at all.  If this doesn't work, we
+|can then see how you can get by without dynamic linking.
+|
+|For the real fix, I think we need to have configure find out whether
+|libguiledlopenhelper is needed or not because people might still be
+|using old versions of Guile.
+|> guile-1.3.4
+|
+|This is recent enough.
+|
+|- Marius
+
+By setting GUILE_LOAD_PATH, we can insert our own version of dynlink.scm
+and other guile-gtk modules.
+
+module gtk.scm uses module dynlink.scm, then does
+	(gtk-version-alias 'gtk)
+and that's it.
+
+(gtk-version-alias arranges to get the right version of gtk loaded;
+I think this results in loading share/guile/gtk-1.2/gtk.scm
+
+gtk-1.2/gtk.scm then does
+	 (merge-compiled-code "sgtk_init_gtk_gtk_glue" "libguilegtk-1.2")
+which is were the trouble starts.
+
+I think what marius means is to modify this routine.
+I want it to load /usr/local/contrib/moderated/lib/libguilegtk-1.2.sl
+Looks like the routine find-and-link-dynamic-module in boot-9.scm does
+about what I want.
+
+But it assumes the name of the init func from the module name, rats.
+The underlying routines that it uses, 
+	(try-using-libtool-name directory libname)
+and
+	(link-dynamic-module sharlib-full init-func)
+look right.
+
+Try it - works!
+
+Doesn't work with standalone guile-gtk apps.
+
+
+

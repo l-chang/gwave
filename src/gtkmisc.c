@@ -11,6 +11,59 @@
 
 #include <gtk/gtk.h>
 
+/* A couple of routines to make it easier to build menus.
+ * These are by Steve Tell.
+ *
+ *
+ * Create a (sub)menu and the item that activates it.
+ * Returns GtkMenu widget pointer.
+ */
+GtkWidget *
+create_menu(char *label, GtkWidget *parent)
+{
+	GtkWidget *item, *menu;
+	
+	if(label)
+		item = gtk_menu_item_new_with_label(label);
+	else
+		item = gtk_menu_item_new();
+
+	menu = gtk_menu_new();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), menu);
+
+	if(parent) {
+		if(GTK_IS_MENU_BAR(parent))
+			gtk_menu_bar_append (GTK_MENU_BAR (parent), item);
+		else if(GTK_IS_MENU(parent))
+			gtk_menu_append(GTK_MENU(parent), item);
+	}
+	gtk_widget_show(item);
+	return menu;
+}
+
+/*
+ * helper function for making menu items.  Returns menu item widget pointer,
+ * but it can often be ignored, since the item is already added to the parent.
+ */
+GtkWidget *
+create_menuitem(char *label, GtkWidget *parent, GtkSignalFunc action, 
+		gpointer p)
+{
+	GtkWidget *item;
+	if(label)
+		item = gtk_menu_item_new_with_label(label);
+	else
+		item = gtk_menu_item_new();
+
+	if(action)
+		gtk_signal_connect (GTK_OBJECT (item), "activate", action, p);
+	if(parent)
+		gtk_menu_append (GTK_MENU(parent), item);
+	gtk_widget_show (item);
+	return item;
+}
+
+
 /* these routines were borrowed from testgtk.c:
  *	shape_pressed
  *	shape_released

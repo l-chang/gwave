@@ -17,7 +17,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
+ * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
@@ -33,10 +33,12 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/time.h>
-
 #include <gtk/gtk.h>
 
-#include "gwave.h"
+#include <scwm_guile.h>
+#include <gwave.h>
+#include <wavelist.h>
+#include <wavewin.h>
 
 gint cmd_zoom_absolute(double start, double end)
 {
@@ -66,58 +68,23 @@ gint cmd_zoom_absolute(double start, double end)
 	return 0;
 }
 
-gint cmd_zoom_relative(double factor)
+SCWM_PROC(x_zoom_x, "x-zoom!", 2, 0, 0, (SCM start, SCM end))
+  /** return the GtkWindow object for the main waveform window 
+*/
+#define FUNC_NAME s_x_zoom_x
 {
-	double ocenter, owidth;
-	g_assert(factor > DBL_EPSILON);
-
-	ocenter = (wtable->start_xval + wtable->end_xval)/2;
-	owidth = wtable->end_xval - wtable->start_xval;
-	
-	return cmd_zoom_absolute(ocenter - owidth / (factor * 2),
-				 ocenter + owidth / (factor * 2));
+	double dstart, dend;
+	VALIDATE_ARG_DBL_COPY(1, start, dstart);
+	VALIDATE_ARG_DBL_COPY(1, end, dend);
+	cmd_zoom_absolute(dstart, dend);
+	return SCM_UNSPECIFIED;
 }
-
-gint cmd_zoom_in(GtkWidget *widget)
-{
-	return cmd_zoom_relative(2);
-}
-
-gint cmd_zoom_out(GtkWidget *widget)
-{
-	return cmd_zoom_relative(0.5);
-}
+#undef FUNC_NAME
 
 gint cmd_zoom_full(GtkWidget *widget)
 {
 	return cmd_zoom_absolute(wtable->min_xval, wtable->max_xval);
 }
-
-gint cmd_zoom_cursors(GtkWidget *widget)
-{
-	if(!wtable->cursor[0]->shown)
-		return 0;
-	if(!wtable->cursor[1]->shown)
-		return 0;
-	return cmd_zoom_absolute(wtable->cursor[0]->xval,
-			   wtable->cursor[1]->xval);
-}
-
-static void
-zoom_window_finish(WavePanel *wp, int x1, int x2, gpointer data)
-{
-	double nstart, nend;
-	nstart  = x2val(wp, x1);
-	nend = x2val(wp, x2);
-	cmd_zoom_absolute(nstart, nend);
-}
-
-gint cmd_zoom_window(GtkWidget *widget)
-{
-	select_x_range(zoom_window_finish, NULL);
-	return 0;
-}
-
 
 typedef struct {
 	WavePanel *wp;
@@ -141,10 +108,11 @@ vw_wp_list_if_selected(gpointer p, gpointer d)
 	}
 }
 
-/*
- * cmd_delete_selected_waves
- */
-gint cmd_delete_selected_waves(GtkWidget *widget)
+SCWM_PROC(delete_selected_waves_x, "delete-selected-waves!", 0, 0, 0, ())
+  /** Remove from panels any VisibleWaves that have been
+selected by clicking on their label-buttons.
+*/
+#define FUNC_NAME s_delete_selected_waves
 {
 	int i;
 	VWListItem *vdi;
@@ -163,9 +131,11 @@ gint cmd_delete_selected_waves(GtkWidget *widget)
 		vw_delete_list = g_list_remove(vw_delete_list, vdi);
 		g_free(vdi);
 	}
-	
-	return 0;
+	wtable_redraw_x();
+
+	return SCM_UNSPECIFIED;
 }
+#undef FUNC_NAME
 
 /*
  * remove waveform from panel
@@ -321,9 +291,14 @@ add_var_to_panel(WavePanel *wp, WaveVar *dv)
 
 	if(wp->lvbox)  /* add button to Y-label box */
 		vw_wp_create_button(vw, wp);
-	if(wp->drawing) {
-/*		vw_wp_setup_gc(vw, wp); */
-		vw_wp_visit_draw(vw, wp);
+	if(wp->drawing && (wtable->suppress_redraw == 0)) {
+		/* redraw whole panel.
+		 * Perhaps this is too much extra work, but it seems fast
+		 * enough.
+		 * at the very least, we'd have to undraw any cursors
+		 * before drawing just the single new waveform
+		 */
+		draw_wavepanel(wp->drawing, NULL, wp);
 	}
 }
 
@@ -364,9 +339,9 @@ wavepanel_update_data(WavePanel *wp)
 	char lbuf[128];
 
 	wp->min_xval = G_MAXDOUBLE;
-	wp->max_xval = -G_MAXDOUBLE;
+	wp->max_xval = G_MINDOUBLE;
 	wp->min_yval = G_MAXDOUBLE;
-	wp->max_yval = -G_MAXDOUBLE;
+	wp->max_yval = G_MINDOUBLE;
 	g_list_foreach(wp->vwlist, vw_wp_visit_update_data, (gpointer)wp);
 
 	/* set to something reasonable if they didn't change,
@@ -374,11 +349,11 @@ wavepanel_update_data(WavePanel *wp)
 	 */
 	if(wp->min_xval == G_MAXDOUBLE)
 		wp->min_xval = 0; /* wtable->min_xval; */
-	if(wp->max_xval == -G_MAXDOUBLE)
+	if(wp->max_xval == G_MINDOUBLE)
 		wp->max_xval = 0; /* wtable->max_xval; */
 	if(wp->min_yval == G_MAXDOUBLE)
 		wp->min_yval = 0.0;
-	if(wp->max_yval == -G_MAXDOUBLE)
+	if(wp->max_yval == G_MINDOUBLE)
 		wp->max_yval = 1.0;
 
 	/* zero height? set to +- 0.1%  so a line is visible in the center */
@@ -419,7 +394,7 @@ wavetable_update_data()
 	old_max_x = wtable->max_xval;
 
 	wtable->min_xval = G_MAXDOUBLE;
-	wtable->max_xval = -G_MAXDOUBLE;
+	wtable->max_xval = G_MINDOUBLE;
 	for(i = 0; i < wtable->npanels; i++) {
 		wp = wtable->panels[i];
 		if(wp == NULL)
@@ -435,7 +410,7 @@ wavetable_update_data()
 	/* still nothing? set back to zero */
 	if(wtable->min_xval == G_MAXDOUBLE)
 		wtable->min_xval = 0;
-	if(wtable->max_xval == -G_MAXDOUBLE)
+	if(wtable->max_xval == G_MINDOUBLE)
 		wtable->max_xval = 0;
 
 	/* if start & end were the same or out of range, 
@@ -479,3 +454,10 @@ wavetable_update_data()
 	}
 }
 
+/* guile initialization */
+void init_cmd()
+{
+#ifndef SCM_MAGIC_SNARFER
+#include "cmd.x"
+#endif
+}
