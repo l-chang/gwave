@@ -68,8 +68,9 @@ not the default binary rawfile format.  Select the ascii form by setting
 the environment variable SPICE_ASCIIRAWFILE to "1" before running spice3.
 This comment may apply to ng-spice also.
 
-ACS
-Gwave should identify and read ACS output files.
+ACS (Al's Circuit Simulator)
+Gwave should identify and read ACS output files, generated with the '>'
+option to a .tran statement.  
 
 Avanti's HSPICE.
 Gwave should work with both ascii and binary output in the form of
@@ -90,12 +91,12 @@ Your own custom waveforms:
 The easiest of the input formats to generate with simple scripts and
 other tools is the "ascii" format.  See the ACS-simulator output file
 tpwl.acs in the examples directory for an example of this format.  The
-first line starts lists the variable names.  The first variable must
+first line lists the variable names.  The first variable must
 be the independent variable.  The independent variable must be
 nondecreasing.
 
 Note that the '#' in examples/tpwl.acs is for the benefit of other
-tools (such as gnuplot).  To gwave, that first line is not a comment
+tools (such as gnuplot).  To gwave, the first line is not a comment
 but contains whitespace-seperated fields naming the variables.
 
 
@@ -105,8 +106,6 @@ This tool is far from complete. Partial contents of the To Do list:
 - Send feedback and error messages from loading of files to a popup window
   or status line instead of to stdout.
 - Drag-and-drop to move waveform from one panel to another
-- Logarithmic X and Y axes
-	(logY is working, logX isn't quite done)
 - Speed up redraws and minimize flashing, especialy flashing 
   of waveform name/value labels when moving cursors.
 - Generate a postscript representation for printing or documentation.
@@ -120,9 +119,11 @@ This tool is far from complete. Partial contents of the To Do list:
 - Seperate lists for selecting voltage/current/etc. types of variables
 - Clean up reader code by collecting some idioms that appear again and again
   into common subroutines.  This will make writing new readers a little easier.
+- Documentation, both user's manual and programmer's manual.
+  Autodocs for guile primitives need to be extracted into text files.
+
 
 Feedback is welcome - tell@cs.unc.edu
-
 
 ----------------------------------------------------------------------
 Acknowledgements
@@ -136,5 +137,6 @@ gwave.  A number of code fragments and a bit of the general style of
 the Guile/C interaction was borrowed from SCWM.  Any misinterpretation
 and bugs introduced along the way are most certainly my fault.
 
-And last but not least, thanks to the authors of Gtk+ and Guile for
-some great building blocks.
+And last but not least, thanks to the authors of Gtk+, Guile, and
+Guile-gtk for some great building blocks.
+

@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl ## Initialize autoconf ##
 
 AC_INIT(src/gwave.c)
-AM_INIT_AUTOMAKE(gwave, 20000509)
+AM_INIT_AUTOMAKE(gwave, 20000518)
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
 
@@ -23,7 +23,7 @@ if test ! -z "$GRAPH"; then
 fi
 
 dnl do we need libtool? 
-dnl even though we aren't building shared libraries, it seemed to help on HP
+dnl even though we aren't building shared libraries, it seemed to help on HP-UX
 dnl AM_PROG_LIBTOOL
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -141,7 +141,7 @@ dnl CFLAGS="${saved_CFLAGS}"
 
 dnl Check to see if we are on a system with HP-UX's peculiar
 dnl guile-gtk dynamic linking problems.
-dnl should also check guile-gtk version.
+dnl should also check guile-gtk version, later ones may not need these hacks.
 AC_MSG_CHECKING(with libtool for shlibpath_var)
 shlib_var=`libtool --config  | grep '^shlibpath_var' | sed 's/^.*=//'`
 AC_MSG_RESULT($shlib_var)

@@ -46,7 +46,7 @@ struct _WavePanel {
 	int valid;	/* 1 if valid, 0 if awaiting deletion */
 
 	GList *vwlist;	/* list of VisibleWaves shown in this panel.
-			   Line any GList, NULL if list empty */
+			   Like any GList, NULL if list empty */
 	double min_yval; /* min/max data x/y values over whole vwlist */
 	double max_yval;
 	double min_xval;	

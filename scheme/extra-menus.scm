@@ -24,6 +24,20 @@
 	  (menu (menu-create mbar "SGT")))
        (add-menuitem menu "my menu" #f)
        (add-menuitem menu "garbage collect" gc)
+
+       (add-menuitem menu "list panels" 
+		     (lambda () 
+		       (display "wavefile-list:") (newline)
+		       (display (wtable-wavepanels))
+		       (newline)))
+
+       (add-menuitem menu "list visiblewaves" 
+		     (lambda ()
+		       (for-each (lambda (wp)
+			   (display "wp:") (display wp) (newline)
+			   (display (wavepanel-visiblewaves wp)) (newline))
+				 (wtable-wavepanels))))
+
        (add-menuitem menu "list files"
 		     (lambda () 
 		       (display "wavefile-list:") (newline)
