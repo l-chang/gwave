@@ -37,27 +37,36 @@ Click on the waveform panels with the left and center mouse buttons to set two
 cursors for measuring.
 
 
-New in 0.3:
+New in 0.0.3:
 - Load multiple files at once, either from the command line or 
 interactively.
 - Some operations are moved to pulldown menus.
 
+New in 0.0.4:
+- Fixed bug and/or warning when first waveform is added to display
+- Ability to drag vertical bar cursors around, in addition to click-to-place
+- Added zoom-to-cursor function; if both cursors have been placed,
+	zooms so that the time between the cursors fills the display.
+- Added zoom-to-window function.  Select this menu option, then
+	press/drag/release mouse button 1 to indicate a region of the X
+	axis that then zooms to fill the display.
 
 Known problems:
-- When a signal is added, it may not get drawn immediately.
-  use your window-manager refresh or simply cover and uncover the gwave
-  window, or do a zoom in/out.
-- HSPICE data files generated without ".options probe" are not read
-correctly. workaround: always use ".options probe".
+- HSPICE data files generated without ".options probe" may not be read
+correctly. workaround: try using ".options probe".  This mostly happens with
+AC sweeps.
 
 
 This tool is far from complete. Partial contents of the To Do list:
 
-Interactively changing the number of panels
+Interactively changing the number of panels instead of using a lame
+command-line option
+Send feedback and error messages from loading of files to a popup window
+or status line instead of to stdout.
 Drag-and-drop to move waveform from one panel to another
 Logarithmic X and Y axes
-Ability to drag vertical bar cursors around, in addition to click-to-place
-Speed up redraws, especialy placing of the cursors
+Speed up redraws and minimize flashing, especialy flashing 
+of waveform name/value labels when moving cursors.
 Generate a postscript representation for printing or documentation.
 Override of wave and panel paramters, like min/max Y value, color, etc.
 Saving and restoring waveform/panel configuration 
