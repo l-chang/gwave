@@ -58,6 +58,16 @@ EXTERN long scm_tc16_scwm_GWDataFile;
   else cvar = GWDataFile(scm); \
   } while (0)
 
+  /* "handles" to actual WaveVars.  We can 
+   * invalidate these when freeing the WaveFile,
+   * even if un-gc'ed WaveVar smobs still want to point to
+   * them. */
+struct _WaveVarH { 
+	WaveVar *wv;
+	GWDataFile *df;
+};
+typedef struct _WaveVarH WaveVarH;
+
 /*
  * Structure to hold data for a single loaded waveform file.
  */
@@ -70,7 +80,37 @@ struct _GWDataFile {
 	char *ftag;	/* short tag used to help identify which file is which */
 	SCM smob;
 	int outstanding_smob;	/* if the guile world has a pointer, defer freeing. */
+	int ndv;
+	WaveVarH *wvhs;
 };
+
+
+/***********************************************************************
+ * Stuff to wrap WaveVar as a SMOB 
+ */
+
+EXTERN long scm_tc16_scwm_WaveVar;
+
+#define WaveVarH_P(X) (SCM_NIMP(X) && gh_car(X) == (SCM)scm_tc16_scwm_WaveVar)
+#define WaveVarH(X)  ((WaveVarH *)gh_cdr(X))
+#define SAFE_WaveVarH(X)  (WaveVarH_P((X))? WaveVarH((X)) : NULL)
+
+#define VALIDATE_ARG_WaveVarH(pos,scm) \
+  do { \
+  if (!WaveVarH_P(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
+  } while (0)
+
+#define VALIDATE_ARG_WaveVar_COPY(pos,scm,cvar) \
+  do { \
+  if (!WaveVarH_P(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
+  else cvar = (WaveVarH(scm)->wv) ? WaveVarH(scm)->wv : NULL; \
+  } while (0)
+
+#define VALIDATE_ARG_WaveVarH_COPY(pos,scm,cvar) \
+  do { \
+  if (!WaveVarH_P(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
+  else cvar = WaveVarH(scm); \
+  } while (0)
 
 
 #endif /* WAVELIST_H */

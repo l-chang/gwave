@@ -105,6 +105,10 @@
 		     (lambda () (export-waveimage! "gwave_out.pnm" "pnm")))
        (add-menuitem file-menu "Read File..." prompt-name-load-file)
        (add-menuitem file-menu #f #f)
+       (add-menuitem file-menu "Execute Guile Script..." 
+		     (lambda () (with-selected-filename 
+				 "Guile script to run" load)))
+       (add-menuitem file-menu #f #f)
        (add-menuitem file-menu "Quit" (lambda () (gtk-main-quit)))
        )
      (let ((view-menu (gtk-menu-new)))

@@ -158,7 +158,7 @@ extern char *wave_drag_ok_xpm[];
 
 /* defined in wavelist.c */
 void cmd_show_wave_list(GtkWidget *widget, GWDataFile *wdata);
-extern int load_wave_file(char *name, char *type);
+extern GWDataFile *load_wave_file(char *name, char *type);
 extern void get_fname_load_file(GtkWidget *w, gpointer d);
 extern void reload_all_wave_files(GtkWidget *w);
 
