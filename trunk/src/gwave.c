@@ -3,6 +3,9 @@
  * 	and waveform-drawing strategies.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  1998/08/25 17:29:31  tell
+ * Support for multiple panels
+ *
  * Revision 1.3  1998/08/25 13:49:47  tell
  * added support for second vertical-bar cursor
  *
@@ -42,8 +45,19 @@ static GdkGC *bg_gdk_gc;
 static GtkAdjustment *win_hsadj;
 static GtkWidget *win_hsbar;
 static GtkWidget *win_xlabel_left, *win_xlabel_right;
-/*static GtkWidget *win_table; */
 static GtkWidget *win_status_label;
+
+/* Colors for drawing waveforms into drawing areas 
+ * in main window
+ */
+typedef struct {
+	char *name;
+	GdkColor gdk_color;
+	GdkGC *gc;
+} MyColor;
+
+int colors_initialized = 0;
+const int NWColors = 6;  /* this many wavecolorN styles must be in wv.gtkrc */
 
 /* VBCursor - structure describing a vertical bar cursor */
 typedef struct {
@@ -62,6 +76,8 @@ typedef struct {
 typedef struct
 {
 	DVar *var;		/* data for y-values.  should be a list? */
+	int colorn;
+	GdkGC *gc;
 	double min_yval;
 	double max_yval;
 	double min_xval;	/* minimum and maximum data x values */
@@ -74,15 +90,13 @@ typedef struct
 	double start_xval;	
 	double end_xval;
 
-	GtkWidget *lvbox;	/* for labels */
+	GtkWidget *lvbox;	/* for Y-labels */
 	GtkWidget *lab_min, *lab_max;
 	GtkWidget *lab_wavename;
-	GtkWidget *win_drawing; /* DrawingArea for waveform */
+	GtkWidget *btn_wavename;
+	GtkWidget *drawing; /* DrawingArea for waveforms */
 	GdkPixmap *pixmap;
 
-	/* will need a color per var */
-	GdkColor gdk_color;	/* the rgb values for the color */
-	GdkGC *gdk_gc;	/* the graphics context entry for the color */
 } WavePanel;
 
 /*
@@ -101,6 +115,7 @@ typedef struct {
 	double end_xval;	/* ending drawn x-value */
 } WaveTable;
 
+void alloc_colors(GtkWidget *widget);
 static void draw_pixmap(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp);
 static void draw_labels(void);
 
@@ -114,14 +129,14 @@ static int val2y(float val, float top, float bot, int height)
 
 static double x2val(WavePanel *wp, int x)
 {
-	int w = wp->win_drawing->allocation.width;
+	int w = wp->drawing->allocation.width;
 	return ((double)x/(double)w) * (wp->end_xval - wp->start_xval) 
 		+ wp->start_xval;
 }
 
 static int val2x(WavePanel *wp, double val)
 {
-	int w = wp->win_drawing->allocation.width;
+	int w = wp->drawing->allocation.width;
 
 	return w * ((val - wp->start_xval) / (wp->end_xval - wp->start_xval));
 }
@@ -191,11 +206,11 @@ static gint click_handler(GtkWidget *widget, GdkEventButton *event,
 	if(csp->shown) {
 		for(i = 0; i < wtable->npanels; i++) {
 			wp = &wtable->panels[i];
-			h = wp->win_drawing->allocation.height;
+			h = wp->drawing->allocation.height;
 			if(wp->start_xval <= csp->xval 
 			   && csp->xval <= wp->end_xval) {
 				x = val2x(wp, csp->xval);
-				gdk_draw_line(wp->win_drawing->window, csp->gdk_gc,
+				gdk_draw_line(wp->drawing->window, csp->gdk_gc,
 				      x, 0, x, h);
 			}
 		}
@@ -207,11 +222,11 @@ static gint click_handler(GtkWidget *widget, GdkEventButton *event,
 	/* draw cursor in each panel */
 	for(i = 0; i < wtable->npanels; i++) {
 		wp = &wtable->panels[i];
-		h = wp->win_drawing->allocation.height;
+		h = wp->drawing->allocation.height;
 		if(wp->start_xval <= csp->xval 
 		   && csp->xval <= wp->end_xval) {
 			x = val2x(wp, csp->xval);
-			gdk_draw_line(wp->win_drawing->window,
+			gdk_draw_line(wp->drawing->window,
 				      csp->gdk_gc, x, 0, x, h);
 		}
 	}
@@ -264,7 +279,7 @@ static gint scroll_handler(GtkWidget *widget)
 		wp = &wtable->panels[i];
 		wp->start_xval = wtable->start_xval;
 		wp->end_xval = wtable->end_xval;
-		draw_pixmap(wp->win_drawing, NULL, wp);
+		draw_pixmap(wp->drawing, NULL, wp);
 	}
 	return 0;
 }
@@ -309,9 +324,6 @@ static gint wv_zoom_out(GtkWidget *widget)
 	win_hsadj->page_increment = win_hsadj->page_size/2;
 	win_hsadj->value = wtable->start_xval;
 
-/*	draw_labels();
-	draw_pixmap(wtable->win_drawing, NULL);
-	*/
 	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "changed");
 	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "value_changed");
 
@@ -323,60 +335,34 @@ static gint expose_handler(GtkWidget *widget, GdkEventExpose *event,
 {
 	int w = widget->allocation.width;
 	int h = widget->allocation.height;
-	static int firsttime = 1;
-	
-  /* On the first time through allocate a new GC and copy the window's
-     black gc into it. Subsequently, free any previous pixmap, create
-     a pixmap of window size and depth, and fill it with bg color. */
-	if ( wp->pixmap == NULL) {
-		int i;
-		if(colormap == NULL)
-			colormap = gdk_window_get_colormap(widget->window);
 
-		gdk_color_alloc(colormap, &wp->gdk_color);
-		wp->gdk_gc = gdk_gc_new(widget->window);
-		gdk_gc_set_foreground(wp->gdk_gc, &wp->gdk_color);
-
-		if(bg_color_name) {
-			gdk_color_alloc(colormap, &bg_gdk_color);
-			bg_gdk_gc = gdk_gc_new(widget->window);
-			gdk_gc_set_foreground(bg_gdk_gc, &bg_gdk_color);
-		} else {
-			bg_gdk_color = widget->style->bg[GTK_WIDGET_STATE(widget)];
-			bg_gdk_gc = widget->style->bg_gc[GTK_WIDGET_STATE(widget)];
-		}
-
-		if(firsttime) {
-			for(i = 0; i < 2; i++) {
-			VBCursor *csp = wtable->cursor[i];
-			gdk_color_alloc(colormap, &csp->gdk_color);
- 			csp->gdk_gc = gdk_gc_new(widget->window);
-			if(!csp->gdk_gc) {
-				fprintf(stderr, "couldn't allocate cursor %d gc\n", i);
-				exit(2);
-			}
-			gdk_gc_set_foreground(csp->gdk_gc, &csp->gdk_color);
-			/* FIX: this GDK_XOR gc doesn't work right unless
-			   background color is explicitly set to "black",
-			   but sometimes it happens to at least be visible */
-			gdk_gc_set_background(csp->gdk_gc, &bg_gdk_color);
-			gdk_gc_set_function(csp->gdk_gc, GDK_XOR);
-			}
-			firsttime = 0;
-		}
-	} else {
-		/* FIX: probably only need to free/new if size changed */
-		gdk_pixmap_unref(wp->pixmap);
+	if(!colors_initialized) {
+		alloc_colors(widget);
+		colors_initialized = 1;
 	}
 
+	/* Get the foreground color for the waveform by using the GdkColor
+	 * of the corresponding label.
+	 */
+	if(!wp->gc) {
+		gdk_color_alloc(colormap, &wp->lab_wavename->style->fg[GTK_STATE_NORMAL]);
+		wp->gc = gdk_gc_new(widget->window);
+		gdk_gc_set_foreground(wp->gc, &wp->lab_wavename->style->fg[GTK_STATE_NORMAL]);
+	}
+
+	if ( wp->pixmap ) {
+		/* CHECK/FIX: only need to free/new if size changed? */
+		gdk_pixmap_unref(wp->pixmap);
+	}
 	wp->pixmap = gdk_pixmap_new(widget->window, w, h, -1);
-   
+
 	/* since the scrollbar event also redraws everything, 
 	 * let its handler do all the work by sending it the signal
 	 * bonus: gets the scrollbar updated if this event is due to a resize.
 	 */
-	/* now that we have many panels, this might cause multiple redraws 
-	 *  - try to figure out what's up, and how to fix it. 
+	/* now that we have many panels, this might cause multiple 
+	 *  unnecessary redraws.  Try to figure out if this is the case,
+	 *  and how to fix it. 
 	 */
 	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "changed");
 	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "value_changed");
@@ -384,12 +370,13 @@ static gint expose_handler(GtkWidget *widget, GdkEventExpose *event,
 	return 0;
 }
 
-
 /*
  * half-assed wave-drawing routine.
  * gets data value and draws a line for every pixel.
  * will exhibit aliasing if data has samples at higher frequency than
  * the screen has pixels.
+ * We know how to do this right, but other things have taken precedence.
+ * ALSO TODO: smarter partial redraws on scrolling, expose, etc.
  */
 
 static void 
@@ -421,7 +408,8 @@ draw_pixmap(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 		x1 = x0 + 1;
 		yval = cz_interp_value(wp->var, xval);
 		y1 = val2y(yval, wp->max_yval, wp->min_yval, h);
-		gdk_draw_line(wp->pixmap, wp->gdk_gc, x0,y0, x1,y1);
+/*		gdk_draw_line(wp->pixmap, wp->col->gc, x0,y0, x1,y1); */
+		gdk_draw_line(wp->pixmap, wp->gc, x0,y0, x1,y1);
 	}
 
 	for(i = 0; i < 2; i++) {
@@ -468,12 +456,12 @@ static void draw_labels(void)
 /*
  * Construct window and initial widgets, then commence main loop.
  */
-static void gtk_display(void)
+static void setup_waveform_window(void)
 {
 	int i;
 	GtkWidget *window,  *box1, *hbox, *bbox, *btn; 
 	/* Determine the minimum and nominal window sizes. */
-	const int min_w=80, min_h=50, nom_w=600, nom_h=100, lab_w=80;
+	const int min_w=80, min_h=50, nom_w=600, nom_h=100;
 
 	/* Create a top-level window. Set the title and establish delete and
 	   destroy event handlers. */
@@ -553,26 +541,30 @@ static void gtk_display(void)
 
 		sprintf(lbuf, "%.15s      ", wp->var->d.name);
 		wp->lab_wavename = gtk_label_new(lbuf);
-		gtk_box_pack_start(GTK_BOX(wp->lvbox), wp->lab_wavename,
+		wp->btn_wavename = gtk_toggle_button_new();
+		gtk_container_add(GTK_CONTAINER(wp->btn_wavename), wp->lab_wavename);
+		gtk_box_pack_start(GTK_BOX(wp->lvbox), wp->btn_wavename,
 				   FALSE, FALSE, 0);
-		gtk_widget_set_name(wp->lab_wavename, "wavelabel");
+		sprintf(lbuf, "wavecolor%d", wp->colorn);
+		gtk_widget_set_name(wp->lab_wavename, lbuf);
 		gtk_widget_show(wp->lab_wavename);
+		gtk_widget_show(wp->btn_wavename);
 
 		/* drawing area for waveform */
-		wp->win_drawing = gtk_drawing_area_new();
-		gtk_drawing_area_size(GTK_DRAWING_AREA(wp->win_drawing), nom_w, nom_h);
-		gtk_widget_show(wp->win_drawing);
-		gtk_table_attach(GTK_TABLE(wtable->table), wp->win_drawing, 
+		wp->drawing = gtk_drawing_area_new();
+		gtk_drawing_area_size(GTK_DRAWING_AREA(wp->drawing), nom_w, nom_h);
+		gtk_widget_show(wp->drawing);
+		gtk_table_attach(GTK_TABLE(wtable->table), wp->drawing, 
 			 1, 2, i, i+1, 
 			 GTK_EXPAND|GTK_FILL, GTK_EXPAND|GTK_FILL, 0, 1);
 
 		gtk_signal_connect(
-			GTK_OBJECT(wp->win_drawing), "expose_event", 
+			GTK_OBJECT(wp->drawing), "expose_event", 
 			(GtkSignalFunc)expose_handler, (gpointer)wp);
 		gtk_signal_connect(
-			GTK_OBJECT(wp->win_drawing), "button_release_event", 
+			GTK_OBJECT(wp->drawing), "button_release_event", 
 			(GtkSignalFunc)click_handler, (gpointer)wp);
-		gtk_widget_set_events(wp->win_drawing, 
+		gtk_widget_set_events(wp->drawing, 
 		      GDK_EXPOSURE_MASK|GDK_BUTTON_RELEASE_MASK);
 	}
 	/* horizontal box for X-axis labels */
@@ -615,15 +607,117 @@ static void gtk_display(void)
 			 GTK_EXPAND|GTK_FILL, GTK_FILL, 0, 0);
 	gtk_widget_show(win_hsbar);
 
-  
-	/* Show the top-level window, set its minimum size, and enter the
-	   Main event loop. */
+	/* Show the top-level window, set its minimum size */
 	gtk_widget_show(box1);
 	gtk_widget_show(window);
-	gdk_window_set_hints(
-		window->window, 0,0,  min_w, min_h, 0,0, GDK_HINT_MIN_SIZE);
-	gtk_main();
+	gdk_window_set_hints(window->window, 0,0,  min_w, min_h, 0,0,
+			     GDK_HINT_MIN_SIZE);
 }
+
+/* Color allocation and related stuff for waveform drawing areas.
+ * done on first expose event.
+ * Actually, we do it all on the first expose of the first drawing area,
+ * and hope that this is OK.  They are all in the same GtkWindow.
+ */
+void alloc_colors(GtkWidget *widget)
+{
+	int i;
+	if(colormap == NULL)
+		colormap = gdk_window_get_colormap(widget->window);
+
+	/* background */
+	if(bg_color_name) {  /* explicitly set background color */
+		gdk_color_alloc(colormap, &bg_gdk_color);
+		bg_gdk_gc = gdk_gc_new(widget->window);
+		gdk_gc_set_foreground(bg_gdk_gc, &bg_gdk_color);
+	} else {  /* use the widget's default one - usually grey */
+		bg_gdk_color = widget->style->bg[GTK_WIDGET_STATE(widget)];
+		bg_gdk_gc = widget->style->bg_gc[GTK_WIDGET_STATE(widget)];
+	}
+
+	/* vertical bar cursors */
+	for(i = 0; i < 2; i++) {
+		VBCursor *csp = wtable->cursor[i];
+		gdk_color_alloc(colormap, &csp->gdk_color);
+			csp->gdk_gc = gdk_gc_new(widget->window);
+		if(!csp->gdk_gc) {
+			fprintf(stderr, "couldn't allocate cursor %d gc\n", i);
+			exit(2);
+		}
+		gdk_gc_set_foreground(csp->gdk_gc, &csp->gdk_color);
+		/* FIX: the GDK_XOR gcs don't work right unless
+		   background color is explicitly set to "black",
+		   but sometimes it happens to at least be visible */
+		gdk_gc_set_background(csp->gdk_gc, &bg_gdk_color);
+		gdk_gc_set_function(csp->gdk_gc, GDK_XOR);
+	}
+
+}
+
+/* TODO: figure out how to get these colors from styles in wv.gtkrc */
+void setup_colors(WaveTable *wt)
+{
+	int i;
+
+	wt->cursor[0]->color_name = "white";
+	wt->cursor[1]->color_name = "yellow";
+	for(i = 0; i < 2; i++) {
+		if(!gdk_color_parse(wt->cursor[i]->color_name, 
+				    &wt->cursor[i]->gdk_color)) {
+			fprintf(stderr, "failed to parse cursor %d color\n", i);
+			exit(1);
+		}
+	}
+
+	/* waveform background */
+	if(bg_color_name) {
+		if(!gdk_color_parse(bg_color_name, &bg_gdk_color)) {
+			fprintf(stderr, "failed to parse bg color\n");
+			exit(1);
+		}
+	}
+
+	/* waveform drawn colors */
+/*	for(i = 0; i < NWColors; i++) {
+		if(!gdk_color_parse(wcolors[i].name, &wcolors[i].gdk_color)) {
+			fprintf(stderr, "failed to parse wfm color %d\n", i);
+			exit(1);
+		}
+	}
+	*/
+}
+
+/*
+ * Add a waveform to a WavePanel
+ */
+void
+add_var_to_panel(WaveTable *wt, WavePanel *wp, DVar *dv, int colorno)
+{
+	int i;
+	g_return_if_fail(wp->var == NULL);
+	
+/*	wp->col = &wcolors[colorno]; */
+	wp->colorn = colorno;
+	wp->var = dv;
+	wp->start_xval = wp->var->iv->d.min;
+	wp->end_xval = wp->var->iv->d.max;
+	wp->min_xval = wp->var->iv->d.min;
+	wp->max_xval = wp->var->iv->d.max;
+	wp->min_yval = wp->var->d.min;
+	wp->max_yval = wp->var->d.max;
+
+	/* Update parameters in wavetable that depend on all panels */
+	wt->min_xval = G_MAXDOUBLE;
+	wt->max_xval = G_MINDOUBLE;
+	for(i = 0; i < wt->npanels; i++) {
+		wp = &wt->panels[i];
+		if(wp->min_xval < wt->min_xval)
+			wt->min_xval = wp->min_xval;
+		if(wp->max_xval > wt->max_xval)
+			wt->max_xval = wp->max_xval;
+	}
+}
+
 
 /*
  * usage -- prints the standard switch info, then exits.
@@ -647,64 +741,6 @@ static void usage(char *fmt, ...)
 }
 
 
-/* TODO: figure out how to get these colors from styles in wv.gtkrc */
-void setup_colors(WaveTable *wt)
-{
-	int i;
-	GdkColor col;
-
-	if(!gdk_color_parse("blue", &col)) {
-		fprintf(stderr, "failed to parse fg color\n");
-		exit(1);
-	}
-	for(i = 0; i < wt->npanels; i++) {
-		wt->panels[i].gdk_color = col;
-	}
-	
-	wt->cursor[0]->color_name = "white";
-	wt->cursor[1]->color_name = "yellow";
-	for(i = 0; i < 2; i++) {
-		if(!gdk_color_parse(wt->cursor[i]->color_name, 
-				    &wt->cursor[i]->gdk_color)) {
-			fprintf(stderr, "failed to parse cursor %d color\n", i);
-			exit(1);
-		}
-	}
-
-	if(bg_color_name) {
-		if(!gdk_color_parse(bg_color_name, &bg_gdk_color)) {
-			fprintf(stderr, "failed to parse bg color\n");
-			exit(1);
-		}
-	}
-
-}
-
-void
-add_var_to_panel(WaveTable *wt, WavePanel *wp, DVar *dv)
-{
-	int i;
-	g_return_if_fail(wp->var == NULL);
-	
-	wp->var = dv;
-	wp->start_xval = wp->var->iv->d.min;
-	wp->end_xval = wp->var->iv->d.max;
-	wp->min_xval = wp->var->iv->d.min;
-	wp->max_xval = wp->var->iv->d.max;
-	wp->min_yval = wp->var->d.min;
-	wp->max_yval = wp->var->d.max;
-
-	/* Update parameters in wavetable that depend on all panels */
-	wt->min_xval = G_MAXDOUBLE;
-	wt->max_xval = G_MINDOUBLE;
-	for(i = 0; i < wt->npanels; i++) {
-		wp = &wt->panels[i];
-		if(wp->min_xval < wt->min_xval)
-			wt->min_xval = wp->min_xval;
-		if(wp->max_xval > wt->max_xval)
-			wt->max_xval = wp->max_xval;
-	}
-}
 
 int main(int argc, char **argv)
 {
@@ -773,13 +809,15 @@ int main(int argc, char **argv)
 	if(field >= df->ndv)
 		field = 0;
 	for(i = 0; i < npanels && field < df->ndv; field++, i++) {
-		add_var_to_panel(wtable, &wtable->panels[i], df->dv[field]);
+		add_var_to_panel(wtable, &wtable->panels[i], df->dv[field],
+				 i % NWColors);
 	}
 	wtable->start_xval = wtable->min_xval;
 	wtable->end_xval = wtable->max_xval;
 
 	setup_colors(wtable);
-	gtk_display();
+	setup_waveform_window();
 
+	gtk_main();
 	return EXIT_SUCCESS;
 }
