@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  1999/01/08 22:40:24  tell
+ * substantial changes and modularization in support of wavepanel add/delete
+ * create right-button popup menu for wavepanels
+ *
  * Revision 1.3  1998/09/30 21:55:39  tell
  * Add menu items for new zoom commands
  * add signal handlers to support dragging of cursors and cmd_zoom_window
@@ -45,7 +49,6 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <gtk/gtk.h>
-#include "reader.h"
 #include "gwave.h"
 
 GtkWidget *var_list_submenu;
@@ -108,7 +111,7 @@ create_wdata_submenuitem(GWDataFile *wdata, GtkWidget *submenu)
 {
 	char buf[128];
 
-	sprintf(buf, "%s: %.120s", wdata->ftag, wdata->df->filename);
+	sprintf(buf, "%s: %.120s", wdata->ftag, wdata->wf->wf_filename);
 	wdata->menu_item = gtk_menu_item_new_with_label(buf);
 	gtk_menu_append(GTK_MENU(submenu), wdata->menu_item);
 	gtk_signal_connect (GTK_OBJECT (wdata->menu_item), "activate",
@@ -129,6 +132,7 @@ create_gwave_menu()
 	gtk_widget_show(menubar);
 
 	menu = create_menu("File", menubar);
+	create_menuitem("About Gwave", menu, create_about_window, NULL);
 	create_menuitem("Read File...", menu, 
 			GTK_SIGNAL_FUNC(get_fname_load_file), NULL);
 	create_menuitem(NULL, menu, NULL, NULL); /* separator */
@@ -179,20 +183,21 @@ vw_get_label_string(char *buf, int buflen, VisibleWave *vw)
 	double xval, dval;
 	int n, l;
 
-	gdf = (GWDataFile *)vw->var->udata;
+	gdf = vw->gdf;
 	g_assert(gdf != NULL);
 
 	l = buflen - strlen(gdf->ftag) - 10;
 	n = MIN(l, 15);
 	xval = wtable->cursor[0]->xval;
-	if(vw->var->iv->d.min <= xval && xval <= vw->var->iv->d.max) {
-		dval = an_interp_value(vw->var, xval);
+	if(vw->var->wv_iv->wds->min <= xval && xval <= vw->var->wv_iv->wds->max) {
+
+		dval = wv_interp_value(vw->var, xval);
 		sprintf(buf, "%s: %.*s %.3f",
-			gdf->ftag, l, vw->var->d.name, dval);
+			gdf->ftag, l, vw->varname, dval);
 	} else {
 		/* should keep track of label state (name vs. name+val)
 		 * and only re-do this if necessary */
-		sprintf(buf, "%s: %.*s    ", gdf->ftag, l, vw->var->d.name);
+		sprintf(buf, "%s: %.*s    ", gdf->ftag, l, vw->varname);
 	}
 
 }
