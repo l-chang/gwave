@@ -1,0 +1,35 @@
+;-*- mode: scheme -*-
+
+(display "in system.gwaverc") (newline)
+
+(debug-enable 'debug)
+(read-enable 'positions)
+
+; can't get backtrace when using use-gwave-modules.
+(use-modules 
+ (gtk gtk)
+ (app gwave std-menus)
+ (app gwave std-toolbar)
+ (app gwave cmds)
+)
+
+; demonstrating how we can add our own menu to the end
+; of the menubar by using append-hook.
+(append-hook! 
+ new-wavewin-hook
+ (lambda ()
+;   (display "in new-wavewin-hook") (newline)
+   (let* ((mbar (get-wavewin-menubar))
+	  (menu (menu-create mbar "SGT")))
+       (add-menuitem menu "my menu" #f)
+       (add-menuitem menu "list files"
+		     (lambda () 
+		       (display "wavefile-list:") (newline)
+		       (display (wavefile-list))
+		       (newline))))))
+
+;(add-hook!
+; new-wavepanel-hook
+;(lambda (wp)
+;   (display "in new-wavepanel-hook ")(display wp)(newline)))
+

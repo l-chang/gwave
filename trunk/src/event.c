@@ -16,9 +16,33 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
+ * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ * $Log: not supported by cvs2svn $
+ * Revision 1.5  1999/09/22 17:29:00  tell
+ * add drag&drop support for Gtk+ 1.2
+ *
+ * Revision 1.4  1999/01/08 22:41:41  tell
+ * button-3 popup menu in wavepanel windows
+ *
+ * Revision 1.1  1998/12/26 04:38:58  tell
+ * Initial revision
+ *
+ * Revision 1.3  1998/09/30 21:58:15  tell
+ * Reorganization of mouse-button event handling to support both dragging of
+ * cursors and select_x_range primitive used to get the range for cmd_zoom_window.
+ * add supress_redraw and some misc stuff while tracking down some bugs.
+ * Attempt to make drawing the waveforms a bit more efficient.
+ *
+ * Revision 1.2  1998/09/17 18:35:49  tell
+ * wrap DnD message as type GWDnDData.
+ * Split cursor draw/update into several functions in preparation for
+ * support of dragging.
+ *
+ * Revision 1.1  1998/09/01 21:28:20  tell
+ * Initial revision
  *
  */
 
@@ -35,8 +59,12 @@
 
 #include <gtk/gtk.h>
 
-#include "gwave.h"
+#include <scwm_guile.h>
+#include <gwave.h>
+#include <wavewin.h>
+#include <guile-gtk.h>
 
+extern sgtk_boxed_info sgtk_gdk_event_info;
 
 void destroy_handler(GtkWidget *widget, gpointer data)
 {
@@ -80,14 +108,25 @@ set_all_wp_cursors(int cnum)
  * selecting a subset of the visible part of the X axis by dragging
  * with button 1.
  */
-void
-select_x_range(SRFunc func, gpointer data)
+SCWM_PROC(select_range_x, "select-range-x", 1, 0, 0,
+           (SCM proc))
+     /** Prompt the user to select a range of the visible X axis using 
+      * button 1 of the mouse.  
+      * When finished, PROC is called with 3 arguments, the
+      * WavePanel where the range is located, and the
+      * begining and ending X pixel value of the selection.
+      */
+#define FUNC_NAME s_select_range_x
 {
-	wtable->srange->done_callback = func;
-	wtable->srange->done_data = data;
+	VALIDATE_ARG_PROC(1, proc);
+	
+	scm_protect_object(proc);
+	wtable->srange->done_proc = proc;
+
 	set_all_wp_cursors(GDK_RIGHT_SIDE);
 	wtable->mstate = M_SELRANGE_ARMED;
 }
+#undef FUNC_NAME
 
 /* draw or undraw srange line, using XOR gc */
 void
@@ -249,10 +288,19 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 		break;
 	case 3:
 		if(wtable->mstate == M_NONE) {
-			wtable->popup_panel = wp;
-			gtk_menu_popup (GTK_MENU (wtable->popup_menu),
+			if(wavepanel_mouse_binding[event->button]) {
+				scwm_safe_call2(
+					wavepanel_mouse_binding[event->button],
+					wp->smob,
+					sgtk_boxed2scm (event, &sgtk_gdk_event_info, 1));
+			} 
+/*			else {
+				wtable->popup_panel = wp;
+				gtk_menu_popup (GTK_MENU (wtable->popup_menu),
 					NULL, NULL, NULL, NULL, 
 					event->button, event->time);
+			}
+*/
 		}
 		break;
 	default:
@@ -285,10 +333,17 @@ button_release_handler(GtkWidget *widget, GdkEventButton *event,
 		gtk_grab_remove(widget);
 		set_all_wp_cursors(-1);
 		update_srange(wtable->srange, event->x, 0);
-		(wtable->srange->done_callback)(wtable->srange->wp,
-						wtable->srange->x1, 
-						wtable->srange->x2, 
-						wtable->srange->done_data);
+		
+		if(wtable->srange->wp->valid 
+		   && gh_procedure_p(wtable->srange->done_proc)) {
+			wtable->srange->wp->outstanding_smob = 1;
+			scwm_safe_call3(wtable->srange->done_proc, 
+					wtable->srange->wp->smob,
+					gh_int2scm(wtable->srange->x1), 
+					gh_int2scm(wtable->srange->x2));
+			scm_unprotect_object(wtable->srange->done_proc);
+		}
+
 		break;
 	default:
 	}
@@ -318,6 +373,7 @@ motion_handler(GtkWidget *widget, GdkEventMotion *event,
 		update_srange(wtable->srange, event->x, 1);
 		break;
 	default:
+		/* a sort of debugging output if we get in a bad state */
 		fputc('.', stderr);
 		break;
 	}
@@ -339,13 +395,14 @@ gint scroll_handler(GtkWidget *widget)
 
 	draw_labels();
 
-	if(wtable->suppress_redraw == 0)
-		for(i = 0; i < wtable->npanels; i++) {
-			wp = wtable->panels[i];
-			wp->start_xval = wtable->start_xval;
-			wp->end_xval = wtable->end_xval;
-			draw_wavepanel(wp->drawing, NULL, wp);
-		}
+	for(i = 0; i < wtable->npanels; i++) {
+		wp = wtable->panels[i];
+		wp->start_xval = wtable->start_xval;
+		wp->end_xval = wtable->end_xval;
+	}
+	if(wtable->suppress_redraw == 0) {
+		wtable_redraw_x();
+	}
 	return 0;
 }
 
@@ -395,4 +452,14 @@ gint expose_handler(GtkWidget *widget, GdkEventExpose *event,
 		draw_wavepanel(wp->drawing, event, wp);
 
 	return 0;
+}
+
+/* guile initialization */
+
+void init_event()
+{
+
+#ifndef SCM_MAGIC_SNARFER
+#include "event.x"
+#endif
 }

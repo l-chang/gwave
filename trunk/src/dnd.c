@@ -13,7 +13,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
+ * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
@@ -36,6 +36,7 @@
 
 #include <config.h>
 #include <gwave.h>
+#include <wavelist.h>
 
 #ifndef GTK_V12
 #include "gtkmisc.h"

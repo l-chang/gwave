@@ -1,0 +1,83 @@
+
+Notes on the adding guile as the extension language to gwave.
+
+
+
+
+For my first attempt at SMOBifying GWDataFile, I'll try this model:
+
+The allocation and destruction of the structure stays as-is in C.
+
+Add a "guile has a pointer" flag to the GWDataFile structure.  Set the
+flag whenever we give guile a pointer to the structure.  If guile
+calls the free_GWDataFile() routine and we want to keep the structure,
+(usual case), just clear the flag.
+
+If delete_wave_file() is called and guile-has-pointer is set, we don't
+actually g_free() the structure, but rather just mark it as invalid.
+(in this case, by freeing and setting to NULL the WaveFile pointer. 
+
+NOTE!! this only works so long as we only ever create one SMOB for each
+GWDataFile.  We should call SGT_NEWCELL_SMOB once, and then keep a copy of it.
+
+-----------------------------------------------------------------------------
+
+Adding a simple primitive to guile - this has been borrowed from SCWM
+
+SCWM_PROC(fname,primname, req, opt, var, ARGLIST)
+#define FUNC_NAME s_fname
+
+fname - name of C function
+primname - guileified version of fname, underscores become dashes, etc.
+req, opt, var - passed to scm_make_gsubr
+        req - number of required args
+        opt - number of optional args
+        var - number of rest args??
+
+ARGLIST - actual list of parameters to C function decl;
+        must be a parenthesized list.
+
+FUNC_NAME define must be s_ prepended to fname (the guile symbol variable name)
+
+Inside the body of the function, use the VALIDATE_ macros to check
+each argument to make sure it is the right type before using it. These
+will throw a guile error if the type doesn't match.
+
+-----------------------------------------------------------------------------
+Turning a C structure into a SMOB in N easy steps:
+
+Remember this: You hand off to guile a pointer to your allocated C structure.
+guile may copy that pointer about, but it never fiddles with what's inside;
+it especialy doesn't try copying the contents of your structure.
+
+
+
+1. to SMOBify a data structure GwDataFIle:
+In appropriate header file, add:
+
+declaration for guile's object-type-ID tag:
+	EXTERN long scm_tc16_scwm_GWDataFile;
+
+The test cast macros:
+
+#define GWDataFile_P(X) (SCM_NIMP(X) && gh_car(X) == (SCM)scm_tc16_scwm_GWDataFile)
+#define GWDataFile(X)  ((GWDataFile *)gh_cdr(X))
+#define SAFE_GWDataFile(X)  (GWDataFile_P((X))? GWDataFile((X)) : NULL)
+
+Whatever validation macros are needed for the ways you'll use the thing:
+
+#define VALIDATE_ARG_GWDataFile(pos,scm) \
+
+2. In the appropriate.c file, say wavelist.c:
+
+2a. Write the three SMOB-required functions,
+	free, mark, and print
+
+2b. Write the test-predicate function, GWDataFile?.
+Just copy and modify an existing one; it really just calls GWDataFile_P
+
+2a. right before the wavelist_init() function, add:
+	MAKE_SMOBFUNS(GWDataFile);
+
+2b. add to wavelist_init() function:
+        REGISTER_SCWMSMOBFUNS(GWDataFile);

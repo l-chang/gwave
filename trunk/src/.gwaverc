@@ -1,0 +1,48 @@
+;-*- mode: scheme -*-
+
+(display "in my experimental .gwaverc") (newline)
+
+(debug-enable 'debug)
+(read-enable 'positions)
+
+(use-modules 
+ (app gwave std-menus)
+ (app gwave std-args)
+ (app gwave std-toolbar)
+ (app gwave cmds)
+)
+
+
+; wavepanel type 0=original, tall, with min/max labels.  Good for analog.
+;                1=jge, short, no extra labels. Fit more for digital.
+; BUG: setting it here affects the panel-creating menu items fine,
+; but doesn't reset the state of the Options/DefaultPanelType radio-menu items.
+(set! default-wavepanel-type 1)
+
+; demonstrating how we can add our own menu to the end
+; of the menubar by using append-hook.
+(append-hook! 
+ new-wavewin-hook
+ (lambda ()
+;   (display "in new-wavewin-hook") (newline)
+   (let* ((mbar (get-wavewin-menubar))
+	  (menu (menu-create mbar "SGT")))
+       (add-menuitem menu "my menu" #f)
+       (add-menuitem menu "garbage collect" gc)
+       (add-menuitem menu "list files"
+		     (lambda () 
+		       (display "wavefile-list:") (newline)
+		       (display (wavefile-list))
+		       (newline)))
+;       (add-menuitem menu "rebuild filelist menuitem" rebuild-varlist-submenu)
+
+)))
+
+
+
+;(add-hook!
+; new-wavepanel-hook
+;(lambda (wp)
+;   (display "in new-wavepanel-hook ")(display wp)(newline)))
+
+(display "experimental .gwaverc done\n")

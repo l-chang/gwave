@@ -22,6 +22,10 @@
 #ifndef GWAVE_H
 #define GWAVE_H
 
+#ifndef SCWM_GUILE_H__
+#include <scwm_guile.h>
+#endif
+
 #include <wavefile.h>
 
 typedef struct _VBCursor VBCursor;
@@ -48,20 +52,6 @@ struct _VBCursor {
 	GdkGC *gdk_gc;
 };
 
-typedef void (*SRFunc)(WavePanel *wp, int x1, int x2, gpointer data);
-
-/* selecting a portion of the X axis */
-struct _SelRange {
-	int drawn;
-	WavePanel *wp;
-	GdkGC *gc;
-	GdkColor gdk_color;
-	int y;
-	int x1, x2;
-	SRFunc done_callback;
-	gpointer done_data;
-};
-
 /* VisibleWave -- a waveform and anciliary stuff needed to show it
  *	in a panel.
  */
@@ -73,31 +63,6 @@ struct _VisibleWave {
 	GdkGC *gc;
 	GtkWidget *label;
 	GtkWidget *button;
-};
-
-/*
- * WavePanel -- describes a single panel containing zero or more waveforms.
- */
-struct _WavePanel {
-	GList *vwlist;	/* list of VisibleWaves shown in this panel. NULL if none */
-	double min_yval; /* min/max data x/y values over whole vwlist */
-	double max_yval;
-	double min_xval;	
-	double max_xval;
-
-	/* starting and ending drawn x-value (independent var),
-	* copied from corresponding wtable values when we scroll/zoom,
-	* later we may allow individual panels to be "locked" 
-	* from global scroll/zoom or otherwise controlled independently */
-	double start_xval;	
-	double end_xval;
-
-	GtkWidget *lvbox;	/* for Y-labels */
-	GtkWidget *lab_min, *lab_max;
-	GtkWidget *drawing; /* DrawingArea for waveforms */
-	GdkPixmap *pixmap;
-	int width, height;
-	int nextcolor;	/* color to use for next added waveform */
 };
 
 /*
@@ -128,17 +93,6 @@ struct _WaveTable {
 };
 
 /*
- * Structure to hold data for a single loaded waveform file.
- */
-struct _GWDataFile {
-	WaveFile *wf;
-	GtkWidget *wlist_win;	/* window with scrolling variable list */
-	GtkWidget *wlist_box; 	/* scrolled box containing DnD variable items */
-	GtkWidget *menu_item;	/* item in main window submenu */
-	char *ftag;	/* short tag used to help identify which file is which */
-};
-
-/*
  * structure sent as drag-and-drop-data for selecting waveforms.
  */
 struct _GWDnDData {
@@ -165,7 +119,7 @@ extern GdkColor pg_gdk_color;
 extern GdkGC *pg_gdk_gc;
 extern GdkColormap *win_colormap; /* colormap for main waveform window */
 extern void create_about_window();
-extern void create_message_window(char *s);
+extern int v_flag;
 
 /* defined in cmd.c */
 extern gint cmd_zoom_full(GtkWidget *widget);
@@ -192,10 +146,10 @@ extern char *val2txt(double val, int style);
 extern void alloc_colors(GtkWidget *widget);
 extern void setup_colors(WaveTable *wtable);
 extern void vw_wp_setup_gc(VisibleWave *vw, WavePanel *wp);
+extern SCM wtable_redraw_x();
 
 /* defined in event.c */
 extern void draw_srange(SelRange *sr);
-extern void select_x_range(SRFunc func, gpointer data);
 extern gint button_press_handler(GtkWidget *widget, GdkEventButton *event, 
 			  gpointer data);
 extern gint button_release_handler(GtkWidget *widget, GdkEventButton *event, 
@@ -212,10 +166,6 @@ extern void wavepanel_dnd_drop (GtkWidget *button, GdkEvent *ev, gpointer d);
 extern char *drag_no_xpm[];
 extern char *wave_drag_ok_xpm[];
 
-/* defined in print.c */
-extern void cmd_export_postscript(GtkWidget *w);
-extern void cmd_export_pnm(GtkWidget *w);
-
 /* defined in wavelist.c */
 void cmd_show_wave_list(GtkWidget *widget, GWDataFile *wdata);
 extern int load_wave_file(char *name, char *type);
@@ -225,18 +175,5 @@ extern void reload_all_wave_files(GtkWidget *w);
 extern char *possible_drag_types[];
 extern char *accepted_drop_types[];
 extern GList *wdata_list;  /* List of GWDataFile *'s */
-
-/* defined in wavewin.c */
-extern GtkWidget *create_menu(char *label, GtkWidget *parent);
-extern void create_wdata_submenuitem(GWDataFile *wdata, GtkWidget *submenu);
-extern void setup_waveform_window();
-extern void vw_get_label_string(char *buf, int buflen, VisibleWave *vw);
-extern void vw_wp_create_button(VisibleWave *vw, WavePanel *wp);
-extern void wavewin_insert_panel(WavePanel *wp);
-extern void wavewin_delete_panel(WavePanel *wp);
-extern void cmd_popup_delete_panel(GtkWidget *w);
-extern void cmd_popup_insert_panel(GtkWidget *w);
-extern void cmd_append_panel(GtkWidget *w);
-extern WavePanel *last_drop_wavepanel;
 
 #endif
