@@ -1,26 +1,28 @@
 
 /*
  * declarations and definitions for gwave - waveform viewer
- * Steve Tell
+ * Copyright 1998, 1999 Stephen G. Tell
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.1  1998/12/26 02:56:16  tell
- * Initial revision
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * Revision 1.3  1998/09/30 21:50:41  tell
- * Add stuff for dragging of cursors and zoom-to-window,
- * and associated restructuring of zoom commands and mouse-button event handling
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * Revision 1.2  1998/09/17 18:30:19  tell
- * Lots of changes.  multiple panels, multiple files, etc.
- *
- * Revision 1.1  1998/08/31 21:01:20  tell
- * Initial revision
+ * You should have received a copy of the GNU Library General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
 
 #ifndef GWAVE_H
 #define GWAVE_H
+
+#include <wavefile.h>
 
 typedef struct _VBCursor VBCursor;
 typedef struct _SelRange SelRange;
@@ -64,8 +66,9 @@ struct _SelRange {
  *	in a panel.
  */
 struct _VisibleWave {
-	DVar *var;
+	WaveVar *var;
 	GWDataFile *gdf;
+	char *varname;	/* the variable name from the file */
 	int colorn;
 	GdkGC *gc;
 	GtkWidget *label;
@@ -76,7 +79,7 @@ struct _VisibleWave {
  * WavePanel -- describes a single panel containing zero or more waveforms.
  */
 struct _WavePanel {
-	GList *vwlist;	/* list of waves shown in this panel. NULL if none */
+	GList *vwlist;	/* list of VisibleWaves shown in this panel. NULL if none */
 	double min_yval; /* min/max data x/y values over whole vwlist */
 	double max_yval;
 	double min_xval;	
@@ -128,8 +131,9 @@ struct _WaveTable {
  * Structure to hold data for a single loaded waveform file.
  */
 struct _GWDataFile {
-	DataFile *df;
+	WaveFile *wf;
 	GtkWidget *wlist_win;	/* window with scrolling variable list */
+	GtkWidget *wlist_box; 	/* scrolled box containing DnD variable items */
 	GtkWidget *menu_item;	/* item in main window submenu */
 	char *ftag;	/* short tag used to help identify which file is which */
 };
@@ -138,7 +142,8 @@ struct _GWDataFile {
  * structure sent as drag-and-drop-data for selecting waveforms.
  */
 struct _GWDnDData {
-	DVar *dv;
+	int magic;
+	WaveVar *dv;
 };
 
 /* globals defined in gwave.c */
@@ -155,7 +160,12 @@ extern int colors_initialized;
 extern char *bg_color_name;
 extern GdkColor bg_gdk_color;
 extern GdkGC *bg_gdk_gc;
+extern char *pg_color_name;
+extern GdkColor pg_gdk_color;
+extern GdkGC *pg_gdk_gc;
 extern GdkColormap *win_colormap; /* colormap for main waveform window */
+extern void create_about_window();
+extern void create_message_window(char *s);
 
 /* defined in cmd.c */
 extern gint cmd_zoom_full(GtkWidget *widget);
@@ -164,8 +174,9 @@ extern gint cmd_zoom_out(GtkWidget *widget);
 extern gint cmd_zoom_cursors(GtkWidget *widget);
 extern gint cmd_zoom_window(GtkWidget *widget);
 extern gint cmd_delete_selected_waves(GtkWidget *widget);
+extern void remove_wfile_waves(GWDataFile *wdata);
 extern void remove_wave_from_panel(WavePanel *wp, VisibleWave *vw);
-extern void add_var_to_panel(WavePanel *wp, DVar *dv);
+extern void add_var_to_panel(WavePanel *wp, WaveVar *dv);
 extern void wavepanel_update_data(WavePanel *wp);
 extern void wavetable_update_data();
 
@@ -177,7 +188,7 @@ extern void draw_labels(void);
 extern int val2y(double val, double top, double bot, int height);
 extern double x2val(WavePanel *wp, int x);
 extern int val2x(WavePanel *wp, double val);
-extern char *val2txt(double val);
+extern char *val2txt(double val, int style);
 extern void alloc_colors(GtkWidget *widget);
 extern void setup_colors(WaveTable *wtable);
 extern void vw_wp_setup_gc(VisibleWave *vw, WavePanel *wp);
@@ -201,15 +212,22 @@ extern void wavepanel_dnd_drop (GtkWidget *button, GdkEvent *ev, gpointer d);
 extern char *drag_no_xpm[];
 extern char *wave_drag_ok_xpm[];
 
+/* defined in print.c */
+extern void cmd_export_postscript(GtkWidget *w);
+extern void cmd_export_pnm(GtkWidget *w);
+
 /* defined in wavelist.c */
 void cmd_show_wave_list(GtkWidget *widget, GWDataFile *wdata);
 extern int load_wave_file(char *name, char *type);
 extern void get_fname_load_file(GtkWidget *w, gpointer d);
+extern void reload_all_wave_files(GtkWidget *w);
+
 extern char *possible_drag_types[];
 extern char *accepted_drop_types[];
 extern GList *wdata_list;  /* List of GWDataFile *'s */
 
 /* defined in wavewin.c */
+extern GtkWidget *create_menu(char *label, GtkWidget *parent);
 extern void create_wdata_submenuitem(GWDataFile *wdata, GtkWidget *submenu);
 extern void setup_waveform_window();
 extern void vw_get_label_string(char *buf, int buflen, VisibleWave *vw);
@@ -219,5 +237,6 @@ extern void wavewin_delete_panel(WavePanel *wp);
 extern void cmd_popup_delete_panel(GtkWidget *w);
 extern void cmd_popup_insert_panel(GtkWidget *w);
 extern void cmd_append_panel(GtkWidget *w);
+extern WavePanel *last_drop_wavepanel;
 
 #endif
