@@ -45,7 +45,16 @@ the cursors.
 Pressing and holding the right mouse button while the cursor is in a
 waveform panel brings up a popup menu.  From this menu you can insert
 and delete waveform panels.  Some of the zoom commands are also
-replicated on this menu.
+replicated on this menu.  
+
+Zooming of the Y axis to magnify a signal verticaly is only available
+on the wavepanel popup-menu because it affects each wavepanel
+seperately.  By default, each wavepanel automaticly scales to enclose
+the minimum and maximum values of the signals displayed in it.  Adding
+or removing signals may change the y-axis extents.  After a Y-zoom or
+XY-zoom operation, the Y axis for that particular wavepanel changes to
+"manual" mode and remains fixed.  To restore the panel to full-size
+with automatic Y zooming, select the "Zoom Y Full + Auto" menu option.
 
 
 Configuration save/restore
@@ -77,12 +86,14 @@ conditions.
 In addition to the configuration-script-writing facilities described
 here, you are welcome to create your own guile scripts for specialized
 gwave applications.  For general guile information, see
-http://www.gnu.org/software/guile/guile.html For information on
-gwave-specfic features available for scripting gwave using guile, see
-the text files gwave-concepts.txt, gwave-hooks.txt,
-gwave-procedures.txt, and gwave-variables.txt All of gwave's menus and
-many of its user-interface features are written in guile; the code in
-the scheme subdirectory may also be useful as an example.
+http://www.gnu.org/software/guile/guile.html 
+
+For information on gwave-specfic features available for scripting
+gwave using guile, see the text files gwave-concepts.txt,
+gwave-hooks.txt, gwave-procedures.txt, and gwave-variables.txt All of
+gwave's menus and many of its user-interface features are written in
+guile; the code in the scheme subdirectory may also be useful as an
+example.
 
 
 Remote Control
@@ -115,7 +126,6 @@ Bug: do not use gwave-exec or gwaverepl when running multiple
 instances of gwave at a time on the same X server.
 
 
-
 Waveform Input files.
 
 Gwave understands CAzM transient output (.N/.B/.W) files, the binary
@@ -137,8 +147,9 @@ gwave running on a little-endian machine.  Your mileage may vary (but
 please send bug reports!)
 
 ACS (Al's Circuit Simulator, http://www.geda.seul.org/tools/acs/index.html)
-Gwave should identify and read ACS output files, generated with the '>'
-option to a .tran statement.  
+and its newer, renamed decendant GnuCAP (http://www.gnu.org/software/gnucap):
+Gwave should identify and read ACS/GnuCAP output files, generated with
+the '>' option to a .tran statement.
 
 Avanti's HSPICE.
 Gwave should work with both ascii and binary output in the form of
@@ -217,8 +228,6 @@ This tool is far from complete. Partial contents of the To Do list:
   of waveform name/value labels when moving cursors.
 - Generate a postscript representation for printing or documentation.
 	(partly done)
-- Override of wave and panel paramters, like min/max Y value, color, etc.
-	Many of these are done.... needs docs...
 - More guile methods to round out the interface, including:
 	access to selected-VisibleWave list, others.
 - Drawing a labeled graticule in the waveform area

@@ -1,5 +1,9 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20020109:
+- interactive Y-zoom and XY-area zoom added
+- zoom-to-exact-coordinate dialog box added
+
 New in 20011021:
 - better measurement: value at both cursors or difference in values at cursors
 - enhanced handling of log scales

@@ -1,4 +1,4 @@
-/* $Id: guile-compat.h,v 1.4 2001-08-20 04:27:58 sgt Exp $ */
+/* $Id: guile-compat.h,v 1.5 2002-01-10 04:04:26 sgt Exp $ */
 /*
  * Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
  *
@@ -35,11 +35,6 @@ extern "C" {
 #define gh_free(x) free(x)
 #endif
 
-#ifndef HAVE_SCM_PUTS
-#define scm_putc(x,y) scm_gen_putc(x,y)
-#define scm_puts(x,y) scm_gen_puts(scm_regular_port,x,y)
-#endif
-
 #ifndef HAVE_GH_LENGTH
 #define gh_length gh_list_length
 #endif /* HAVE_GH_LENGTH */
@@ -60,69 +55,33 @@ SCM scm_parse_path (char *path, SCM tail);
 #define gh_vector_ref gh_vref
 #endif
 
+#ifdef HAVE_SCM_THE_LAST_STACK_FLUID_VAR
+#define DEREF_LAST_STACK scm_fluid_ref(SCM_VARIABLE_REF (scm_the_last_stack_fluid_var))
+#else
 #ifdef HAVE_SCM_THE_LAST_STACK_FLUID
   /* from libguile/fluids.h --07/01/98 gjb */
 SCM scm_fluid_ref (SCM fluid);
 SCM scm_fluid_set_x (SCM fluid, SCM value);
 #define DEREF_LAST_STACK scm_fluid_ref(gh_cdr(scm_the_last_stack_fluid))
 #define SET_LAST_STACK(X) scm_fluid_set_x (gh_cdr (scm_the_last_stack_fluid), (X))
-
 #else
 #define DEREF_LAST_STACK gh_cdr(scm_the_last_stack_var)
 #define SET_LAST_STACK(X) gh_set_cdr_x(scm_the_last_stack_var, (X))
+#endif
 #endif
 
 #ifndef SCM_EOF_OBJECT_P
 #define SCM_EOF_OBJECT_P(x) ((x) == SCM_EOF_VAL)
 #endif
 
-#ifndef HAVE_SCM_INTERNAL_CWDR
-
-/* Simulate cwdr with catch. */
-#define scm_internal_cwdr(body, body_data, handler, handler_data, \
-			  stack_start) \
-scm_internal_catch (SCM_BOOL_T, body, body_data, handler, handler_data)
-#endif /* SCM_INTERNAL_CWDR */
-
 SCM 
 scm_internal_cwdr_no_unwind (scm_catch_body_t body, void *body_data,
 			     scm_catch_handler_t handler, void *handler_data,
 			     SCM_STACKITEM *stack_start);
 
-
-
-#ifndef HAVE_SCM_INTERNAL_STACK_CATCH
-extern SCM scm_internal_stack_catch (SCM tag,
-				     scm_catch_body_t body,
-				     void *body_data,
-				     scm_catch_handler_t handler,
-				     void *handler_data);
-#endif
-
-#ifndef HAVE_SCM_INTERNAL_PARSE_PATH
-#define scm_internal_parse_path scm_parse_path
-#endif
-
 #ifndef gh_memq
 #define gh_memq scm_memq
 #endif
-
-typedef void (*main_prog_t) (int argc, char **argv);
-
-#ifdef HAVE_SCM_LOAD_STARTUP_FILES
-#define scwm_gh_enter gh_enter		     
-#else /* !HAVE_SCM_LOAD_STARTUP_FILES */
-void scwm_gh_enter (int argc, char *argv[], main_prog_t c_main_prog);
-#endif /* !HAVE_SCM_LOAD_STARTUP_FILES */
-
-
-
-
-
-#ifdef __cplusplus
-}
-#endif
-
 
 SCM make_output_strport(char *fname);
 #ifndef HAVE_SCM_STRPORT_TO_STRING
