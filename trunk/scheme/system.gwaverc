@@ -1,17 +1,30 @@
 ;-*- mode: scheme -*-
+;
+; system.gwaverc: default standard startup configuration for gwave.
+;
+; Gwave configuration and scripting is done in guile; the  GNU
+; extension language, which is an implementation of the scheme language.
+; see http://www.gnu.ai.mit.edu/software/guile/guile.html
+; for generic information on Guile.
+;
+; To personalize gwave, copy this system.gwaverc file to
+; $HOME/.gwaverc, and edit as appropriate.
+;
 
-; message printed only when debug messages are enabled with -x option.
+;  this message is printed only when debug messages are enabled with -x option.
 (dbprint "in system.gwaverc\n")
 
 (debug-enable 'debug)
 (read-enable 'positions)
 
-(use-modules 
- (app gwave std-menus)
- (app gwave std-args)
- (app gwave std-toolbar)
- (app gwave visiblewave-ops)
-)
+; Uncomment this to turn off tooltips (those popup hints on buttons).
+;(gtk-tooltips-disable gwave-tooltips)
+
+; An example of loading an additional module of guile code.
+; this particular one creates another pullown menu, with some debugging items.
+;(use-modules 
+; (app gwave extra-menus)
+;)
 
 ; Number of initial wave panels to create.
 (set! initial-panels 2)

@@ -22,7 +22,7 @@
  (lambda ()
 ;   (display "in new-wavewin-hook") (newline)
    (let* ((mbar (get-wavewin-menubar))
-	  (menu (menu-create mbar "SGT")))
+	  (menu (menu-create mbar "Debug")))
        (add-menuitem menu "my menu" #f)
        (add-menuitem menu "garbage collect" gc)
 
