@@ -84,6 +84,13 @@ the installed data directory, typicaly PREFIX/share, as set by configure.
 It is used by the startup code as a default location for finding gwave's
 guile modules.");
 
+SCM_VCELL_INIT(scm_gwave_bingwave, "gwave-bin-gwave-path", gh_str02scm(BINGWAVE),
+"This variable is initialized to contain the compiled-in pathname to
+the installed gwave executable, typicaly PREFIX/bin/gwave, as set by configure.
+It is used by the procedures that write out gwave configuration-restoring
+scripts so that when run from the command line command line, the scripts
+can use gwave as their interpreter.");
+
 SCM_VCELL(scm_gwave_debug, "gwave-debug",
 "This variable is set to #t very early in gwave's startup when the -x flag
 is passed on the command line.  It enables debugging output to stdout
@@ -146,11 +153,7 @@ main(int argc, char **argv)
 void gwave_main(int argc, char **argv)
 {
 	int c;
-	extern int optind;
-	extern char *optarg;
-	int errflg = 0;
 	int nobacktrace = 0;
-	int i;
 
 	SCM_REDEFER_INTS;
 	init_scwm_guile();
@@ -167,7 +170,7 @@ void gwave_main(int argc, char **argv)
 	gtk_init(&argc, &argv);
 
 	prog_name = argv[0];
-	while ((c = getopt (argc, argv, "np:vx")) != EOF) {
+	while ((c = getopt (argc, argv, "nvx")) != EOF) {
 		switch(c) {
 		case 'n':
 			nobacktrace = 1;
@@ -179,15 +182,9 @@ void gwave_main(int argc, char **argv)
 			x_flag = 1;
 			SCM_SETCDR(scm_gwave_debug, SCM_BOOL_T);
 			break;
-		case 'p':
-			break;
 		default:
-			errflg = 1;
 			break;
 		}
-	}
-	if(errflg) {
-		usage(NULL);
 	}
 
 	gtk_rc_parse_string(gwave_base_gtkrc);

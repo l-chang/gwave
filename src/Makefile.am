@@ -16,7 +16,7 @@ gwave_LDADD = $(top_srcdir)/spicefile/libspicefile.a  @GTK_LIBS@ @GUILEGTK_LIBS@
 gwave_LDFLAGS =  @GUILE_LDFLAGS@
 
 CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILEGTK_CFLAGS@ \
-	-DDATADIR=\"$(datadir)\" @ggtk_hack_cflags@
+	-DDATADIR=\"$(datadir)\" -DBINGWAVE=\"$(bindir)/gwave\" @ggtk_hack_cflags@
 
 DOT_X_FILES = gwave.x cmd.x wavewin.x wavelist.x scwm_guile.x event.x \
 	draw.x print.x gtkmisc.x
