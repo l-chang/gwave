@@ -21,6 +21,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.12  2001/03/20 05:53:19  sgt
+ * create "measure button" abstraction, and use it for cursor values
+ *
  * Revision 1.11  2001/03/13 06:49:51  sgt
  * Change label area on the left side of a panel to use a table,
  * and display two measurements.  measurements are currently the two
@@ -93,36 +96,10 @@ void destroy_handler(GtkWidget *widget, gpointer data)
 	gtk_main_quit();
 }
 
-/* vw_wp_visit_update_measure -- called from g_list_foreach to update the
- * measurement labels for a VisibleWave
- * For now, this is hardwired so that measurement 0 is the value at cursor 0,
- * measurement 1 is the value at cursor 1.  
- * TODO: 
- *	- make this configurable.
- *	- we're updating both labels whenever either cursor changes;
- *	  try to avoid the extra work if possible.
+/* 
+ * Set the X pointer cursor for all wavepanels: used to provide a
+ * hint that we're expecting the user to drag out a line or region.
  */
-void 
-vw_wp_visit_update_measure(gpointer p, gpointer d)
-{
-	VisibleWave *vw = (VisibleWave *)p;
-	double xval, dval;
-	char lbuf[64];
-	int i;
-
-	for(i = 0; i < 2; i++) {
-		xval = wtable->cursor[i]->xval;
-		if(wtable->cursor[i]->shown &&
-		   vw->var->wv_iv->wds->min <= xval 
-		   && xval <= vw->var->wv_iv->wds->max) {
-			dval = wv_interp_value(vw->var, xval);
-			gtk_label_set(GTK_LABEL(vw->meas_label[i]), val2txt(dval, 0));
-		} else {
-			gtk_label_set(GTK_LABEL(vw->meas_label[i]), "");
-		}
-	}
-}
-
 void
 set_all_wp_cursors(int cnum)
 {
@@ -195,7 +172,7 @@ update_srange(SelRange *sr, int newx2, int draw)
 }
 
 /*
- * draw (or undraw) cursor.
+ * draw (or undraw) a vertical-bar cursor.
  */
 static void
 draw_cursor(VBCursor *csp)
@@ -237,16 +214,12 @@ update_cursor(VBCursor *csp, double xval)
 	/* draw cursor in each panel */
 	draw_cursor(csp);
 
-	/* update name/value label */
-/*	gtk_container_disable_resize(GTK_CONTAINER(win_main)); */
-
-	for(i = 0; i < wtable->npanels; i++) {
-		wp = wtable->panels[i];
-		g_list_foreach(wp->vwlist, vw_wp_visit_update_measure, wp);
-	}
-
 	/* update all measurebuttons, those that show the values of the
-	 cursor, and those that show the value of some WaveVar at a cursor */
+	 * cursor, and those that show the value of some WaveVar at a cursor.
+	 * 
+	 * TODO:  pass in some indication of what changed, since only
+	 * one cursor (usually) moves at a time.
+	 */
 	mbtn_update_all();
 }
 

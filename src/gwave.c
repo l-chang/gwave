@@ -68,7 +68,7 @@ GdkColormap *win_colormap; /* colormap for main waveform window */
 GtkAdjustment *win_hsadj;
 GtkWidget *win_hsbar;
 GtkWidget *win_xlabel_left, *win_xlabel_right;
-GtkTooltips *gwave_tooltips;
+/* GtkTooltips *gwave_tooltips; */
 
 
 /* variables accessible from C and guile */
@@ -194,7 +194,6 @@ void gwave_main(int argc, char **argv)
 
 	gtk_rc_parse_string(gwave_base_gtkrc);
 	gtk_rc_parse("gwave.gtkrc");
-	gwave_tooltips = gtk_tooltips_new();
 	assert( SCM_CONSP(scm_gwave_tooltips) );
 
 #ifdef GUILE_GTK_EXTRA_LOADPATH
