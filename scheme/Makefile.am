@@ -5,7 +5,8 @@ guiledir=$(datadir)/guile/app/gwave
 guile_DATA=system.gwaverc cmds.scm dynlink.scm globals.scm minimal.scm \
 	std-args.scm std-menus.scm std-toolbar.scm gtk-helpers.scm \
 	extra-menus.scm visiblewave-ops.scm gwave-startup.scm \
-	utils.scm export.scm export-gnugraph.scm export-gnuplot.scm
+	utils.scm export.scm export-gnugraph.scm export-gnuplot.scm \
+	gwave-config.scm
 
 EXTRA_DIST=$(guile_DATA)
 
