@@ -20,6 +20,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  1998/09/01 21:28:09  tell
+ * Initial revision
+ *
  */
 
 #include <ctype.h>
@@ -116,9 +119,11 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 	for(i = 0, xval = wp->start_xval; i < w; i++, xval += xstep) {
 		x0 = x1; y0 = y1;
 		x1 = x0 + 1;
-		yval = an_interp_value(vw->var, xval);
-		y1 = val2y(yval, wp->max_yval, wp->min_yval, h);
-		gdk_draw_line(wp->pixmap, vw->gc, x0,y0, x1,y1);
+		if(vw->var->iv->d.min <= xval && xval <= vw->var->iv->d.max) {
+			yval = an_interp_value(vw->var, xval);
+			y1 = val2y(yval, wp->max_yval, wp->min_yval, h);
+			gdk_draw_line(wp->pixmap, vw->gc, x0,y0, x1,y1);
+		}
 	}
 }
 
@@ -136,9 +141,11 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 	gdk_draw_rectangle(
 		wp->pixmap, bg_gdk_gc, TRUE, 0,0, w,h);
 
-	g_list_foreach(wp->vwlist, (GFunc)vw_wp_visit_draw, wp); /* draw waves */
+	/* draw waves */
+	g_list_foreach(wp->vwlist, (GFunc)vw_wp_visit_draw, wp); 
 
-	for(i = 0; i < 2; i++) {			/* draw cursors */
+	/* draw cursors */
+	for(i = 0; i < 2; i++) {			
 		VBCursor *csp = wtable->cursor[i];
 		if(csp->shown) {
 			if(wp->start_xval <= csp->xval 
