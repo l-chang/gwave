@@ -3,7 +3,7 @@
  *
  * Functions for drawing waveforms
  *
- * Copyright (C) 1998  University of North Carolina at Chapel Hill
+ * Copyright (C) 1998, 1999 Stephen G. Tell
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,21 +15,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Library General Public
+ * You should have received a copy of the GNU General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Log: not supported by cvs2svn $
- * Revision 1.3  1998/09/30 21:52:32  tell
- * various fixes to clean up lingering bug - error messages on first few redraws
- * a few things for the range-select function
- *
- * Revision 1.2  1998/09/17 18:33:39  tell
- * Only draw portion of wave for which there is actually data - with multiple
- * files loaded, can scroll off the end of one.
- *
- * Revision 1.1  1998/09/01 21:28:09  tell
- * Initial revision
  *
  */
 
@@ -47,6 +35,80 @@
 #include <gtk/gtk.h>
 
 #include "gwave.h"
+
+/* convert double value to printable text.
+ * Two modes:
+ * 0: using suffixes
+ *    We always try to print 4 significant figures, with one nonzero digit
+ *    to the left of the decimal point.
+ *    maximum field width: 7 characters
+ *
+ * 1: use scientific notation, printf %g format.
+ *    maximum field width appears to be 10 characters
+ *
+ * FIXME:tell   for each caller of this routine, provide a mechanism
+ *  for the user to specify which style to use.
+ */
+char *val2txt(double val, int mode)
+{
+	static char buf[64];
+	double aval = fabs(val);
+	double sval, asval;
+	char suffix;
+	int ddigits;
+
+	switch(mode) {
+	case 1:
+		sprintf(buf, "% .4g", val);
+		break;
+	case 0:
+	default:
+		if(1e12 <= aval) {
+			suffix = 'T';
+			sval = val / 1e12;
+		} else if(1e9 <= aval && aval < 1e12) {
+			suffix = 'G';
+			sval = val / 1e9;
+		} else if(1e6 <= aval && aval < 1e9) {
+			suffix = 'M';
+			sval = val / 1e6;
+		} else if(1e3 <= aval && aval < 1e6) {
+			suffix = 'K';
+			sval = val / 1000;
+		} else if(1e-3 <= aval && aval < 1) {
+			suffix = 'm';
+			sval = val * 1000;
+		} else if(1e-6 <= aval && aval < 1e-3) {
+			suffix = 'u';
+			sval = val * 1e6;
+		} else if(1e-9 <= aval && aval < 1e-6) {
+			suffix = 'n';
+			sval = val * 1e9;
+		} else if(1e-12 <= aval && aval < 1e-9) {
+			suffix = 'p';
+			sval = val * 1e12;
+		} else if(1e-15 <= aval && aval < 1e-12) {
+			suffix = 'f';
+			sval = val * 1e15;
+		} else if(DBL_EPSILON < aval && aval < 1e-15) {
+			suffix = 'a';
+			sval = val * 1e18;
+		} else {
+			suffix = ' ';
+			sval = val;
+		}
+		asval = fabs(sval);
+		if(1.0 <=  asval && asval < 10.0) 
+			ddigits = 3;
+		else if(10.0 <=  asval && asval < 100.0) 
+			ddigits = 2;
+		else 
+			ddigits = 1;
+		sprintf(buf, "% .*f%c", ddigits, sval, suffix);
+		break;
+	}	
+	return buf;
+}
 
 /* convert value to pixmap y coord */
 int val2y(double val, double top, double bot, int height)
@@ -68,35 +130,13 @@ int val2x(WavePanel *wp, double val)
 	return w * ((val - wp->start_xval) / (wp->end_xval - wp->start_xval));
 }
 
-/* convert double value to printable text,
- * using suffixes to make things more precise
- */
-char *val2txt(double val)
-{
-	static char buf[64];
-	double aval = fabs(val);
-	if(1e-3 <= aval && aval < 0) {
-		sprintf(buf, "%.2fm", val * 1000);
-	} else if(1e-6 <= aval && aval < 1e-3) {
-		sprintf(buf, "%.2fu", val * 1e6);
-	} else if(1e-9 <= aval && aval < 1e-6) {
-		sprintf(buf, "%.2fn", val * 1e9);
-	} else if(1e-12 <= aval && aval < 1e-9) {
-		sprintf(buf, "%.2fp", val * 1e12);
-	} else {
-		sprintf(buf, "%.2f", val);
-	}
-	
-	return buf;
-}
-
 
 /*
  * half-assed wave-drawing routine.
  * gets data value and draws a line for every pixel.
  * will exhibit aliasing if data has samples at higher frequency than
  * the screen has pixels.
- * We know how to do this right, but working on other things have taken
+ * We know how to do this right, but working on other things has taken
  * precedence.
  * ALSO TODO: smarter partial redraws on scrolling, expose, etc.
  */
@@ -150,6 +190,9 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 	}
 }
 
+/*
+ * Repaint all or part of a wavepanel.
+ */
 void 
 draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 {
@@ -163,7 +206,9 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 
 	gdk_draw_rectangle(wp->pixmap, bg_gdk_gc, TRUE, 0,0, w,h);
 
-	/* draw horizontal line at y=zero */
+	/* draw horizontal line at y=zero 
+	 * someday: a real graticule 
+	 */
 	if(wp->min_yval < 0 && wp->max_yval > 0) {
 		y = val2y(0, wp->max_yval, wp->min_yval, h);
 		gdk_draw_line(wp->pixmap, pg_gdk_gc, 0, y, w, y);
@@ -210,8 +255,8 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
  */
 void draw_labels(void)
 {
-	gtk_label_set(GTK_LABEL(win_xlabel_left), val2txt(wtable->start_xval));
-	gtk_label_set(GTK_LABEL(win_xlabel_right), val2txt(wtable->end_xval));
+	gtk_label_set(GTK_LABEL(win_xlabel_left), val2txt(wtable->start_xval, 0));
+	gtk_label_set(GTK_LABEL(win_xlabel_right), val2txt(wtable->end_xval, 0));
 }
 
 /* Color allocation and related stuff for waveform drawing area
