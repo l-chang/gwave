@@ -38,6 +38,7 @@
 #include <scwm_guile.h>
 #include <gwave.h>
 #include <wavelist.h>
+#include <measurebtn.h>
 
 #define WAVEWIN_IMPLEMENTATION
 #include <wavewin.h>
@@ -326,10 +327,23 @@ void setup_waveform_window(void)
 	gtk_box_pack_start(GTK_BOX(wtable->vbox),
 			   win_main_toolbar, FALSE, FALSE, 0);
 
-	/* label with cursor status */
-	win_status_label = gtk_label_new(" ");
-	gtk_box_pack_start(GTK_BOX(wtable->vbox), win_status_label, FALSE, FALSE, 0);
-	gtk_widget_show(win_status_label);
+	/* label with cursor status, and the three cursor measurebuttons */
+	wtable->xmeasure_hbox = gtk_hbox_new(FALSE, 0);
+	gtk_widget_show(wtable->xmeasure_hbox);
+	gtk_box_pack_start(GTK_BOX(wtable->vbox),
+			   wtable->xmeasure_hbox, FALSE, FALSE, 0);
+
+	wtable->cursor_mbtn[2] = measure_button_new(NULL, MBF_CURSORDIFF);
+	gtk_box_pack_end(GTK_BOX(wtable->xmeasure_hbox),
+			   wtable->cursor_mbtn[2]->button,  FALSE, FALSE, 0);
+
+	wtable->cursor_mbtn[1] = measure_button_new(NULL, MBF_CURSOR1);
+	gtk_box_pack_end(GTK_BOX(wtable->xmeasure_hbox),
+			   wtable->cursor_mbtn[1]->button,  FALSE, FALSE, 0);
+
+	wtable->cursor_mbtn[0] = measure_button_new(NULL, MBF_CURSOR0);
+	gtk_box_pack_end(GTK_BOX(wtable->xmeasure_hbox),
+			   wtable->cursor_mbtn[0]->button, FALSE, FALSE, 0);
 
 	/* set up initial WavePanels - remnant to be removed */
 	for(i = 0; i < wtable->npanels; i++) {
