@@ -21,6 +21,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.9  2000/08/08 06:41:23  sgt
+ * Convert to guile-1.4 style SCM_DEFINE macros, where the docstrings
+ * are strings, not comments.  Remove some unused functions.
+ * Other guile-1.4 compatibility.  Not tested with earlier guile yet.
+ *
  * Revision 1.8  2000/04/27 06:14:38  tell
  * Implement logarithmic axis scaling.
  * Working well for Y, needs fixing for X.
@@ -176,8 +181,9 @@ draw_cursor(VBCursor *csp)
 		if(wp->start_xval <= csp->xval 
 		   && csp->xval <= wp->end_xval) {
 			x = val2x(wp, csp->xval, wtable->logx);
-			gdk_draw_line(wp->drawing->window, csp->gdk_gc,
-			      x, 0, x, h);
+			if(wp->drawing->window)
+				gdk_draw_line(wp->drawing->window, csp->gdk_gc,
+					      x, 0, x, h);
 		}
 	}
 }
@@ -186,7 +192,7 @@ draw_cursor(VBCursor *csp)
  * move cursor at specified location;
  * turn it on if not on already.
  */
-static void 
+void 
 update_cursor(VBCursor *csp, double xval)
 {
 	WavePanel *wp;

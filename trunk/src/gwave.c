@@ -153,6 +153,7 @@ main(int argc, char **argv)
 void gwave_main(int argc, char **argv)
 {
 	int c;
+	int i;
 	int nobacktrace = 0;
 
 	SCM_REDEFER_INTS;
@@ -170,20 +171,18 @@ void gwave_main(int argc, char **argv)
 	gtk_init(&argc, &argv);
 
 	prog_name = argv[0];
-	while ((c = getopt (argc, argv, "nvx")) != EOF) {
-		switch(c) {
-		case 'n':
+
+	/* simple pre-processing of debugging options that we need to set up
+	 * before we get into guile.  Most of the general user options
+	 * are handled in std-args.scm  */
+	for(i = 1; i < argc; i++) {
+		if(strcmp(argv[i], "-n") == 0) {
 			nobacktrace = 1;
-			break;
-		case 'v':
+		} else if (strcmp(argv[i], "-v") == 0) {
 			v_flag = 1;
-			break;
-		case 'x':
+		} else if (strcmp(argv[i], "-x") == 0) {
 			x_flag = 1;
 			SCM_SETCDR(scm_gwave_debug, SCM_BOOL_T);
-			break;
-		default:
-			break;
 		}
 	}
 
@@ -191,8 +190,6 @@ void gwave_main(int argc, char **argv)
 	gtk_rc_parse("gwave.gtkrc");
 	gwave_tooltips = gtk_tooltips_new();
 	assert( SCM_CONSP(scm_gwave_tooltips) );
-
-/*	SCM_SETCDR(scm_gwave_tooltips, sgtk_wrap_gtkobj(GTK_OBJECT(gwave_tooltips))); */
 
 #ifdef GUILE_GTK_EXTRA_LOADPATH
 	gh_eval_str("(set! %load-path (cons \"" GUILE_GTK_EXTRA_LOADPATH "\" %load-path))");
@@ -228,7 +225,7 @@ void gwave_main(int argc, char **argv)
 	setup_colors(wtable);
 	setup_waveform_window();
 
-	xg_init(NULL);
+	xg_init(NULL);  /* X-server interprocess communication for Gtk+ */
 
 	gtk_main();
 	exit(0);

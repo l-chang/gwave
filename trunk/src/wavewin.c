@@ -319,6 +319,28 @@ SCM_DEFINE(wtable_vcursor, "wtable-vcursor", 1, 0, 0, (SCM cur),
 }
 #undef FUNC_NAME
 
+SCM_DEFINE(set_wtable_vcursor_x, "set-wtable-vcursor!", 2, 0, 0, 
+	   (SCM cur, SCM x),
+	   "Position vertical bar cursor number CUR at X")
+#define FUNC_NAME s_set_wtable_vcursor_x
+{
+	int icno;
+	double xval;
+	VBCursor *csp;
+
+	VALIDATE_ARG_INT_RANGE_COPY(1, cur, 0, 2, icno);
+	csp = wtable->cursor[icno];
+	VALIDATE_ARG_DBL_COPY(2, x, xval);
+	if(xval < wtable->min_xval)
+		xval = wtable->min_xval;
+	if(xval > wtable->max_xval)
+		xval = wtable->max_xval;
+
+	update_cursor(csp, xval);
+
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
 
 /* build the GtkTable widget for the main window.
  * side effect:
@@ -678,6 +700,17 @@ SCM_DEFINE(wtable_set_xlogscale_x, "wtable-set-xlogscale!", 1, 0, 0,
 	}
 
 	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(wtable_xlogscale_p, "wtable-xlogscale?", 0, 0, 0, (),
+	   "If the X axis is set to Logarithmic scaling, return #t.")
+#define FUNC_NAME s_wtable_xlogscale_p
+{
+	if(wtable->logx)
+		return SCM_BOOL_T;
+	else
+		return SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
