@@ -5,7 +5,7 @@
  * Later they can become callable from the extension language
  * when we add one (most will will require some glue).
  *
- * Copyright (C) 1998, 1999 Stephen G. Tell
+ * Copyright (C) 1998-2003 Stephen G. Tell
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -540,9 +540,9 @@ XSCM_DEFINE(visiblewave_on_top_x, "visiblewave-on-top!", 1, 0, 0, (SCM vw),
 	}
 	/* move label & measurements to the top of the table, if not already there */
 	old_row = gtk_table_get_child_row(wp->lmtable, cvw->button);
-	printf("visible-wave-on-top moving from row %d\n", old_row);
+	/*printf("visible-wave-on-top moving from row %d to 1\n", old_row);*/
 	if(old_row > 0) {
-		gtk_table_rotate_rows(wp->lmtable, old_row, 0);
+		gtk_table_rotate_rows(wp->lmtable, old_row, 1);
 	}
 
 	return SCM_UNSPECIFIED;

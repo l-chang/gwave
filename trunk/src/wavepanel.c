@@ -86,9 +86,9 @@ vw_wp_create_button(VisibleWave *vw, WavePanel *wp)
 	vw->button = gtk_toggle_button_new();
 	gtk_container_add(GTK_CONTAINER(vw->button), vw->label);
 
-	/* create new row at the top of the label/measurement
-	   table, and add this stuff there */
-	newrow = 0;
+	/* create new row #1 of the label/measurement table,
+	   and add this stuff there.  row 0 reserved for Y-axis label. */
+	newrow = 1;
 	gtk_table_insert_row(wp->lmtable, newrow);
 
 	gtk_table_attach(GTK_TABLE(wp->lmtable), vw->button, 
