@@ -124,6 +124,7 @@ else portrait orientation")
 	int status;
 	int i;
 	WavePanel *wp;
+	WavePanel **plot_wps;
 	int rc;
 
 	VALIDATE_ARG_STR_NEWCOPY(1, file, sfile);
@@ -132,7 +133,8 @@ else portrait orientation")
 	VALIDATE_ARG_BOOL_COPY_USE_F(4, landscape, landscape_flag);
 
 	dfnames = g_new(char*, wtable->npanels);
-	
+	plot_wps = g_new(WavePanel*, wtable->npanels);
+		
 	for(i = 0; i < wtable->npanels; i++) {
 		wp = wtable->panels[i];
 		if(wp == NULL)
@@ -143,7 +145,7 @@ else portrait orientation")
 		sprintf(dfnames[ngraphs], "%s/gwplot.%d", tmpdir, ngraphs);
 		
 		export_graph_data(dfnames[ngraphs], wp);
-
+		plot_wps[ngraphs] = wp;
 		ngraphs++;
 	}
 
@@ -171,6 +173,10 @@ else portrait orientation")
 	graph_argv[graph_argc++] = "0.03";
 	graph_argv[graph_argc++] = "--grid-style";
 	graph_argv[graph_argc++] = "3";
+	if(wtable->logx) {
+		graph_argv[graph_argc++] = "-l";
+		graph_argv[graph_argc++] = "X";
+	}
 
 	for(i = 0; i < ngraphs; i++) {
 		if(i) {
@@ -180,7 +186,15 @@ else portrait orientation")
 			graph_argv[graph_argc++] = strdup(buf2);
 			graph_argv[graph_argc++] = "1";
 		}
+		if(plot_wps[i]->logy) {
+			graph_argv[graph_argc++] = "-l";
+			graph_argv[graph_argc++] = "Y";
+		}
 		graph_argv[graph_argc++] = dfnames[ngraphs - i - 1];
+		if(plot_wps[i]->logy) {
+			graph_argv[graph_argc++] = "-l";
+			graph_argv[graph_argc++] = "Y";
+		}
 	}
 	graph_argv[graph_argc++] = NULL;
 	printf("running %s", graph_prog);
