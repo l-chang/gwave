@@ -161,7 +161,7 @@ void gwave_main(int argc, char **argv)
 	int i;
 	int nobacktrace = 0;
 
-/* #ifdef HAVE_SCM_C_READ_STRING */
+#ifdef HAVE_SCM_C_READ_STRING
 	/* In guile-1.5 and later, need to use scm_primitive_eval_x
 	 * in order to change modules so that our C primitives
 	 * registered below become globals, instead of hidden away
@@ -171,7 +171,7 @@ void gwave_main(int argc, char **argv)
 		SCM exp = scm_c_read_string("(define-module (guile))");
 		scm_primitive_eval_x(exp);
 	}
-/*#endif */
+#endif
 	SCM_REDEFER_INTS;
 	init_scwm_guile();
 	init_gtkmisc();

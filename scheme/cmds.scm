@@ -34,10 +34,9 @@
 (define-public (y-zoom-range!)
   (select-range-y 
    (lambda (wp y1 y2)
-;     (display "in y-zoom-range callback ")
-;     (display wp) (display " ")
-;     (display y1) (display " -> ") (display (wavepanel-y2val wp y1)) (display " ")
-;     (display y2) (display " -> ") (display (wavepanel-y2val wp y2)) (newline)
+;     (print "y-zoom-range callback(" wp ") ")
+;     (print y1 " -> " (wavepanel-y2val wp y1) ", ")
+;     (print y2 " -> " (wavepanel-y2val wp y2) "\n")
      (wavepanel-y-zoom! wp (wavepanel-y2val wp y1) (wavepanel-y2val wp y2))
 )))
 
