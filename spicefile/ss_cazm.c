@@ -191,6 +191,7 @@ SpiceStream *ascii_process_header(char *line, VarType ivtype,
 
 	sf->ndv = 0;
 	sf->ncols = 1;
+	sf->ntables = 1;
 	while((signam = strtok(NULL, " \t\n")) != NULL) {
 		if(sf->ndv >= dvsize) {
 			dvsize *= 2;
