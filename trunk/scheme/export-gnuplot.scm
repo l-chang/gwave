@@ -138,26 +138,29 @@
 	(display "\n")
 	(for-each 
 	 (lambda (wp)
-	   (if multiplot
-	       (format #t "set origin 0,~f\n" (* (- (- npanels 1) pidx) (/ 1 npanels))))
-	   (if (wavepanel-ylogscale? wp)
-	       (display "set logscale y\n")
-	       (display "set nologscale y\n"))
-	   (let ((plotlines '()))
-	     (for-each 
-	      (lambda (vw)
-		(let* ((f (format #f "~a.~s" tmpbase widx))
-		       (p (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777)))
-		  (export-variables (cons vw '()) p minx maxx)
-		  (set! plotlines (append plotlines (list
-			(format #f " \"~a\" using 1:2 title \"~a\" with lines"
-				f  (visiblewave-varname vw) ))))
-		  (set! tmpfilelist (cons f tmpfilelist))
-		  (close-port p)
-		  (set! widx (+ 1 widx))))
-	      (wavepanel-visiblewaves wp))
-	     (format #t "plot ~a\n\n" (join ", \\\n" plotlines))
-	     )
+	   (let ((plotlines '())
+		 (wavelist (wavepanel-visiblewaves wp)))
+	     (if (< 0 (length wavelist))
+		 (begin
+		   (if multiplot
+		       (format #t "set origin 0,~f\n" (* (- (- npanels 1) pidx) (/ 1 npanels))))
+		   (if (wavepanel-ylogscale? wp)
+		       (display "set logscale y\n")
+		       (display "set nologscale y\n"))
+		   (for-each 
+		    (lambda (vw)
+		      (let* ((f (format #f "~a.~s" tmpbase widx))
+			     (p (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777)))
+			(export-variables (cons vw '()) p minx maxx)
+			(set! plotlines (append plotlines (list
+							   (format #f " \"~a\" using 1:2 title \"~a\" with lines"
+								   f  (visiblewave-varname vw) ))))
+			(set! tmpfilelist (cons f tmpfilelist))
+			(close-port p)
+			(set! widx (+ 1 widx))))
+		    wavelist)
+		   (format #t "plot ~a\n\n" (join ", \\\n" plotlines))
+	     )))
 	   (set! pidx (+ 1 pidx))
 	   )
 	 panellist)
