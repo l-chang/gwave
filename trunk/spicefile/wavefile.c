@@ -19,6 +19,9 @@
  *
  */
 
+/* map fopen to fopen64, etc. */
+#define _FILE_OFFSET_BITS 64
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>

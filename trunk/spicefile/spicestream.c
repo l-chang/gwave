@@ -19,6 +19,7 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
+#define _FILE_OFFSET_BITS 64
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +27,7 @@
 #include <ctype.h>
 #include <float.h>
 #include <stdarg.h>
+#include <errno.h>
 #include <config.h>
 #ifdef HAVE_GTK
 #include <glib.h>
@@ -100,7 +102,8 @@ ss_open(char *filename, char *format)
 
 	fp = fopen(filename, "r");
 	if(fp == NULL) {
-		perror(filename);
+		fprintf(stderr, "fopen(\"%s\": %s\n", filename, strerror(errno));
+		/*perror(filename); */
 		return NULL;
 	}
 
