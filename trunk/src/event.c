@@ -21,6 +21,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2000/01/07 06:33:43  tell
+ * Merged in the guile and guile-gtk stuff
+ *
  * Revision 1.5  1999/09/22 17:29:00  tell
  * add drag&drop support for Gtk+ 1.2
  *
@@ -169,7 +172,7 @@ draw_cursor(VBCursor *csp)
 		h = wp->drawing->allocation.height;
 		if(wp->start_xval <= csp->xval 
 		   && csp->xval <= wp->end_xval) {
-			x = val2x(wp, csp->xval);
+			x = val2x(wp, csp->xval, wtable->logx);
 			gdk_draw_line(wp->drawing->window, csp->gdk_gc,
 			      x, 0, x, h);
 		}
@@ -235,7 +238,7 @@ window_update_cursor(WavePanel *wp, VBCursor *csp, int x)
 	double xval;
 	g_assert(csp != NULL);
 
-	xval = x2val(wp, x);
+	xval = x2val(wp, x, wtable->logx);
 	if(fabs(xval - csp->xval) < DBL_EPSILON && csp->shown)
 		return;
 	if(xval < wp->start_xval || xval > wp->end_xval)

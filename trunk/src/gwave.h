@@ -63,6 +63,7 @@ struct _WaveTable {
 	GtkWidget *vbox;	/* GtkVBox containing most elements
 				   in main window. */
 	GtkWidget *xlhbox;	/* GtkHBox containing x-axis labels */
+	GtkWidget *lab_xlogscale;
 	GtkWidget *table;
 	VBCursor *cursor[2];
 	SelRange *srange;
@@ -71,6 +72,7 @@ struct _WaveTable {
 	double start_xval;	/* starting drawn x-value (independent var) */
 	double end_xval;	/* ending drawn x-value */
 	int suppress_redraw;	/* don't re-draw if 1 */
+	int logx;  	/* X axis scaling: 0=linear 1=log base 10 */
 
 	GtkWidget *popup_menu;
 	WavePanel *popup_panel; /*panel cursor was in when panel-popup popped*/
@@ -126,9 +128,9 @@ extern void vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp);
 extern void draw_wavepanel(GtkWidget *widget, GdkEventExpose *event,
 			   WavePanel *wp);
 extern void draw_labels(void);
-extern int val2y(double val, double top, double bot, int height);
-extern double x2val(WavePanel *wp, int x);
-extern int val2x(WavePanel *wp, double val);
+extern int val2y(double val, double top, double bot, int height, int log);
+extern double x2val(WavePanel *wp, int x, int log);
+extern int val2x(WavePanel *wp, double val, int log);
 extern char *val2txt(double val, int style);
 extern void alloc_colors(GtkWidget *widget);
 extern void setup_colors(WaveTable *wtable);

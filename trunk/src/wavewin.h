@@ -42,11 +42,8 @@
  */
 struct _WavePanel {
 	SCM smob;
-	SCM scmdata;	/* we let guile hang additional data here,
-			   usualy an assoc list */
 	int outstanding_smob;	/* if guile has a pointer, defer freeing. */
 	int valid;	/* 1 if valid, 0 if awaiting deletion */
-	int ptype;	/* panel type: 0=original 1=short/digital */
 
 	GList *vwlist;	/* list of VisibleWaves shown in this panel.
 			   Line any GList, NULL if list empty */
@@ -65,11 +62,13 @@ struct _WavePanel {
 	GtkWidget *lvbox;	/* for Y-labels */
 	GtkWidget *lab_min, *lab_max;
 	GtkWidget *lab_min_hbox, *lab_max_hbox;
+	GtkWidget *lab_logscale;
 	GtkWidget *drawing; /* DrawingArea for waveforms */
 	GdkPixmap *pixmap;
 	int req_height;	/* requested height */
 	int width, height; /* actual size */
 	int nextcolor;	/* color to use for next added waveform */
+	int logy;   /* Y axis scaling: 0=linear 1=log base 10 */
 };
 
 /* Stuff to wrap WavePanel as a SMOB */

@@ -14,7 +14,6 @@
 
 (dbprint "std-menus.scm running\n")
 
-
 ;*****************************************************************************
 ;
 ; create a menuitem that calls proc when selected,
@@ -132,6 +131,18 @@
 		      (lambda () (set! default-wavepanel-type 1))))
 	 (gtk-menu-item-set-submenu 
 	  (add-menuitem menu "Default Panel Type" #f) ptmenu))
+
+       (let ((lxmenu (gtk-menu-new))
+	     (group #f))
+	 (gtk-widget-show lxmenu)
+	 (set! group (add-radio-menuitem 
+		      lxmenu group "Linear"
+		      (lambda () (wtable-set-xlogscale! #f))))
+	 (set! group (add-radio-menuitem 
+		      lxmenu group "Log"
+		      (lambda () (wtable-set-xlogscale! #t))))
+	 (gtk-menu-item-set-submenu 
+	  (add-menuitem menu "X Axis Scale" #f) lxmenu))
        )
 )))
 
@@ -203,7 +214,13 @@
       menu 
       (string-append "Set type " (list-ref wavepanel-type-names next-ptype))
       (lambda () (set-wavepanel-type! wp next-ptype)))
-	       
+
+     (if (wavepanel-ylogscale? wp)
+	 (add-menuitem menu "Linear Y Scale"
+		   (lambda () (set-wavepanel-ylogscale! wp #f)))
+	 (add-menuitem menu "Log Y Scale"
+		   (lambda () (set-wavepanel-ylogscale! wp #t))))
+       
      (gtk-menu-popup menu #f #f
 		     (gdk-event-button event)
 		     (gdk-event-time event)))))

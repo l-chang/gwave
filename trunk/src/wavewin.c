@@ -134,7 +134,7 @@ GtkWidget *create_toolbar()
 }
 
 /* horizontal box for X-axis labels */
-GtkWidget *create_xlabel_hbox()
+GtkWidget *create_xlabel_hbox(WaveTable *wt)
 {
 	GtkWidget *hbox;
 	hbox = gtk_hbox_new(FALSE, 0);
@@ -145,6 +145,9 @@ GtkWidget *create_xlabel_hbox()
 	win_xlabel_right = gtk_label_new("0");
 	gtk_box_pack_end(GTK_BOX(hbox), win_xlabel_right, FALSE, FALSE, 0);
 	gtk_widget_show(win_xlabel_right);
+
+	wt->lab_xlogscale = gtk_label_new("LogX");
+	gtk_box_pack_end(GTK_BOX(hbox), wt->lab_xlogscale, TRUE, FALSE, 0);
 
 	gtk_widget_show(hbox);
 	return hbox;
@@ -194,6 +197,10 @@ void setup_wave_panel(WavePanel *wp, int minheight, int showlabels)
 	gtk_box_pack_end(GTK_BOX(wp->lab_max_hbox), wp->lab_max,
 			 FALSE, FALSE, 0);
 	gtk_widget_show(wp->lab_max);
+
+	wp->lab_logscale = gtk_label_new("LogY");
+	gtk_box_pack_start(GTK_BOX(wp->lab_max_hbox), wp->lab_logscale,
+			 FALSE, FALSE, 0);
 
 	wp->lab_min_hbox = gtk_hbox_new(FALSE, 0);
 	strcpy(lbuf, val2txt(wp->min_yval, 0));
@@ -489,7 +496,7 @@ void setup_waveform_window(void)
 	}
 
 	/* horizontal box for X-axis labels */
-	wtable->xlhbox = create_xlabel_hbox();
+	wtable->xlhbox = create_xlabel_hbox(wtable);
 
 	/* scrollbar */
 	{
@@ -659,6 +666,29 @@ SCWM_PROC(wtable_delete_panel_x, "wtable-delete-panel!", 1, 0, 0, (SCM wp))
 }
 #undef FUNC_NAME
 
+SCWM_PROC(wtable_set_xlogscale_x, "wtable-set-xlogscale!", 1, 0, 0,
+	  (SCM xlogscale))
+/** Set scaling for all X axes; logarithmic if XLOGSCALE is #t, else linear */
+#define FUNC_NAME s_wtable_set_xlogscale_x
+{
+	int logx;
+	VALIDATE_ARG_BOOL_COPY(1,xlogscale,logx);
+
+	if(wtable->logx != logx) {
+		wtable->logx = logx;
+		if(logx) {
+			gtk_widget_show(wtable->lab_xlogscale);
+		} else {
+			gtk_widget_hide(wtable->lab_xlogscale);
+		}
+		wtable_redraw_x();
+	}
+
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+
 SCWM_PROC(wavepanel_x2val, "wavepanel-x2val", 2, 0, 0,
 	  (SCM wavepanel, SCM xpixel))
 /** Given an XPIXEL coordinate in WAVEPANEL, 
@@ -672,7 +702,7 @@ SCWM_PROC(wavepanel_x2val, "wavepanel-x2val", 2, 0, 0,
 	double val;
 	VALIDATE_ARG_WavePanel_COPY_USE_NULL(1,wavepanel,wp);
 	VALIDATE_ARG_INT_COPY(2,xpixel,x);
-	val = x2val(wp,x);
+	val = x2val(wp, x, wtable->logx);
 	return gh_double2scm(val);
 }
 #undef FUNC_NAME
@@ -720,6 +750,47 @@ SCWM_PROC(set_wavepanel_ylabels_visible_x, "set-wavepanel-ylabels-visible!", 2, 
 		gtk_widget_hide(wp->lab_max_hbox);
 	}
 	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+SCWM_PROC(set_wavepanel_ylogscale_x, "set-wavepanel-ylogscale!", 2, 0, 0,
+	  (SCM wavepanel, SCM logscale))
+/** If LOGSCALE is #t, The Y-axis of WAVEPANEL is set to have
+ * Logarithmic scaling.  Otherwise, scaling is linear.
+ */
+#define FUNC_NAME s_set_wavepanel_ylogscale_x
+{
+	WavePanel *wp;
+	int logy;
+	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+	VALIDATE_ARG_BOOL_COPY(2, logscale, logy);
+	
+	if(wp->logy != logy) {
+		wp->logy = logy;
+		if(logy)
+			gtk_widget_show(wp->lab_logscale);
+		else
+			gtk_widget_hide(wp->lab_logscale);
+		draw_wavepanel(wp->drawing, NULL, wp);
+	}
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+SCWM_PROC(wavepanel_ylogscale_p, "wavepanel-ylogscale?", 1, 0, 0,
+	  (SCM wavepanel))
+/** If WAVEPANEL is set to Logarithmic scaling, return #t. 
+ */
+#define FUNC_NAME s_wavepanel_ylogscale_p
+{
+	WavePanel *wp;
+	int logy;
+	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+
+	if(wp->logy)
+		return SCM_BOOL_T;
+	else
+		return SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
