@@ -33,7 +33,11 @@
 #include <config.h>
 #include <scwm_guile.h>
 #include "guile-compat.h"
+
+#ifndef SCM_MAGIC_SNARFER
 #include <scm_init_funcs.h>
+#endif
+
 #include <gwave.h>
 
 #include <wavelist.h>
@@ -64,6 +68,24 @@ GtkAdjustment *win_hsadj;
 GtkWidget *win_hsbar;
 GtkWidget *win_xlabel_left, *win_xlabel_right;
 GtkWidget *win_status_label;
+
+
+/* variables accessible from C and guile */
+
+SCM_VCELL_INIT(scm_gwave_version, "gwave-version-string",  gh_str02scm(VERSION),
+"This variable is initialized to contain the version string for gwave, as
+set in configure.in.");
+
+SCM_VCELL_INIT(scm_gwave_datadir, "gwave-datadir",  gh_str02scm(DATADIR),
+"This variable is initialized to contain the compiled-in pathname to
+the installed data directory, typicaly PREFIX/share, as set by configure.
+It is used by the startup code as a default location for finding gwave's
+guile modules.");
+
+SCM_VCELL(scm_gwave_debug, "gwave-debug",
+"This variable is set to #t very early in gwave's startup when the -x flag
+is passed on the command line.  It enables debugging output to stdout
+in the startup code and in various modules.");
 
 /*
  * usage -- prints the standard switch info, then exits.
@@ -126,6 +148,7 @@ void gwave_main(int argc, char **argv)
 
 	SCM_REDEFER_INTS;
 	init_scwm_guile();
+	init_gwave();
 	init_cmd();
 	init_wavewin();
 	init_wavelist();
@@ -147,6 +170,7 @@ void gwave_main(int argc, char **argv)
 			break;
 		case 'x':
 			x_flag = 1;
+			SCM_SETCDR(scm_gwave_debug, SCM_BOOL_T);
 			break;
 		case 'p':
 			break;
@@ -161,10 +185,8 @@ void gwave_main(int argc, char **argv)
 	}
 	gtk_rc_parse_string(gwave_base_gtkrc);
 	gtk_rc_parse("gwave.gtkrc");
-	SCWM_VAR_READ_ONLY(, "gwave-version-string",  gh_str02scm(VERSION));
 	SCWM_VAR_READ_ONLY(, "gwave-debug", x_flag ? SCM_BOOL_T : SCM_BOOL_F);
 
-	SCWM_VAR_READ_ONLY(, "gwave-datadir",  gh_str02scm(DATADIR));
 #ifdef GUILE_GTK_EXTRA_LOADPATH
 	gh_eval_str("(set! %load-path (cons \"" GUILE_GTK_EXTRA_LOADPATH "\" %load-path))");
 #endif
@@ -177,7 +199,6 @@ void gwave_main(int argc, char **argv)
 	} /* else {
  		gh_eval_str("(debug-disable 'debug)(read-disable 'positions)");
 		}*/
-
 
 	/* the compiled-in initial scheme code comes from minimal.scm,
 	   built into init_scheme_string.c by the Makefile
@@ -202,4 +223,12 @@ void gwave_main(int argc, char **argv)
 
 	gtk_main();
 	exit(0);
+}
+
+/* guile initialization */
+void init_gwave()
+{
+#ifndef SCM_MAGIC_SNARFER
+#include "gwave.x"
+#endif
 }

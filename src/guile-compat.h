@@ -1,4 +1,4 @@
-/* $Id: guile-compat.h,v 1.2 2000-08-08 06:41:23 sgt Exp $ */
+/* $Id: guile-compat.h,v 1.3 2000-08-10 04:43:27 sgt Exp $ */
 /*
  * Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
  *
@@ -114,6 +114,10 @@ typedef void (*main_prog_t) (int argc, char **argv);
 #else /* !HAVE_SCM_LOAD_STARTUP_FILES */
 void scwm_gh_enter (int argc, char *argv[], main_prog_t c_main_prog);
 #endif /* !HAVE_SCM_LOAD_STARTUP_FILES */
+
+
+
+
 
 #ifdef __cplusplus
 }

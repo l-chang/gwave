@@ -48,17 +48,17 @@
 #define WAVEPANEL_STD_HEIGHT 100
 #define WAVEPANEL_JGE_HEIGHT 25
 
-SCWM_HOOK(new_wavewin_hook,"new-wavewin-hook", 0,
-"This hook is invoked with no arguments as the main waveform
-window is created.
-The main purpose of this hook is to create the menu and tool items
-and add them to the menu/tool bars.");
+SCM_HOOK(new_wavewin_hook,"new-wavewin-hook", 0, (),
+"This hook is invoked with no arguments when the main waveform
+window is first created.
+The main purpose of this hook is to allow creation of the 
+contents of the menubar and toolbar.");
 
-SCWM_HOOK(new_wavepanel_hook,"new-wavepanel-hook", 1,
-"This hook is invoked with one WavePanel argument when the
-WavePanel is first created.
-The main purpose of this hook is to allow support creation of 
-the popup menus and other event bindings for the wavepanel.");
+SCM_HOOK(new_wavepanel_hook,"new-wavepanel-hook", 1, (SCM wp),
+"This hook is invoked with one WavePanel argument, WP, when the
+WavePanel is first created and added to the waveform window.
+The main purpose of this hook is to allow creation of 
+popup menus and other event bindings for the wavepanel.");
 
 SCM wavepanel_mouse_binding[6];
 

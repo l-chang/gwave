@@ -20,6 +20,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.11  2000/08/08 06:41:24  sgt
+ * Convert to guile-1.4 style SCM_DEFINE macros, where the docstrings
+ * are strings, not comments.  Remove some unused functions.
+ * Other guile-1.4 compatibility.  Not tested with earlier guile yet.
+ *
  * Revision 1.10  2000/08/08 01:08:58  sgt
  * be more explicit about required pointer casting in wavefile_to_scm()
  *
@@ -86,15 +91,16 @@ void add_variables_to_list(GWDataFile *wdata);
 static gint wavelist_button_click(GtkWidget *widget,
 				  GdkEventButton *event, gpointer data);
 
-SCWM_HOOK(new_wavefile_hook,"new-wavefile-hook", 1,
+SCM_HOOK(new_wavefile_hook,"new-wavefile-hook", 1, (SCM DF),
 "This hook is invoked when a new waveform file is successfully loaded.
-it is called with the new GWDataFile as its only argument");
+It is called with the new GWDataFile, DF, as its only argument.");
 
-SCWM_HOOK(new_wavelist_hook,"new-wavelist-hook", 1,
+SCM_HOOK(new_wavelist_hook,"new-wavelist-hook", 1, (SCM DF),
 "This hook is invoked when the variable list window for a
-GWDataFile is created.  The GWDataFile object is passed as an
+GWDataFile is created.  The GWDataFile object, DF, is passed as an
 argument.  Note that variable-list windows can be created and
-destroyed many times during the life of a GWDataFile");
+destroyed many times during the life of a GWDataFile.  One of the principle
+uses of this hook is creating the menus such for the variable-list window.");
 
 /*
  * Load a waveform file, adding it to the list of files from which

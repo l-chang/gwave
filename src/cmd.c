@@ -40,9 +40,9 @@
 #include <wavelist.h>
 #include <wavewin.h>
 
-SCWM_HOOK(new_visiblewave_hook, "new-visiblewave-hook", 1,
-"This hook is invoked with one VisibleWave argument
-when the VisibleWave is created.   The main purpose of this hook 
+SCM_HOOK(new_visiblewave_hook, "new-visiblewave-hook", 1, (SCM vw),
+"This hook is invoked with one VisibleWave argument, VW,
+when the VisibleWave is first created.   The main purpose of this hook 
 will be to create the button and menus attached to the VisibleWave.");
 
 gint cmd_zoom_absolute(double start, double end)

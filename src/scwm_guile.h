@@ -13,7 +13,7 @@
 
 #include "arg_unused.h"
 #include <guile/gh.h>
-#include "scwm-snarf.h"
+#include "guile-ext.h"
 #include "validate.h"
 
 #ifndef False
