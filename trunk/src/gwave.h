@@ -97,6 +97,7 @@ extern GtkWidget *win_hsbar;
 extern GtkWidget *win_xlabel_left, *win_xlabel_right;
 extern GtkWidget *win_status_label;
 extern GtkWidget *var_list_submenu;
+extern GtkTooltips *gwave_tooltips;
 extern WaveTable *wtable;
 extern const int NWColors;
 extern int colors_initialized;

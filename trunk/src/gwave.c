@@ -68,6 +68,7 @@ GtkAdjustment *win_hsadj;
 GtkWidget *win_hsbar;
 GtkWidget *win_xlabel_left, *win_xlabel_right;
 GtkWidget *win_status_label;
+GtkTooltips *gwave_tooltips;
 
 
 /* variables accessible from C and guile */
@@ -86,6 +87,10 @@ SCM_VCELL(scm_gwave_debug, "gwave-debug",
 "This variable is set to #t very early in gwave's startup when the -x flag
 is passed on the command line.  It enables debugging output to stdout
 in the startup code and in various modules.");
+
+SCM_VCELL(scm_gwave_tooltips, "gwave-tooltips",
+"This variable is a GtkTooltips object used for controlling all
+of the popup tooltips in the user interface.");
 
 /*
  * usage -- prints the standard switch info, then exits.
@@ -181,11 +186,12 @@ void gwave_main(int argc, char **argv)
 	}
 	if(errflg) {
 		usage(NULL);
-/*		exit(1); */
 	}
+
 	gtk_rc_parse_string(gwave_base_gtkrc);
 	gtk_rc_parse("gwave.gtkrc");
-	SCWM_VAR_READ_ONLY(, "gwave-debug", x_flag ? SCM_BOOL_T : SCM_BOOL_F);
+	gwave_tooltips = gtk_tooltips_new();
+/*	SCM_SETCDR(scm_gwave_tooltips, sgtk_wrap_gtkobj(GTK_OBJECT(gwave_tooltips))); */
 
 #ifdef GUILE_GTK_EXTRA_LOADPATH
 	gh_eval_str("(set! %load-path (cons \"" GUILE_GTK_EXTRA_LOADPATH "\" %load-path))");
