@@ -5,7 +5,7 @@
  * Later they can become callable from the extension language
  * when we add one (most will will require some glue).
  *
- * Copyright (C) 1998  University of North Carolina at Chapel Hill
+ * Copyright (C) 1998, 1999 Stephen G. Tell
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,29 +17,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Library General Public
+ * You should have received a copy of the GNU General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Log: not supported by cvs2svn $
- * Revision 1.4  1999/01/08 22:42:13  tell
- * minor changes to support wavepanel add/delete
- *
- * Revision 1.1  1998/12/26 04:38:06  tell
- * Initial revision
- *
- * Revision 1.3  1998/09/30 21:54:39  tell
- * Restructure zoom commands, creating cmd_zoom_absolute and cmd_zoom_relative
- * to factor out common code.  Add cmd_zoom_cursor and cmd_zoom_window.
- * Add supress_redraw hook for use in update_wavetable to keep things from
- * getting redrawn before we're ready when adding first wave.
- *
- * Revision 1.2  1998/09/17 18:31:58  tell
- * Fixed longstanding bug deleting multiple waves.
- * update scrollbar if min_xval/max_xval change.
- *
- * Revision 1.1  1998/09/01 21:28:02  tell
- * Initial revision
  *
  */
 
@@ -271,12 +251,15 @@ update_wfile_waves(GWDataFile *wdata)
 
 	foo.gdf = wdata;
 
-	/* get a list of all VisibleWaves referencing this file */
+	/* get a list of all VisibleWaves referencing this file 
+	 * The list is pointed to by the global wv_delete_list
+	 */
 	for(i = 0; i < wtable->npanels; i++) {
 		WavePanel *wp = wtable->panels[i];
 		foo.wp = wp;
 		g_list_foreach(wp->vwlist, vw_list_if_wfile, &foo);
 	}
+
 	while((vdi = g_list_nth_data(vw_delete_list, 0)) != NULL) {
 		foundone = 1;
 		wv = wf_find_variable(wdata->wf, vdi->vw->varname);
@@ -299,16 +282,31 @@ update_wfile_waves(GWDataFile *wdata)
 			wavepanel_update_data(wp);
 		}
 		wavetable_update_data();
+		if(wtable->suppress_redraw == 0)
+			for(i = 0; i < wtable->npanels; i++) {
+				WavePanel *wp = wtable->panels[i];
+				draw_wavepanel(wp->drawing, NULL, wp);
+			}
 	}
 }
 
 /*
  * Add a new waveform to a WavePanel
+ * If no wavepanel is specified, try to use the "current" wavepanel,
+ * defined for now to be the last one where a signal was dropped.
  */
 void
 add_var_to_panel(WavePanel *wp, WaveVar *dv)
 {
 	VisibleWave *vw;
+
+	if(wp == NULL) {
+		if(last_drop_wavepanel)
+			wp = last_drop_wavepanel;
+		else return;
+	} else {
+		last_drop_wavepanel = wp;
+	}
 
 	vw = g_new0(VisibleWave, 1);
 	vw->var = dv;
@@ -366,9 +364,9 @@ wavepanel_update_data(WavePanel *wp)
 	char lbuf[128];
 
 	wp->min_xval = G_MAXDOUBLE;
-	wp->max_xval = G_MINDOUBLE;
+	wp->max_xval = -G_MAXDOUBLE;
 	wp->min_yval = G_MAXDOUBLE;
-	wp->max_yval = G_MINDOUBLE;
+	wp->max_yval = -G_MAXDOUBLE;
 	g_list_foreach(wp->vwlist, vw_wp_visit_update_data, (gpointer)wp);
 
 	/* set to something reasonable if they didn't change,
@@ -376,12 +374,12 @@ wavepanel_update_data(WavePanel *wp)
 	 */
 	if(wp->min_xval == G_MAXDOUBLE)
 		wp->min_xval = 0; /* wtable->min_xval; */
-	if(wp->max_xval == G_MINDOUBLE)
+	if(wp->max_xval == -G_MAXDOUBLE)
 		wp->max_xval = 0; /* wtable->max_xval; */
 	if(wp->min_yval == G_MAXDOUBLE)
 		wp->min_yval = 0.0;
-	if(wp->max_yval == G_MINDOUBLE)
-		wp->max_yval = 3.3;
+	if(wp->max_yval == -G_MAXDOUBLE)
+		wp->max_yval = 1.0;
 
 	/* zero height? set to +- 0.1%  so a line is visible in the center */
 	if((wp->max_yval - wp->min_yval) < DBL_EPSILON) {
@@ -403,12 +401,10 @@ wavepanel_update_data(WavePanel *wp)
 
 	/* Update y-axis labels */
 	if(wp->lab_min) {
-		sprintf(lbuf, "%.3f", wp->min_yval);
-		gtk_label_set(GTK_LABEL(wp->lab_min), lbuf);
+		gtk_label_set(GTK_LABEL(wp->lab_min), val2txt(wp->min_yval,0));
 	}
 	if(wp->lab_max) {
-		sprintf(lbuf, "%.3f", wp->max_yval);
-		gtk_label_set(GTK_LABEL(wp->lab_max), lbuf);
+		gtk_label_set(GTK_LABEL(wp->lab_max), val2txt(wp->max_yval,0));
 	}
 }
 
@@ -423,7 +419,7 @@ wavetable_update_data()
 	old_max_x = wtable->max_xval;
 
 	wtable->min_xval = G_MAXDOUBLE;
-	wtable->max_xval = G_MINDOUBLE;
+	wtable->max_xval = -G_MAXDOUBLE;
 	for(i = 0; i < wtable->npanels; i++) {
 		wp = wtable->panels[i];
 		if(wp == NULL)
@@ -439,7 +435,7 @@ wavetable_update_data()
 	/* still nothing? set back to zero */
 	if(wtable->min_xval == G_MAXDOUBLE)
 		wtable->min_xval = 0;
-	if(wtable->max_xval == G_MINDOUBLE)
+	if(wtable->max_xval == -G_MAXDOUBLE)
 		wtable->max_xval = 0;
 
 	/* if start & end were the same or out of range, 
@@ -475,6 +471,11 @@ wavetable_update_data()
 		gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "value_changed");
 		wtable->suppress_redraw = 0;
 
+	}
+	for(i = 0; i < wtable->npanels; i++) {
+		wp = wtable->panels[i];
+		wp->start_xval = wtable->start_xval;
+		wp->end_xval = wtable->end_xval;
 	}
 }
 
