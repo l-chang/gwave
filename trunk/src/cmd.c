@@ -278,7 +278,6 @@ update_wfile_waves(GWDataFile *wdata)
 	}
 }
 
-
 SCM_DEFINE(wavepanel_add_variable_x, "wavepanel-add-variable!", 2, 0, 0,
 	   (SCM wavepanel, SCM var),
 	   "Add variable VAR to the display in WAVEPANEL.")
@@ -290,8 +289,9 @@ SCM_DEFINE(wavepanel_add_variable_x, "wavepanel-add-variable!", 2, 0, 0,
 	VALIDATE_ARG_WaveVar_COPY(1,var,wv);
 
 	if(wv)
-		add_var_to_panel(wp, wv);
-	return SCM_UNSPECIFIED;
+		return add_var_to_panel(wp, wv);
+	else
+		return SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
@@ -301,7 +301,7 @@ SCM_DEFINE(wavepanel_add_variable_x, "wavepanel-add-variable!", 2, 0, 0,
  * defined for now to be the last one where a signal was dropped.
  * This is the only place that VisibleWave structures are created.
  */
-void
+SCM
 add_var_to_panel(WavePanel *wp, WaveVar *dv)
 {
 	VisibleWave *vw;
@@ -343,8 +343,8 @@ add_var_to_panel(WavePanel *wp, WaveVar *dv)
 		 */
 		draw_wavepanel(wp->drawing, NULL, wp);
 	}
+	return vw->smob;
 }
-
 
 
 /*

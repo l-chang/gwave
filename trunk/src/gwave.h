@@ -120,7 +120,7 @@ extern gint cmd_zoom_window(GtkWidget *widget);
 extern gint cmd_delete_selected_waves(GtkWidget *widget);
 extern void remove_wfile_waves(GWDataFile *wdata);
 extern void remove_wave_from_panel(WavePanel *wp, VisibleWave *vw);
-extern void add_var_to_panel(WavePanel *wp, WaveVar *dv);
+extern SCM add_var_to_panel(WavePanel *wp, WaveVar *dv);
 extern void wavepanel_update_data(WavePanel *wp);
 extern void wavetable_update_data();
 

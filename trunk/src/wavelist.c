@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.14  2000/10/24 05:50:55  sgt
+ * SMOBify WaveVar, and add most access methods needed for
+ * restoring VisibleWave/Panel configurations
+ *
  * Revision 1.13  2000/08/11 06:40:47  sgt
  * Get common GtkTooltips sharable between guile and C, use it in wavelist
  * window.
@@ -636,13 +640,12 @@ SCM_DEFINE(wavefile_variable, "wavefile-variable", 2, 0, 0,
 {
 	GWDataFile *wdata;
 	SCM result = SCM_BOOL_F;
-	SCM wvsmob;
 	char *s;
 	int i;
 	VALIDATE_ARG_GWDataFile_COPY(1, df, wdata);
 	VALIDATE_ARG_STR_NEWCOPY(1, vname, s);
 
-	if(!wdata->wf) {
+	if(wdata->wf) {
 		for(i = 0; i < wdata->wf->wf_ndv; i++) {
 			WaveVar *dv = &wdata->wf->dv[i];
 			if(0==strcmp(s, dv->sv->name)) {
