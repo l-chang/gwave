@@ -36,8 +36,10 @@
 		     (lambda ()
 		       (for-each (lambda (wp)
 			   (display "wp:") (display wp) (newline)
-			   (display (wavepanel-visiblewaves wp)) (newline))
-				 (wtable-wavepanels))))
+			   (for-each (lambda (vw)
+				       (display vw)(newline))
+				     (wavepanel-visiblewaves wp)))
+				     (wtable-wavepanels))))
 
        (add-menuitem menu "list files"
 		     (lambda () 
@@ -60,7 +62,5 @@
 		     ))
        (add-menuitem menu #f #f)
        )))
-
-
 
 (dbprint "extra-menus.scm done\n")

@@ -30,6 +30,7 @@
 (define gwave-no-std-menus #f)
 (define gwave-no-std-args #f)
 (define initial-panels 2)
+(define default-measure1-function 5)
 
 ;
 ; Find a .gwaverc file to load, loading only the first one found.

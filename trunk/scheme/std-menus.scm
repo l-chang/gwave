@@ -179,9 +179,19 @@
 		      (lambda () (gtk-tooltips-disable gwave-tooltips))))
 	 (gtk-menu-item-set-submenu 
 	  (add-menuitem menu "ToolTips" #f) submenu))
+
+       (let ((submenu (gtk-menu-new)))
+	 (gtk-widget-show submenu)
+	 (gtk-menu-item-set-submenu 
+	  (add-menuitem menu "Cursor 1 Measurement" #f) submenu)
+	  (add-menuitem submenu "Cursor1 value" 
+			(lambda () (set-all-measurements! 1 5)
+				(set! default-measure1-function 5)))
+	  (add-menuitem submenu "Cursor1 val - Cursor0 val"
+			(lambda () (set-all-measurements! 1 6)
+				(set! default-measure1-function 6)))
+	 )
        )
-
-
 )))
 
 ;

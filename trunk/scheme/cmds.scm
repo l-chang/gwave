@@ -162,6 +162,19 @@
     (gtk-widget-show window)
 ))
 
+;
+; call set-visiblewave-measure! on all visiblewaves
+; to set the function for measurement number mno to mfunc.
+;
+(define-public (set-all-measurements! mno mfunc)
+  (for-each (lambda (wp)
+	      (for-each (lambda (vw)
+			  (set-visiblewave-measure! vw mno mfunc))
+			(wavepanel-visiblewaves wp)))
+	    (wtable-wavepanels)))
+
+
+
 ; Add variable to wavepanel, and then do setup of its color, style, etc.
 ; Mainly for use from scripts that restore a saved configuration.
 ; TODO: don't add the variable if already present in the specified panel.
@@ -239,6 +252,7 @@
   (print "#!" gwave-bin-gwave-path " -s\n!#\n")
   (print "; gwave script\n")
   (print "(require-n-wavepanels " (length (wtable-wavepanels)) ")\n")
+  (print "(set! default-measure1-function " default-measure1-function ")\n")
 )
 
 ; write trailer part of config-restore script, which restores
