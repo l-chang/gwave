@@ -269,6 +269,7 @@
      (add-menuitem menu "Zoom Y..." y-zoom-range!)
      (add-menuitem menu "Zoom Y Full+Auto" (lambda () (y-zoom-fullauto! wp)))
      (add-menuitem menu "Zoom XY-Area..." xy-zoom-area!)
+     (add-menuitem menu "Zoom Dialog..." (lambda () (show-zoom-dialog! wp)))
      (add-menuitem menu "Insert Panel Above" 
 		   (lambda () (wtable-insert-typed-panel! wp default-wavepanel-type)))
      (add-menuitem menu "Delete this Panel"

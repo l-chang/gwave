@@ -441,8 +441,87 @@ void setup_colors(WaveTable *wt)
 	}
 }
 
-/* guile initialization */
+/* given a string containing a number, possibly with a spice-syntax suffix,
+ * return the value  */
+double spice2val(char *s)
+{
+	double val, mul;
+	char *ep;
+	val = strtod(s, &ep);
 
+	if(ep && ep != s && *ep) {
+		switch(*ep) {
+		case 'T':
+			mul = 1e12;
+			break;
+		case 'G':
+			mul = 1e9;
+			break;
+		case 'M':
+			mul = 1e6;
+			break;
+		case 'k':
+		case 'K':
+			mul = 1e3;
+			break;
+		case 'm':
+			mul = 1e-3;
+			break;
+		case 'u':
+			mul = 1e-6;
+			break;
+		case 'n':
+			mul = 1e-9;
+			break;
+		case 'p':
+			mul = 1e-12;
+			break;
+		case 'f':
+			mul = 1e-15;
+			break;
+		case 'a':
+			mul = 1e-18;
+			break;
+		default:
+			mul = 1;
+			break;
+		}
+
+		return val * mul;
+	} else {
+		return val;
+	}
+}
+
+SCM_DEFINE(spice_number, "spice->number", 1, 0, 0, (SCM str),
+"Given a string SSTR containing a representation of a number,
+possibly containing spice-style multiplier suffixes, return a real number.")
+#define FUNC_NAME s_spice_number
+{
+	double dval;
+	char *s;
+	VALIDATE_ARG_STR_NEWCOPY(1, str, s);
+
+	dval = spice2val(s);
+	free(s);
+	return gh_double2scm(dval);
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(number_spice, "number->spice", 1, 0, 0, (SCM val),
+ "Given a real number VAL, return a string representation 
+in spice suffix syntax.")
+#define FUNC_NAME s_number_spice
+{
+	double dval;
+	char *s;
+	VALIDATE_ARG_DBL_COPY(1, val, dval);
+	s = val2txt(dval, 0);
+	return gh_str02scm(s);
+}
+#undef FUNC_NAME
+
+/* guile initialization */
 void init_draw()
 {
 
