@@ -3,6 +3,9 @@
  * 	and waveform-drawing strategies.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  1998/08/21 19:11:38  tell
+ * Initial revision
+ *
  */
 
 #include <ctype.h>
@@ -16,7 +19,7 @@
 #include <errno.h>
 #include <sys/time.h>
 
-#include "gtk/gtk.h"
+#include <gtk/gtk.h>
 
 #include "reader.h"
 
@@ -35,6 +38,8 @@ static GdkGC *crs_gdk_gc;
 static GtkAdjustment *win_hsadj;
 static GtkWidget *win_hsbar;
 static GtkWidget *win_xlabel_left, *win_xlabel_right;
+static GtkWidget *win_table;
+static GtkWidget *win_status_label;
 
 /*
  * WavePanel -- describes a single panel containing one waveform
@@ -56,8 +61,10 @@ typedef struct
 	 * because the bottom (X) labels then don't line up right.
 	 * Perhaps a table will do the right thing
 	 */
-	GtkWidget *hbox;
-	GtkWidget *lab_drawing; /* for labels */
+	GtkWidget *lvbox;	/* for labels */
+	GtkWidget *lab_min, *lab_max;
+	GtkWidget *lab_wavename;
+/*	GtkWidget *lab_drawing; *//* for labels */
 	GtkWidget *win_drawing; /* DrawingArea for waveform */
 
 	/* will need a color per var */
@@ -104,15 +111,15 @@ static char *val2txt(double val)
 	static char buf[64];
 	double aval = fabs(val);
 	if(1e-3 <= aval && aval < 0) {
-		sprintf(buf, "%.1fm", val * 1000);
+		sprintf(buf, "%.2fm", val * 1000);
 	} else if(1e-6 <= aval && aval < 1e-3) {
-		sprintf(buf, "%.1fu", val * 1e6);
+		sprintf(buf, "%.2fu", val * 1e6);
 	} else if(1e-9 <= aval && aval < 1e-6) {
-		sprintf(buf, "%.1fn", val * 1e9);
+		sprintf(buf, "%.2fn", val * 1e9);
 	} else if(1e-12 <= aval && aval < 1e-9) {
-		sprintf(buf, "%.1fp", val * 1e12);
+		sprintf(buf, "%.2fp", val * 1e12);
 	} else {
-		sprintf(buf, "%.1f", val);
+		sprintf(buf, "%.2f", val);
 	}
 	
 	return buf;
@@ -136,6 +143,7 @@ static gint click_handler(GtkWidget *widget, GdkEventButton *event,
 	double xval, dval;
 	WavePanel *wp = (WavePanel *)data;
 	int h, x;
+	char lbuf[128];
 	
 	h = wp->win_drawing->allocation.height;
 	
@@ -148,13 +156,21 @@ static gint click_handler(GtkWidget *widget, GdkEventButton *event,
 	wp->cursor_xval = xval;
 	wp->cursor_shown = 1;
 	dval = cz_interp_value(wpanel->var, xval);
-	printf("click x=%.1f y=%.1f xval=%g yval=%g\n",
-	       event->x, event->y, xval, dval);
+/*	printf("click x=%.1f y=%.1f xval=%g yval=%g\n",
+	       event->x, event->y, xval, dval); */
 
 	/* draw new cursor */
 	x = val2x(wp, wp->cursor_xval);
 	gdk_draw_line(wp->win_drawing->window, crs_gdk_gc, x, 0, x, h);
 
+	/* update value-label */
+	sprintf(lbuf, "%.15s %.3f", wpanel->var->d.name, dval);
+	gtk_label_set(GTK_LABEL(wpanel->lab_wavename), lbuf);
+
+	/* update status label */
+	sprintf(lbuf, "cursor: %s", val2txt(xval));
+	gtk_label_set(GTK_LABEL(win_status_label), lbuf);
+	
 	return 0;
 }
 
@@ -189,9 +205,6 @@ static gint wv_zoom_in(GtkWidget *widget)
 	win_hsadj->page_size = fabs(wpanel->end_xval - wpanel->start_xval);
 	win_hsadj->page_increment = win_hsadj->page_size/2;
 
-/*	draw_labels();
-	draw_pixmap(wpanel->win_drawing, NULL);
-	*/
 	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "changed");
 	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "value_changed");
 
@@ -372,7 +385,8 @@ static void gtk_display(void)
 	box1 = gtk_vbox_new(FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (window), box1);
 
-	/* create horizontal button box, add to top, put some buttons in it */
+	/* create horizontal button box, add to top, put some buttons in it
+	* When we get more than about 5 commands, build a menu. */
 	bbox = gtk_hbutton_box_new();
 	gtk_button_box_set_layout(GTK_BUTTON_BOX(bbox), GTK_BUTTONBOX_START);
 	gtk_button_box_set_spacing(GTK_BUTTON_BOX(bbox), 5);
@@ -396,23 +410,59 @@ static void gtk_display(void)
 			    GTK_SIGNAL_FUNC(wv_zoom_out), NULL);
 	gtk_widget_show (btn);
 	gtk_widget_show(bbox);
-	
-	/* areas for labels and waveform */
-	wpanel->hbox = gtk_hbox_new(FALSE, 5);
-	gtk_widget_show(wpanel->hbox);
-	gtk_box_pack_start(GTK_BOX(box1), wpanel->hbox, TRUE, TRUE, 5);
 
+	/* label with cursor status */
+	win_status_label = gtk_label_new(" ");
+	gtk_box_pack_start(GTK_BOX(box1), win_status_label, FALSE, FALSE, 0);
+	gtk_widget_show(win_status_label);
 
-	wpanel->lab_drawing = gtk_drawing_area_new();
+	/* table containing labels and waveforms */
+	win_table = gtk_table_new(3,2,FALSE);
+	gtk_widget_show(win_table);
+	gtk_box_pack_start(GTK_BOX(box1), win_table, TRUE, TRUE, 5);
+
+	/* area for y-axis labels and signal names */
+	{
+		char lbuf[128];
+		wpanel->lvbox = gtk_vbox_new(FALSE, 0);
+		gtk_widget_show(wpanel->lvbox);
+
+/*	wpanel->lab_drawing = gtk_drawing_area_new();
 	gtk_drawing_area_size(GTK_DRAWING_AREA(wpanel->lab_drawing), lab_w, nom_h);
-	gtk_box_pack_start(GTK_BOX(wpanel->hbox), wpanel->lab_drawing, FALSE, FALSE, 0);
-/*	gtk_widget_show(wpanel->lab_drawing); */
+	gtk_widget_show(wpanel->lab_drawing);
+*/
+		gtk_table_attach(GTK_TABLE(win_table), wpanel->lvbox, 
+			 0, 1, 0, 1, 
+			 GTK_FILL, GTK_EXPAND|GTK_FILL, 0, 0);
 
+		sprintf(lbuf, "%.3f", wpanel->var->d.max);
+		wpanel->lab_max = gtk_label_new(lbuf);
+		gtk_box_pack_start(GTK_BOX(wpanel->lvbox), wpanel->lab_max,
+			 FALSE, FALSE, 0);
+		gtk_widget_show(wpanel->lab_max);
 
+		sprintf(lbuf, "%.3f", wpanel->var->d.min);
+		wpanel->lab_min = gtk_label_new(lbuf);
+		gtk_box_pack_end(GTK_BOX(wpanel->lvbox), wpanel->lab_min,
+			   FALSE, FALSE, 0);
+		gtk_widget_show(wpanel->lab_min);
+
+		sprintf(lbuf, "%.15s      ", wpanel->var->d.name);
+		wpanel->lab_wavename = gtk_label_new(lbuf);
+		gtk_box_pack_start(GTK_BOX(wpanel->lvbox), wpanel->lab_wavename,
+				   FALSE, FALSE, 0);
+		gtk_widget_set_name(wpanel->lab_wavename, "wavelabel");
+		gtk_widget_show(wpanel->lab_wavename);
+
+	}
+	/* drawing area for waveform */
 	wpanel->win_drawing = gtk_drawing_area_new();
 	gtk_drawing_area_size(GTK_DRAWING_AREA(wpanel->win_drawing), nom_w, nom_h);
-	gtk_box_pack_start(GTK_BOX(wpanel->hbox), wpanel->win_drawing, TRUE, TRUE, 0);
 	gtk_widget_show(wpanel->win_drawing);
+	gtk_table_attach(GTK_TABLE(win_table), wpanel->win_drawing, 
+			 1, 2, 0, 1, 
+			 GTK_EXPAND|GTK_FILL, GTK_EXPAND|GTK_FILL, 0, 0);
+
 	gtk_signal_connect(
 		GTK_OBJECT(wpanel->win_drawing), "expose_event", 
 		(GtkSignalFunc)expose_handler, (gpointer)wpanel);
@@ -422,9 +472,11 @@ static void gtk_display(void)
 	gtk_widget_set_events(wpanel->win_drawing, 
 			      GDK_EXPOSURE_MASK|GDK_BUTTON_RELEASE_MASK);
 	
-	/* create horizontal box for labels */
+	/* horizontal box for X-axis labels */
 	hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(box1), hbox, FALSE, FALSE, 0);
+	gtk_table_attach(GTK_TABLE(win_table), hbox,
+			 1, 2, 1, 2,
+			 GTK_EXPAND|GTK_FILL, GTK_FILL, 0, 0);
 
 	win_xlabel_left = gtk_label_new("L");
 	gtk_box_pack_start(GTK_BOX(hbox), win_xlabel_left, FALSE, FALSE, 0);
@@ -455,9 +507,11 @@ static void gtk_display(void)
 	gtk_signal_connect(
 		GTK_OBJECT(win_hsadj), "value_changed", 
 		(GtkSignalFunc)scroll_handler, NULL);
-
-	gtk_box_pack_end(GTK_BOX(box1), win_hsbar, FALSE, FALSE, 0);
+	gtk_table_attach(GTK_TABLE(win_table), win_hsbar,
+			 1, 2, 2, 3,
+			 GTK_EXPAND|GTK_FILL, GTK_FILL, 0, 0);
 	gtk_widget_show(win_hsbar);
+
   
 	/* Show the top-level window, set its minimum size, and enter the
 	   Main event loop. */
@@ -527,6 +581,7 @@ int main(int argc, char **argv)
 		usage("no waveform file specified");
 		exit(1);
 	}
+	gtk_rc_parse("wv.gtkrc");
 
 	df = cz_read_file(argv[optind]);
 	if(!df) {
@@ -550,6 +605,7 @@ int main(int argc, char **argv)
 	wpanel->min_yval = wpanel->var->d.min;
 	wpanel->max_yval = wpanel->var->d.max;
 
+/* TODO: figure out how to get these colors from styles in wv.gtkrc */
 	if(!gdk_color_parse("blue", &wpanel->gdk_color)) {
 		fprintf(stderr, "failed to parse fg color\n");
 		exit(1);
@@ -564,7 +620,6 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 	}
-
 
 	post_init = 1;
 
