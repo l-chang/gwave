@@ -84,7 +84,7 @@ ss_open_internal(FILE *fp, char *filename, char *format)
 				ss->filetype = i;
 				return ss;
 			} else {
-				ss_msg(ERR, "ss_open", "failed to open %s using format %s", filename, format_tab[i].name);
+				ss_msg(DBG, "ss_open", "failed to open %s using format %s", filename, format_tab[i].name);
 				return NULL;
 			}
 		}

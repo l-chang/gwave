@@ -36,6 +36,7 @@
 
 static int sf_readrow_s3raw(SpiceStream *sf, double *ivar, double *dvars);
 char *msgid = "s3raw";
+static int sf_readrow_s3bin(SpiceStream *sf, double *ivar, double *dvars);
 
 /* convert variable type string from spice3 raw file to 
  * our type numbers
@@ -75,6 +76,13 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 	
 	while(fread_line(fp, &line, &linesize) != EOF) {
 		lineno++;
+		if(lineno == 1 && strncmp(line, "Title: ", 7)) {
+			/* not a spice3raw file; bail out */
+			ss_msg(DBG, msgid, "%s:%d: Doesn't look like a spice3raw file; \"Title:\" expected\n", name, lineno);
+			
+			return NULL;
+		}
+
 		key = strtok(line, ":");
 		if(!key) {
 			ss_msg(ERR, msgid, "%s:%d: syntax error, expected \"keyword:\"", name, lineno);
@@ -173,14 +181,18 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 		ss_msg(ERR, msgid, "%s:%d: EOF without \"Values:\" in header", name, lineno);
 		goto err;
 	}
+
 	if(binary) {
-		ss_msg(ERR, msgid, "%s: Binary Spice3 file not handled yet; set SPICE_ASCIIRAWFILE=1\n", name);
-		goto err;
+		sf->readrow = sf_readrow_s3bin;
+	} else {
+		sf->readrow = sf_readrow_s3raw;
 	}
+	sf->read_rows = 0;
+	sf->expected_vals = npoints * (sf->ncols + (dtype_complex ? 1 : 0));
+	ss_msg(DBG, msgid, "expecting %d values\n", sf->expected_vals);
 	sf->lineno = lineno;
 	sf->linebuf = line;
 	sf->lbufsize = linesize;
-	sf->readrow = sf_readrow_s3raw;
 	ss_msg(DBG, msgid, "Done with header at offset 0x%lx\n", ftell(sf->fp));
 	
 	return sf;
@@ -259,5 +271,68 @@ sf_readrow_s3raw(SpiceStream *sf, double *ivar, double *dvars)
 			dvars[dv->col] = atof(tok);
 		}
 	}
+	sf->read_rows++;
+	return 1;
+}
+
+/*
+ * Read a single value from binary spice3 rawfile, and do
+ * the related error-checking.
+ */
+
+static int
+sf_getval_s3bin(SpiceStream *sf, double *dval)
+{
+	long pos;
+	double val;
+	int i;
+
+	if(sf->read_vals >= sf->expected_vals) {
+		pos = ftell(sf->fp);
+		ss_msg(DBG, "sf_getval_s3bin", "past last expected value offset 0x%lx", pos);
+		return 0;
+	}
+	if(fread(&val, sizeof(double), 1, sf->fp) != 1) {
+		pos = ftell(sf->fp);
+		ss_msg(ERR, "sf_getval_s3bin", "unexepected EOF in data at offset 0x%lx", pos);
+		return -1;
+	}
+	sf->read_vals++;
+
+	*dval = val;
+	return 1;
+}
+
+
+/*
+ * Read row of values from a binay spice3 raw file
+ */
+static int
+sf_readrow_s3bin(SpiceStream *sf, double *ivar, double *dvars)
+{
+	int i, rc;
+	double dummy;
+
+	rc = sf_getval_s3bin(sf, ivar);
+	if(rc == 0)		/* file EOF */
+		return 0;
+	if(rc < 0)
+		return -1;
+	if(sf->ivar->ncols == 2) {
+		rc = sf_getval_s3bin(sf, &dummy);
+		if(rc == 0)		/* file EOF */
+			return 0;
+		if(rc < 0)
+			return -1;
+	}
+
+	for(i = 0; i < sf->ncols-1; i++) {
+		if(sf_getval_s3bin(sf, &dvars[i]) != 1) {
+			ss_msg(WARN, "sf_readrow_s3bin", "%s: EOF or error reading data field %d in row %d; file is incomplete.", sf->filename, i, sf->read_rows);
+			return 0;
+		}
+	}
+
+	sf->read_rows++;
 	return 1;
 }

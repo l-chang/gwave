@@ -60,7 +60,7 @@ sf_rdhdr_s2raw(char *name, FILE *fp)
 	if(fread (&s2var,sizeof(s2var),1,fp) != 1)
 		return NULL;
         if (memcmp(&s2var,SPICE_MAGIC,8)) {
-		ss_msg(ERR, msgid, "%s: not a spice2 rawfile (bad magic number)", name);
+		ss_msg(DBG, msgid, "%s: not a spice2 rawfile (bad magic number)", name);
                 return NULL;
         }
 	if(fread (&s2hdr,sizeof(s2hdr),1,fp) != 1)
