@@ -6,10 +6,12 @@
   :use-module (gtk gtk)
   :use-module (ice-9 optargs)
   :use-module (app gwave cmds)
+  :use-module (app gwave gtk-helpers)
   :use-module (app gwave export-gnugraph)
 )
 (read-set! keywords 'prefix)
-
+(debug-enable 'backtrace)
+(debug-enable 'debug)
 
 (define (export-variables-to-file f vwlist . ext)
  (let ((p (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777)))
@@ -20,29 +22,6 @@
    (close-port p)
    ))
 
-;
-; create a gtk-radio-button that calls proc when selected,
-; add it to the parent widget, and return it.
-; Caller must still handle threading up the groups.
-; TODO: write a function that takes a list of lists of labels & procs,
-; and creates the whole set of radio-buttons.
-;
-(define-public (add-radio-button parent group label active proc)
-  (let ((item (if label
-		  (gtk-radio-button-new-with-label group label)
-		  (gtk-radio button-new group))))
-    (gtk-widget-show item)
-    (if proc
-	(gtk-signal-connect item "clicked" proc))
-;			    (lambda ()
-;			      (if (gtk-toggle-button-active item)
-;				  proc))))
-    (if active
-	(gtk-toggle-button-set-state item active))
-    (gtk-container-add parent item) 
-    item
-    ))
-  
 (define-public (popup-export-dialog wvlist)
   (let* ((window (gtk-window-new 'toplevel))
 	 (vbox (gtk-vbox-new #f 0))
