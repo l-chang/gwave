@@ -148,10 +148,16 @@ selected by clicking on their label-buttons.")
 void
 remove_wave_from_panel(WavePanel *wp, VisibleWave *vw)
 {
-
+	int row;
 	wp->vwlist = g_list_remove(wp->vwlist, vw);
-
-	gtk_widget_destroy(vw->button);
+	
+	row = gtk_table_get_child_row(wp->lmtable, vw->button);
+	if(row == -1) {
+		fprintf(stderr, "remove_wave_from_panel(): VisibleWave not in this panel\n");
+	} else {
+		gtk_table_delete_row(wp->lmtable, row);
+	}
+/*	gtk_widget_destroy(vw->button); */
 
 	gdk_gc_destroy(vw->gc);
 	g_free(vw->varname);
@@ -331,7 +337,7 @@ add_var_to_panel(WavePanel *wp, WaveVar *dv)
 	scm_protect_object(vw->smob);
 	vw->outstanding_smob = 1;
 
-	if(wp->lvbox)  /* add button to Y-label box */
+	if(wp->lmtable)  /* add button to Y-label box */
 		vw_wp_create_button(vw, wp);
 	call1_hooks(new_visiblewave_hook, vw->smob);
 	if(wp->drawing && (wtable->suppress_redraw == 0)) {

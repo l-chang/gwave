@@ -188,7 +188,7 @@ wavewin_build_table()
 	for(i = 0; i < wtable->npanels; i++) {
 		WavePanel *wp = wtable->panels[i];
 
-		gtk_table_attach(GTK_TABLE(wtable->table), wp->lvbox, 
+		gtk_table_attach(GTK_TABLE(wtable->table), wp->lmtable, 
 			 0, 1, i, i+1, 
 			 GTK_FILL, GTK_EXPAND|GTK_FILL, 0, 1);
 
@@ -232,8 +232,8 @@ wavewin_destroy_table()
 	/* bump refcount on table's children so they don't get cleaned up */
 	for(i = 0; i < wtable->npanels; i++) {
 		WavePanel *wp = wtable->panels[i];
-		gtk_widget_ref(wp->lvbox);
-		gtk_container_remove(GTK_CONTAINER(wtable->table), wp->lvbox);
+		gtk_widget_ref(wp->lmtable);
+		gtk_container_remove(GTK_CONTAINER(wtable->table), wp->lmtable);
 		gtk_widget_ref(wp->drawing);
 		gtk_container_remove(GTK_CONTAINER(wtable->table),wp->drawing);
 	}
@@ -256,7 +256,7 @@ wavewin_finish_table_rebuild()
 	for(i = 0; i < wtable->npanels; i++) {
 		WavePanel *wp = wtable->panels[i];
 
-		gtk_widget_unref(wp->lvbox);
+		gtk_widget_unref(wp->lmtable);
 		gtk_widget_unref(wp->drawing);
 	}
 	gtk_widget_unref(wtable->xlhbox);
@@ -414,7 +414,7 @@ wavewin_insert_panel(WavePanel *ppos, int minheight, int showlabels)
 
 			/* protect new widgets from unref needed on old widgets
 			 * in finish_table_rebuild */
-			gtk_widget_ref(wtable->panels[n]->lvbox);
+			gtk_widget_ref(wtable->panels[n]->lmtable);
 			gtk_widget_ref(wtable->panels[n]->drawing);
 			found = 1;
 			n++;
@@ -425,7 +425,7 @@ wavewin_insert_panel(WavePanel *ppos, int minheight, int showlabels)
 		wtable->panels[n] = new_wave_panel();
 		setup_wave_panel(wtable->panels[n], minheight, showlabels);
 
-		gtk_widget_ref(wtable->panels[n]->lvbox);
+		gtk_widget_ref(wtable->panels[n]->lmtable);
 		gtk_widget_ref(wtable->panels[n]->drawing);
 	}
 	g_free(owp);

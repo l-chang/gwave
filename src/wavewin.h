@@ -59,7 +59,7 @@ struct _WavePanel {
 	double start_xval;	
 	double end_xval;
 
-	GtkWidget *lvbox;	/* for Y-labels */
+	GtkWidget *lmtable;	/* label and measurement table */
 	GtkWidget *lab_min, *lab_max;
 	GtkWidget *lab_min_hbox, *lab_max_hbox;
 	GtkWidget *lab_logscale;
@@ -114,6 +114,8 @@ struct _VisibleWave {
 	GdkGC *gc;
 	GtkWidget *button;
 	GtkWidget *label;
+	GtkWidget *meas_label[2];
+	GtkWidget *meas_button[2];
 };
 
 /* VisibleWave as a SMOB */ 

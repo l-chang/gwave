@@ -12,7 +12,7 @@ gwave_SOURCES = cmd.c wavewin.c draw.c gwave.c event.c \
 	scwm_guile.c guile-compat.c init_scheme_string.c print.c \
 	gwave.h gtkmisc.h wavewin.h wavelist.h  wavepanel.c \
 	guile-compat.h arg_unused.h scwm_guile.h validate.h guile-ext.h \
-	rgeval.c xgserver.c
+	rgeval.c xgserver.c GtkTable_indel.c
 
 gwave_LDADD = $(top_srcdir)/spicefile/libspicefile.a  @GTK_LIBS@ @GUILEGTK_LIBS@ 
 gwave_LDFLAGS =  @GUILE_LDFLAGS@
