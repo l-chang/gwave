@@ -624,10 +624,19 @@ SCWM_PROC(set_visiblewave_color_x, "set-visiblewave-color!", 2, 0, 0, (SCM vw, S
 	VALIDATE_ARG_INT_RANGE_COPY(2,num, 0, NWColors, colorn);
 
 	if(cvw->valid) {
+		GtkStyle *newstyle;
+		char lbuf[64];
 		cvw->colorn = colorn;
-		/* This sets the internal state, how to set the
-		   button, get new style, and allocate new gc */
-		/* draw_wavepanel(cvw->wp->drawing, NULL, cvw->wp); */
+		sprintf(lbuf, "wavecolor%d", cvw->colorn);
+		gtk_widget_set_name(cvw->label, lbuf);
+		
+		newstyle = gtk_rc_get_style(cvw->label);
+		gtk_widget_set_style(cvw->label, newstyle);
+		if(cvw->gc) {  
+			gdk_gc_set_foreground(cvw->gc,
+			      &cvw->label->style->fg[GTK_STATE_NORMAL]);
+			draw_wavepanel(cvw->wp->drawing, NULL, cvw->wp);
+		}
 	}
 	return SCM_UNSPECIFIED;
 }
