@@ -1,5 +1,29 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 1990716:
+Improved handling of HSPICE ascii format in libspicefile - tested on files
+from 98.4 on HP-UX and Solaris.
+
+New in 19990601:
+- Changed version naming scheme to one based on the date, rather than a number
+that suggests some sort of progress on the scale from 0.0 to 1.0.
+- Deleting and reloading waveform files
+- Detects Gtk 1.0 vs Gtk 1.2, builds on either.  
+(assumes that Gtk+-1.1.x is like 1.2, which may even be correct somtimes)
+- New structure for file-reading code uses a library libspicefile.a, which I
+also use in some other tools.
+- Should handle HSPICE AC analysis files without ".options probe" better.
+
+known bugs and limitations in 19990601:
+- panel setup after adding waveforms may not always be right, in particular
+after adding first waveform to a panel.  If the horizontal scale looks bogus,
+try "zoom all."
+- Although it can read HSPICE AC analysis files that have complex variables,
+it doesn't display those variables correctly yet.  Can't read spice3 or spice2
+AC analysis rawfiles containing complex variables.
+- I've had some trouble with my adaptation of the spice2 file reader.
+- Doesn't always redraw after reloading a waveform file, do zoom all to fix.
+
 New in 0.0.6:
 - Inserting/deleting waveform panels.
 - added right-button popup menu to waveform panels
