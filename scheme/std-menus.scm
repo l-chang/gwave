@@ -6,7 +6,6 @@
   :use-module (gtk gtk)
   :use-module (gtk gdk)
   :use-module (app gwave cmds)
-;  :use-module (app gwave options)
 )
 
 (debug-enable 'debug)

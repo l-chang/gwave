@@ -29,6 +29,28 @@ sometimes found on vendor unixes.  Workaround: run configure as
 	GRAPH="/path/to/gnu/graph" ./configure ...
 
 
+Running gwave without installing it.
+------------------------------------
+
+After compiling, you may wish to test gwave before doing a "make install."
+
+Gwave normally looks for its guile support files beneath
+PREFIX/share/guile in the standard guile module structure; the
+complete pathnames would be somthing like PREFIX/share/guile/app/gwave/cmds.scm
+
+If gwave can't find any of its startup guile code, it spews error
+messages and then starts up with only a tiny little window, that
+contains no wave panels nor menus.  (The lack of a more informative
+ error messages in this case could be considered a bug)
+
+The GWAVE_GUILE_DIR environment variable can be used to cause gwave to
+look in an alternate directory for these guile files.  Set
+GWAVE_GUILE_DIR to the full pathname of the src directory in this
+distribution, for example if this file is called 
+/home/tell/build/gwave-20000301/INSTALL, set 
+GWAVE_GUILE_DIR=/home/tell/build/gwave-20000301/src
+
+
 
 Basic Installation
 ==================

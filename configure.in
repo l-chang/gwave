@@ -13,6 +13,7 @@ AM_PROG_CC_STDC
 dnl ## Checks for programs ##
 AC_PROG_CC
 AC_PROG_RANLIB
+AC_PROG_LN_S
 
 # need to make this find GNU graph only, not tradional berkeley/sysv graph
 # this will fail on linux where /usr/bin/graph is GNU graph.
@@ -161,4 +162,5 @@ AC_SUBST(ggtk_extra_loadpath)
 dnl doesn't work if prefix isn't specified.
 dnl AC_DEFINE_UNQUOTED(DATADIR,"${datadir}",Installation prefix for finding necessary guile code)
 
-AC_OUTPUT(Makefile src/Makefile spicefile/Makefile scheme/Makefile)
+AC_OUTPUT(Makefile src/Makefile spicefile/Makefile scheme/Makefile \
+src/app/Makefile)
