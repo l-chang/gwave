@@ -69,6 +69,8 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 	int nvars, npoints;
 	int got_nvars = 0;
 	int got_values = 0;
+	int dtype_complex = 0;
+	int binary = 0;
 	int i;
 	
 	while(fread_line(fp, &line, &linesize) != EOF) {
@@ -80,8 +82,14 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 			return NULL;
 		}
 		if(strcmp(key, "Flags") == 0) {
-			/* TODO: check for binary and complex flags, 
-			   and change reader code appropriately */
+			while(val = strtok(NULL, " ,\t\n")) {
+				if(strcmp(val, "real") == 0) {
+					dtype_complex = 0;
+				}
+				if(strcmp(val, "complex") == 0) {
+					dtype_complex = 1;
+				}
+			}
 		} else if(strcmp(key, "No. Variables") == 0) {
 			val = strtok(NULL, " \t\n");
 			if(!val) {
@@ -106,7 +114,8 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 				
 			}
 			sf = ss_new(fp, name, nvars-1, 0);
-			sf->ncols = nvars;
+			sf->ncols = 1;
+			sf->ntables = 1;
 			for(i = 0; i < nvars; i++) {
 				char *vnum, *vname, *vtypestr;
 				if(fread_line(fp, &line, &linesize) == EOF) {
@@ -125,19 +134,36 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 					sf->ivar->name = g_strdup(vname);
 					sf->ivar->type = sf_str2type_s3raw(vtypestr);
 					sf->ivar->col = 0;
-					sf->ivar->ncols = 1;
+					/* ivar can't really be two-column,
+					   this is a flag that says to
+					   discard 2nd point */
+					if(dtype_complex)
+						sf->ivar->ncols = 2;
+					else
+						sf->ivar->ncols = 1;
+						
 				} else {
 					sf->dvar[i-1].name = g_strdup(vname);
 					sf->dvar[i-1].type = sf_str2type_s3raw(vtypestr);
-					sf->dvar[i-1].col = i-1;
-					sf->dvar[i-1].ncols = 1;
+					sf->dvar[i-1].col = sf->ncols;
+					if(dtype_complex)
+						sf->dvar[i-1].ncols = 2;
+					else
+						sf->dvar[i-1].ncols = 1;
+
+					sf->ncols += sf->dvar[i-1].ncols;
 				}
-				
 			}
 		} else if(strcmp(key, "Values") == 0) {
 			got_values = 1;
 			break;
+		} else if(strcmp(key, "Binary") == 0) {
+			binary = 1;
+			got_values = 1;
+			break;
 		}
+		if(got_values)
+			break;
 	}
 	if(!sf) {
 		ss_msg(ERR, msgid, "%s:%d: no \"Variables:\" section in header", name, lineno);
@@ -147,10 +173,15 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 		ss_msg(ERR, msgid, "%s:%d: EOF without \"Values:\" in header", name, lineno);
 		goto err;
 	}
+	if(binary) {
+		ss_msg(ERR, msgid, "%s: Binary Spice3 file not handled yet; set SPICE_ASCIIRAWFILE=1\n", name);
+		goto err;
+	}
 	sf->lineno = lineno;
 	sf->linebuf = line;
 	sf->lbufsize = linesize;
 	sf->readrow = sf_readrow_s3raw;
+	ss_msg(DBG, msgid, "Done with header at offset 0x%lx\n", ftell(sf->fp));
 	
 	return sf;
 err:
@@ -162,7 +193,6 @@ err:
 	return NULL;
 }
 
-
 /*
  * Read row of values from an ascii spice3 raw file
  */
@@ -173,20 +203,60 @@ sf_readrow_s3raw(SpiceStream *sf, double *ivar, double *dvars)
 	int frownum;
 	char *tok;
 
-	if(fscanf(sf->fp, "%d", &frownum) == EOF) {
+	if(fread_line(sf->fp, &sf->linebuf, &sf->lbufsize) == EOF) {
+		return 0;  /* normal EOF */
+	}
+	sf->lineno++;
+	/* first line of a set contains row number, independent variable */
+	tok = strtok(sf->linebuf, " \t\n,");
+	if(!tok) {
+		ss_msg(ERR, msgid, "%s:%d: expected row number", 
+		       sf->filename, sf->lineno);
+		return -1;
+	}
+	if(!isdigit(*tok)) {
+		ss_msg(WARN, msgid, "%s:%d: expected row number, got \"%s\". Note: only one dataset per file is supported, extra garbage ignored", 
+		       sf->filename, sf->lineno, tok);
 		return 0;
 	}
+	frownum = atoi(tok);
 	/* todo: check for expected and maximum row number */
 
-	if(fscanf(sf->fp, "%lg", ivar) == EOF) {
-		ss_msg(WARN, msgid, "unexpected EOF at ivar", i);
-		return 0;
+	tok = strtok(NULL, " \t\n,");
+	if(!tok) {
+		ss_msg(WARN, msgid, "%s:%d: expected ivar value", 
+		       sf->filename, sf->lineno);
+		return -1;
 	}
+	*ivar = atof(tok);
 	
-	for(i = 0; i < sf->ncols-1; i++) {
-		if(fscanf(sf->fp, "%lg", &dvars[i]) == EOF) {
-			ss_msg(ERR, msgid, "unexpected EOF at dvar %d", i);
+	for(i = 0; i < sf->ndv; i++) {
+		SpiceVar *dv;
+		dv = &sf->dvar[i];
+
+		if(fread_line(sf->fp, &sf->linebuf, &sf->lbufsize) == EOF) {
+			ss_msg(ERR, msgid, "%s:%d unexpected EOF at dvar %d",
+			       sf->filename, sf->lineno, i);
 			return -1;
+		}
+		sf->lineno++;
+
+		tok = strtok(sf->linebuf, " \t\n,");
+		if(!tok) {
+			ss_msg(ERR, msgid, "%s:%d: expected value", 
+			       sf->filename, sf->lineno);
+			return -1;
+		}
+		dvars[dv->col-1] = atof(tok);
+
+		if(dv->ncols > 1) {
+			tok = strtok(NULL, " \t\n,");
+			if(!tok) {
+				ss_msg(ERR, msgid, "%s:%d: expected second value", 
+				       sf->filename, sf->lineno);
+				return -1;
+			}
+			dvars[dv->col] = atof(tok);
 		}
 	}
 	return 1;
