@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.21  2003/06/02 13:10:33  sgt
+ * new code for data-export functions
+ * make export-variables able to accept either WaveVar or VisibleWave to export
+ *
  * Revision 1.20  2003/05/22 05:03:09  sgt
  * Add C-level primitive export-variables, for use in writing new
  * plot/export features.
@@ -117,7 +121,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <assert.h>
 #include <sys/time.h>
 
 #include <gtk/gtk.h>
@@ -365,7 +368,7 @@ get_gwave_tooltips()
 {
 	extern SCM scm_gwave_tooltips;
 	SCM scm_tt;
-	assert( SCM_CONSP(scm_gwave_tooltips) );
+	g_assert( SCM_CONSP(scm_gwave_tooltips) );
 	scm_tt = SCM_CDR(scm_gwave_tooltips);
 	
 	if( sgtk_is_a_gtkobj (GTK_TYPE_TOOLTIPS, scm_tt))
@@ -484,7 +487,7 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 		gtk_container_border_width (GTK_CONTAINER (scrolled_window), 10);
 		gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window),
                                   GTK_POLICY_AUTOMATIC, 
-                                  GTK_POLICY_AUTOMATIC);
+                                  GTK_POLICY_ALWAYS);
 		GTK_WIDGET_UNSET_FLAGS (GTK_SCROLLED_WINDOW (scrolled_window)->vscrollbar, GTK_CAN_FOCUS);
 		gtk_box_pack_start(GTK_BOX (box1), scrolled_window,
 				   TRUE, TRUE, 0);
@@ -739,10 +742,14 @@ XSCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
 	double x,y;
 	int idx;
 	char buf[128];
+	SCM_ASYNC_TICK;
 	/* validate varlist and count elements */
 	for (l = varlist; SCM_NNULLP(l); l = SCM_CDR (l)) {
                 v = SCM_CAR(l);
 		VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,v,wv);
+		if(!wv) {
+			scm_misc_error(FUNC_NAME, "invalid WaveVar ~s", SCM_LIST1(v));
+		}
 		if(iv == NULL)
 			iv = wv->wv_iv;
 		else if(iv != wv->wv_iv) {
@@ -764,6 +771,7 @@ XSCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
 		for (l = varlist; SCM_NNULLP(l); l = SCM_CDR (l)) {
 			v = SCM_CAR(l);
 			VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,v,wv);
+			g_assert(wv);  /* should have been checked above */
 			y = wds_get_point(&wv->wds[0], i);
 			sprintf(buf, " %g", y); 
 			scm_puts(buf, port);
