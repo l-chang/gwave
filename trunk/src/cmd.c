@@ -671,6 +671,20 @@ XSCM_DEFINE(wavevar_max, "wavevar-max", 1, 0, 0, (SCM wv),
 }
 #undef FUNC_NAME
 
+XSCM_DEFINE(wavevar_interp_val, "wavevar-interp-val", 2, 0, 0, (SCM vw, SCM xval),
+	    "Given a VisibleWave or WaveVar VW, return its value at the point"
+	    "where its independent variable has the value XVAL")
+#define FUNC_NAME s_wavevar_interp_val
+{
+	WaveVar *var;
+	double x;
+	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,vw,var);
+	VALIDATE_ARG_DBL_COPY(1, xval, x);
+
+	return gh_double2scm(wv_interp_value(var, x));
+}
+#undef FUNC_NAME
+
 XSCM_DEFINE(set_visiblewave_color_x, "set-visiblewave-color!", 2, 0, 0, (SCM vw, SCM num),
 	 "Change VW so that it is drawn with color NUM")
 #define FUNC_NAME s_set_visiblewave_color_x
