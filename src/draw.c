@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  1998/09/30 21:52:32  tell
+ * various fixes to clean up lingering bug - error messages on first few redraws
+ * a few things for the range-select function
+ *
  * Revision 1.2  1998/09/17 18:33:39  tell
  * Only draw portion of wave for which there is actually data - with multiple
  * files loaded, can scroll off the end of one.
@@ -42,13 +46,12 @@
 
 #include <gtk/gtk.h>
 
-#include "reader.h"
 #include "gwave.h"
 
 /* convert value to pixmap y coord */
 int val2y(double val, double top, double bot, int height)
 {
-	return height - ((height-2) * ((val - bot ) / (top - bot))) - 1;
+	return height - ((height-4) * ((val - bot ) / (top - bot))) - 2;
 }
 
 double x2val(WavePanel *wp, int x)
@@ -113,15 +116,14 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 	if(!vw->gc) {
 		if(!vw->label) {
 			fprintf(stderr, "visit_draw(%s): label=NULL\n",
-				vw->var->d.name);
+				vw->varname);
 			return;
-			
 		}
 		if(!gdk_color_alloc(win_colormap, 
 				    &vw->label->style->fg[GTK_STATE_NORMAL])) {
 			fprintf(stderr, 
 				"visit_draw(%s): gdk_color_alloc failed\n",
-				vw->var->d.name);
+				vw->varname);
 			return;
 		}
 		vw->gc = gdk_gc_new(wp->drawing->window);
@@ -133,14 +135,15 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 	xstep = (wp->end_xval - wp->start_xval)/w;
 
 	x1 = 0;
-	yval = an_interp_value(vw->var, wp->start_xval);
+	yval = wv_interp_value(vw->var, wp->start_xval);
 	y1 = val2y(yval, wp->max_yval, wp->min_yval, h);
 
 	for(i = 0, xval = wp->start_xval; i < w; i++, xval += xstep) {
 		x0 = x1; y0 = y1;
 		x1 = x0 + 1;
-		if(vw->var->iv->d.min <= xval && xval <= vw->var->iv->d.max) {
-			yval = an_interp_value(vw->var, xval);
+		if(vw->var->wv_iv->wds->min <= xval 
+		   && xval <= vw->var->wv_iv->wds->max) {
+			yval = wv_interp_value(vw->var, xval);
 			y1 = val2y(yval, wp->max_yval, wp->min_yval, h);
 			gdk_draw_line(wp->pixmap, vw->gc, x0,y0, x1,y1);
 		}
@@ -152,13 +155,19 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 {
 	int w = widget->allocation.width;
 	int h = widget->allocation.height;
-	int x;
+	int x, y;
 	int i;
 
 	if(wp->pixmap == NULL)
 		return;
 
 	gdk_draw_rectangle(wp->pixmap, bg_gdk_gc, TRUE, 0,0, w,h);
+
+	/* draw horizontal line at y=zero */
+	if(wp->min_yval < 0 && wp->max_yval > 0) {
+		y = val2y(0, wp->max_yval, wp->min_yval, h);
+		gdk_draw_line(wp->pixmap, pg_gdk_gc, 0, y, w, y);
+	}
 
 	/* draw waves */
 	g_list_foreach(wp->vwlist, (GFunc)vw_wp_visit_draw, wp); 
@@ -243,6 +252,14 @@ void alloc_colors(GtkWidget *widget)
 		gdk_gc_set_function(csp->gdk_gc, GDK_XOR);
 	}
 
+	/* graticule */
+	gdk_color_alloc(win_colormap, &pg_gdk_color);
+	pg_gdk_gc = gdk_gc_new(widget->window);
+	if(!pg_gdk_gc) {
+			fprintf(stderr, "couldn't allocate graticule gc\n");
+			exit(2);
+	}
+	gdk_gc_set_foreground(pg_gdk_gc, &pg_gdk_color);
 }
 
 /* TODO: figure out how to get these colors from styles in wv.gtkrc
@@ -274,6 +291,14 @@ void setup_colors(WaveTable *wt)
 	if(bg_color_name) {
 		if(!gdk_color_parse(bg_color_name, &bg_gdk_color)) {
 			fprintf(stderr, "failed to parse bg color\n");
+			exit(1);
+		}
+	}
+
+	/* waveform panel graticule */
+	if(pg_color_name) {
+		if(!gdk_color_parse(pg_color_name, &pg_gdk_color)) {
+			fprintf(stderr, "failed to parse panel graticule color\n");
 			exit(1);
 		}
 	}
