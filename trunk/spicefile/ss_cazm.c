@@ -184,7 +184,12 @@ SpiceStream *ascii_process_header(char *line, VarType ivtype,
 	 */
 	sf = ss_new(NULL, fname, dvsize, 0);
 
-	sf->ivar->type = ivtype;
+	if(ivtype == UNKNOWN) {
+		if(strcasecmp(signam, "time") == 0)
+                       sf->ivar->type = TIME;
+	} else {
+               sf->ivar->type = ivtype;
+	}
 	sf->ivar->name = g_strdup(signam);
 	sf->ivar->col = 0;
 	sf->ivar->ncols = 1;
