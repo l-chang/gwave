@@ -20,6 +20,13 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.9  2000/05/18 07:03:26  sgt
+ * draw.c: fix embarassing mistake in x2val; Log X scale now works
+ * wavewin.c: add wtable-wavepanels and wavepanel-visiblewaves in the
+ * 	name of completeness of data structure access from guile.
+ * The usual tweaks for another snapshot release.
+ * minor comment fixes: wavewin.h cmds.scm wavelist.c
+ *
  * Revision 1.8  2000/01/07 06:33:44  tell
  * Merged in the guile and guile-gtk stuff
  *
@@ -571,8 +578,9 @@ SCWM_PROC(wavefile_listwin_menubar, "wavefile-listwin-menubar", 1, 0, 0,
 #undef FUNC_NAME
 
 SCM
-wavefile_to_scm(GWDataFile *wdata)
+wavefile_to_scm(void *vp)
 {
+	GWDataFile *wdata = (GWDataFile *)vp;
 	return wdata->smob;
 }
 
