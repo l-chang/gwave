@@ -18,8 +18,6 @@ Requires: gtk+ >= 1.2.3
 Requires: glib >= 1.2.3
 Requires: guile >= 1.3.4
 Requires: guile-gtk >= 0.18
-
-# should be %{prefix}/doc for Redhat 6.2 - how to detect+fix?
 Docdir: %{prefix}/share/doc
 
 %description
@@ -45,7 +43,7 @@ other tabluar data.
 make 
 
 %install
-make prefix=$RPM_BUILD_ROOT/%{prefix} install
+make prefix=$RPM_BUILD_ROOT/%{prefix} mandir=$RPM_BUILD_ROOT/%{prefix}/share/man/ install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -62,6 +60,7 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/bin/gwaverepl
 %{prefix}/bin/sp2sp
 %{prefix}/share/guile/app/gwave
+%{prefix}/share/man/man1/*
 # %config %{prefix}/share/guile/app/gwave/system.gwaverc
 
 %doc AUTHORS COPYING ChangeLog

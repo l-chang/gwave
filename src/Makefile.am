@@ -10,7 +10,7 @@ noinst_SCRIPTS = xguile-snarf
 
 gwave_SOURCES = cmd.c wavewin.c draw.c gwave.c event.c \
 	gtkmisc.c pixmaps.c wavelist.c dnd.c \
-	scwm_guile.c guile-compat.c init_scheme_string.c print.c \
+	scwm_guile.c guile-compat.c init_scheme_string.c \
 	gwave.h gtkmisc.h wavewin.h wavelist.h  wavepanel.c \
 	guile-compat.h arg_unused.h scwm_guile.h validate.h guile-ext.h \
 	rgeval.c xgserver.c measurebtn.c measurebtn.h \
@@ -23,10 +23,10 @@ CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILEGTK_CFLAGS@ \
 	-DDATADIR=\"$(datadir)\" -DBINGWAVE=\"$(bindir)/gwave\" @ggtk_hack_cflags@
 
 DOT_X_FILES = gwave.x cmd.x wavewin.x wavelist.x scwm_guile.x event.x \
-	draw.x print.x gtkmisc.x wavepanel.x
+	draw.x gtkmisc.x wavepanel.x
 
 DOT_DOC_FILES = gwave.doc cmd.doc wavewin.doc wavelist.doc scwm_guile.doc \
-	event.doc draw.doc print.doc
+	event.doc draw.doc
 
 BUILT_SOURCES=init_scheme_string.c scm_init_funcs.h $(DOT_X_FILES) 
 # $(DOT_DOC_FILES)
