@@ -27,6 +27,8 @@
 	     "\n       panel=" (visiblewave-panel vw)
              "\n      button=" (visiblewave-button vw) "\n")
 
+   (set-visiblewave-measure! vw 1 default-measure1-function)
+
    (gtk-signal-connect (visiblewave-button vw) "button-press-event" 
 			(lambda (event) 
 ;			  (display "press-signal") 
