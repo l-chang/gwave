@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl ## Initialize autoconf ##
 
 AC_INIT(src/gwave.c)
-AM_INIT_AUTOMAKE(gwave, 20000518)
+AM_INIT_AUTOMAKE(gwave, 20000807)
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
 
@@ -173,6 +173,7 @@ dnl AC_DEFINE_UNQUOTED(DATADIR,"${datadir}",Installation prefix for finding nece
 
 AC_OUTPUT(Makefile src/Makefile spicefile/Makefile scheme/Makefile \
 src/app/Makefile \
+doc/Makefile  \
 utilities/scwmdoc \
-doc/Makefile )
+utilities/guile-doc-snarf utilities/guile-func-name-check utilities/guile-snarf.awk )
 
