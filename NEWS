@@ -1,8 +1,14 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20020122:
+- fix RPM building and other minor build issues
+
+New in 20020114:
+- restore ability to compile with guile-1.3.4
+
 New in 20020109:
-- interactive Y-zoom and XY-area zoom added
-- zoom-to-exact-coordinate dialog box added
+- interactive Y-zoom and XY-area zoom added (see Readme)
+- zoom-to-exact-size dialog box added
 
 New in 20011021:
 - better measurement: value at both cursors or difference in values at cursors

@@ -1,6 +1,6 @@
 # Note that this is NOT a relocatable package
 %define ver @VERSION@
-%define rel 2
+%define rel 3
 %define prefix /usr
 
 Name: gwave
@@ -19,7 +19,8 @@ Requires: glib >= 1.2.3
 Requires: guile >= 1.3.4
 Requires: guile-gtk >= 0.18
 
-Docdir: %{prefix}/doc
+# should be %{prefix}/doc for Redhat 6.2 - how to detect+fix?
+Docdir: %{prefix}/share/doc
 
 %description
 
@@ -60,8 +61,8 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/bin/gwave-exec
 %{prefix}/bin/gwaverepl
 %{prefix}/bin/sp2sp
-# %config %{prefix}/share/guile/app/gwave/system.gwaverc
 %{prefix}/share/guile/app/gwave
+# %config %{prefix}/share/guile/app/gwave/system.gwaverc
 
 %doc AUTHORS COPYING ChangeLog
 %doc INSTALL NEWS README

@@ -1,4 +1,4 @@
-## $Id: Makefile.am,v 1.6 2001-08-22 23:38:32 sgt Exp $
+## $Id: Makefile.am,v 1.7 2002-01-23 04:07:11 sgt Exp $
 ## process this file with automake to create Makefile.in
 ## (You should run ./autogen.sh from the top level directory)
 
@@ -14,7 +14,7 @@ noinst_DATA=gwave-procedures.txt gwave-variables.txt gwave-hooks.txt \
 
 man_MANS=sp2sp.1
 
-EXTRA_DIST=Guile.notes HPUX.notes hspice.txt hspice-output.txt sp2sp.sgml sp2sp.1
+EXTRA_DIST=Guile.notes HPUX.notes hspice.txt hspice-output.txt sp2sp.sgml sp2sp.1 spice3.txt scwmexec.proto
 
 # Make the reference-document textfiles
 gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt:

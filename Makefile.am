@@ -12,3 +12,8 @@ dist-hook:
 	rsync -C -p examples/* $(distdir)/examples
 	mkdir $(distdir)/icons
 	rsync -C -p icons/* $(distdir)/icons
+
+# build RPMs - but only on a redhat system
+rpm:	$(distdir).tar.gz
+	cp gwave.spec $(distdir).tar.gz /usr/src/redhat/SOURCES
+	cd /usr/src/redhat/SOURCE; rpm -ba gwave.spec
