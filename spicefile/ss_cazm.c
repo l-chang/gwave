@@ -36,6 +36,7 @@
  * header line to contain space, tab, and USASCII printable characters only.
  * 
  */
+#define _FILE_OFFSET_BITS 64
 
 #include <stdio.h>
 #include <stdlib.h>

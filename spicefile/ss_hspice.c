@@ -19,6 +19,8 @@
  *
  */
 
+#define _FILE_OFFSET_BITS 64
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -256,7 +258,7 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	sf->expected_vals = datasize / sizeof(float);
 	sf->read_vals = 0;
 	
-	ss_msg(DBG, "sf_rdhdr_hsbin", "datasize=%d expect %d columns, %d values;\n  reading first data block at 0x%lx", datasize, sf->ncols, sf->expected_vals, ftell(fp));
+	ss_msg(DBG, "sf_rdhdr_hsbin", "datasize=%d expect %d columns, %d values;\n  reading first data block at 0x%lx", datasize, sf->ncols, sf->expected_vals, (long)ftello(fp));
 
 
 	sf->fp = fp;
@@ -467,29 +469,29 @@ sf_readblock_hsbin(FILE *fp, char **bufp, int *bufsize, int offset)
 static int
 sf_getval_hsbin(SpiceStream *sf, double *dval)
 {
-	long pos;
+	off_t pos;
 	float val;
 	int i;
 	struct hsblock_header hh;
 	gint32 trailer;
 
 	if(sf->read_vals >= sf->expected_vals) {
-		pos = ftell(sf->fp);
+		pos = ftello(sf->fp);
 		if(fread(&trailer, sizeof(gint32), 1, sf->fp) != 1) {
-			ss_msg(DBG, "sf_getval_hsbin", "EOF reading block trailer at offset 0x%lx", pos);
+			ss_msg(DBG, "sf_getval_hsbin", "EOF reading block trailer at offset 0x%lx", (long) pos);
 			return 0;
 		}
 		if(sf->flags & SSF_ESWAP) {
 			swap_gint32(&trailer, 1);
 		}
 		if(trailer != sf->expected_vals * sizeof(float)) {
-			ss_msg(DBG, "sf_getval_hsbin", "block trailer mismatch at offset 0x%lx", pos);
+			ss_msg(DBG, "sf_getval_hsbin", "block trailer mismatch at offset 0x%lx", (long) pos);
 			return -2;
 		}
 
-		pos = ftell(sf->fp);
+		pos = ftello(sf->fp);
 		if(fread(&hh, sizeof(hh), 1, sf->fp) != 1) {
-			ss_msg(DBG, "sf_getval_hsbin", "EOF reading block header at offset 0x%lx", pos);
+			ss_msg(DBG, "sf_getval_hsbin", "EOF reading block header at offset 0x%lx", (long) pos);
 			return 0;
 		}
 		if(hh.h1 == 0x04000000 && hh.h3 == 0x04000000) {
@@ -507,8 +509,8 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 		sf->read_vals = 0;
 	}
 	if(fread(&val, sizeof(float), 1, sf->fp) != 1) {
-		pos = ftell(sf->fp);
-		ss_msg(ERR, "sf_getval_hsbin", "unexepected EOF in data at offset 0x%lx", pos);
+		pos = ftello(sf->fp);
+		ss_msg(ERR, "sf_getval_hsbin", "unexepected EOF in data at offset 0x%lx", (long) pos);
 		return 0;
 	}
 	sf->read_vals++;

@@ -24,6 +24,8 @@
  *
  */
 
+#define _FILE_OFFSET_BITS 64
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,7 +115,7 @@ sf_rdhdr_s2raw(char *name, FILE *fp)
 		goto err;
 	s2title.title[23] = 0;
 	ss_msg(DBG, msgid, "title=\"%s\"", s2title.title);
-	ss_msg(DBG, msgid, "done with header at offset=0x%lx", ftell(fp));
+	ss_msg(DBG, msgid, "done with header at offset=0x%lx", (long) ftello(fp));
 
 	sf->readrow = sf_readrow_s2raw;
 	return sf;
