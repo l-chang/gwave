@@ -22,6 +22,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  1998/09/17 18:31:58  tell
+ * Fixed longstanding bug deleting multiple waves.
+ * update scrollbar if min_xval/max_xval change.
+ *
  * Revision 1.1  1998/09/01 21:28:02  tell
  * Initial revision
  *
@@ -43,61 +47,20 @@
 #include "reader.h"
 #include "gwave.h"
 
-/* For now: zooms are always done about the center.
- * 	adjust start and end X values for waveform graph, 
- *	adjust scrollbar percentage.
- *
- * To do: replace cmd_zoom_in and cmd_zoom_out with a single function
- * cmd_zoom which takes a value to zoom by, <1 for in, >1 for out.
- */
-gint cmd_zoom_in(GtkWidget *widget)
+gint cmd_zoom_absolute(double start, double end)
 {
-	double ocenter, owidth;
-	ocenter = (wtable->start_xval + wtable->end_xval)/2;
-	owidth = wtable->end_xval - wtable->start_xval;
+	if(start <= end) {
+		wtable->start_xval = start;
+		wtable->end_xval = end;
+	} else {
+		wtable->start_xval = end;
+		wtable->end_xval = start;
+	}
 
-	wtable->start_xval = ocenter - owidth/4;
-	wtable->end_xval = ocenter + owidth/4;
-
-	win_hsadj->value = wtable->start_xval;
-	win_hsadj->page_size = fabs(wtable->end_xval - wtable->start_xval);
-	win_hsadj->page_increment = win_hsadj->page_size/2;
-	win_hsadj->step_increment = win_hsadj->page_size/100;
-
-	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "changed");
-	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "value_changed");
-
-	return 0;
-}
-
-gint cmd_zoom_out(GtkWidget *widget)
-{
-	double ocenter, owidth;
-	ocenter = (wtable->start_xval + wtable->end_xval)/2;
-	owidth = wtable->end_xval - wtable->start_xval;
-
-	wtable->start_xval = ocenter - owidth;
 	if(wtable->start_xval < wtable->min_xval)
 		wtable->start_xval = wtable->min_xval;
-	wtable->end_xval = ocenter + owidth;
 	if(wtable->end_xval > wtable->max_xval)
 		wtable->end_xval = wtable->max_xval;
-
-	win_hsadj->page_size = fabs(wtable->end_xval - wtable->start_xval);
-	win_hsadj->page_increment = win_hsadj->page_size/2;
-	win_hsadj->step_increment = win_hsadj->page_size/100;
-	win_hsadj->value = wtable->start_xval;
-
-	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "changed");
-	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "value_changed");
-
-	return 0;
-}
-
-gint cmd_zoom_full(GtkWidget *widget)
-{
-	wtable->start_xval = wtable->min_xval;
-	wtable->end_xval = wtable->max_xval;
 
 	win_hsadj->page_size = fabs(wtable->end_xval - wtable->start_xval);
 	win_hsadj->page_increment = win_hsadj->page_size/2;
@@ -111,6 +74,59 @@ gint cmd_zoom_full(GtkWidget *widget)
 
 	return 0;
 }
+
+gint cmd_zoom_relative(double factor)
+{
+	double ocenter, owidth;
+	g_assert(factor > DBL_EPSILON);
+
+	ocenter = (wtable->start_xval + wtable->end_xval)/2;
+	owidth = wtable->end_xval - wtable->start_xval;
+	
+	return cmd_zoom_absolute(ocenter - owidth / (factor * 2),
+				 ocenter + owidth / (factor * 2));
+}
+
+gint cmd_zoom_in(GtkWidget *widget)
+{
+	return cmd_zoom_relative(2);
+}
+
+gint cmd_zoom_out(GtkWidget *widget)
+{
+	return cmd_zoom_relative(0.5);
+}
+
+gint cmd_zoom_full(GtkWidget *widget)
+{
+	return cmd_zoom_absolute(wtable->min_xval, wtable->max_xval);
+}
+
+gint cmd_zoom_cursors(GtkWidget *widget)
+{
+	if(!wtable->cursor[0]->shown)
+		return 0;
+	if(!wtable->cursor[1]->shown)
+		return 0;
+	return cmd_zoom_absolute(wtable->cursor[0]->xval,
+			   wtable->cursor[1]->xval);
+}
+
+static void
+zoom_window_finish(WavePanel *wp, int x1, int x2, gpointer data)
+{
+	double nstart, nend;
+	nstart  = x2val(wp, x1);
+	nend = x2val(wp, x2);
+	cmd_zoom_absolute(nstart, nend);
+}
+
+gint cmd_zoom_window(GtkWidget *widget)
+{
+	select_x_range(zoom_window_finish, NULL);
+	return 0;
+}
+
 
 typedef struct {
 	WavePanel *wp;
@@ -171,10 +187,6 @@ remove_wave_from_panel(WavePanel *wp, VisibleWave *vw)
 
 	wp->vwlist = g_list_remove(wp->vwlist, vw);
 
-/* BUG: things appear to work OK, but I get gtk runtime error messages when
-   removing/destroying widgets.  Somthing subtle must be wrong here.
-*/
-/*	gtk_container_remove(GTK_CONTAINER(wp->lvbox), vw->button); */
 	gtk_widget_destroy(vw->button);
 
 	gdk_gc_destroy(vw->gc);
@@ -204,7 +216,7 @@ add_var_to_panel(WavePanel *wp, DVar *dv)
 	if(wp->lvbox)  /* add button to Y-label box */
 		vw_wp_create_button(vw, wp);
 	if(wp->drawing) {
-		vw_wp_setup_gc(vw, wp);
+/*		vw_wp_setup_gc(vw, wp); */
 		vw_wp_visit_draw(vw, wp);
 	}
 }
@@ -316,7 +328,9 @@ wavetable_update_data()
 	*/
 	if(fabs(wtable->end_xval - wtable->start_xval) < DBL_EPSILON &&
 		win_hsadj != NULL) {
+		wtable->suppress_redraw = 1;
 		cmd_zoom_full(NULL);
+		wtable->suppress_redraw = 0;
 	} else if((wtable->min_xval != old_min_x 
 		  || wtable->max_xval != old_max_x) && win_hsadj) {
 
@@ -326,7 +340,10 @@ wavetable_update_data()
 		 */
 		win_hsadj->lower = wtable->min_xval;
 		win_hsadj->upper = wtable->max_xval;
-		gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "changed");
+		wtable->suppress_redraw = 1;
+		gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "value_changed");
+		wtable->suppress_redraw = 0;
+
 	}
 }
 
