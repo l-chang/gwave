@@ -171,6 +171,9 @@
 	(wtable-insert-typed-panel! #f default-wavepanel-type))
       ))
 
+(define-public (num-wavepanels)
+  (length (wtable-wavepanels)))
+  
 (define-public (nth-wavepanel n)
   (list-ref (wtable-wavepanels) n))
 
@@ -199,18 +202,21 @@
     (with-output-to-port p 
       (lambda () 
 	(write-script-header)
-	(write-wfr-script df)))
+	(write-wfr-script df)
+	(write-script-trailer)
+	))
     (close-port p)))
 
 ; Similar, but writes configuration-restoring script for all datafiles
 (define-public (write-allrestore-script sname)
   (let ((p (open sname (logior O_WRONLY O_CREAT) #o0777)))
-    (print "port=" p "\n")
     (with-output-to-port p 
       (lambda () 
 	(write-script-header)
 	(for-each (lambda (df) (write-wfr-script df))
-		  (wavefile-list))))
+		  (wavefile-list))
+	(write-script-trailer)
+	))
     (close-port p)))
 
 ; write header part of configuration-restoring script, 
@@ -219,6 +225,34 @@
   (print "#!" gwave-bin-gwave-path " -s\n!#\n")
   (print "; gwave script\n")
   (print "(require-n-wavepanels " (length (wtable-wavepanels)) ")\n")
+)
+
+; write trailer part of config-restore script, which restores
+; panel and global display parameters, and global preferences.
+; BUG: tooltips, wavepanel-tpe, and X-logscale are restored,
+; but the radio-buttons in the Options menu are not affected.
+;
+(define (write-script-trailer)
+  (print "(x-zoom! " (wtable-start-xval) " " (wtable-end-xval) ")\n")
+  (print "(wtable-set-xlogscale! "(wtable-xlogscale?) ")\n")
+  (print "(set! default-wavepanel-type " default-wavepanel-type")\n")
+  (if (wtable-vcursor 0)
+      (print "(set-wtable-vcursor! 0 " (wtable-vcursor 0) ")\n"))
+  (if (wtable-vcursor 1)
+      (print "(set-wtable-vcursor! 1 " (wtable-vcursor 1) ")\n"))
+
+  (if (gtk-tooltips-enabled? gwave-tooltips)
+      (print "(gtk-tooltips-enable gwave-tooltips)\n")
+      (print "(gtk-tooltips-disable gwave-tooltips)\n"))
+  (do ((i 0
+	  (+ i 1))) 
+      ((not (< i (num-wavepanels))))
+    (let ((wp (nth-wavepanel i)))
+      (print "(let ((wp (nth-wavepanel "i")))\n")
+      (print " (set-wavepanel-ylogscale! wp "(wavepanel-ylogscale? wp) ")\n")
+      (print " (set-wavepanel-type! wp " (wavepanel-type wp) ")\n")
+      (print ")\n")
+      ))
 )
 
 ; write portion of script to restore waves for a single wavefile
