@@ -10,6 +10,8 @@
 #include <unistd.h>
 
 #include <gtk/gtk.h>
+#include <guile-gtk.h>
+#include <scwm_guile.h>
 
 /* A couple of routines to make it easier to build menus.
  * These are by Steve Tell.
@@ -279,4 +281,30 @@ shape_create_icon_d (char     **xpm_data,
   gtk_widget_show (window);
   
   return window;
+}
+
+SCM_DEFINE(gtk_tooltips_enabled_p, "gtk-tooltips-enabled?", 1, 0, 0, (SCM tt),
+ "Return #t if the GtkTooltips object TT is enabled, otherwise
+return #f.  See gtk-tooltips-enable in the guile-gtk documentation,
+or gtk_tooltips_enable in the Gtk+ documentation for GtkTooltips.")
+#define FUNC_NAME s_gtk_tooltips_enabled_p
+{
+	GtkTooltips *gtktt;
+
+	VALIDATE_ARG_GTK_COPY(1, tt, GTK_TYPE_TOOLTIPS, gtktt);
+
+	if(gtktt->enabled)
+		return SCM_BOOL_T;
+	else
+		return SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+
+/* guile initialization */
+void init_gtkmisc()
+{
+#ifndef SCM_MAGIC_SNARFER
+#include "gtkmisc.x"
+#endif
 }

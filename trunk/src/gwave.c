@@ -27,6 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <assert.h>
 #include <sys/time.h>
 
 #include <gtk/gtk.h>
@@ -88,7 +89,7 @@ SCM_VCELL(scm_gwave_debug, "gwave-debug",
 is passed on the command line.  It enables debugging output to stdout
 in the startup code and in various modules.");
 
-SCM_VCELL(scm_gwave_tooltips, "gwave-tooltips",
+SCM_GLOBAL_VCELL(scm_gwave_tooltips, "gwave-tooltips",
 "This variable is a GtkTooltips object used for controlling all
 of the popup tooltips in the user interface.");
 
@@ -153,6 +154,7 @@ void gwave_main(int argc, char **argv)
 
 	SCM_REDEFER_INTS;
 	init_scwm_guile();
+	init_gtkmisc();
 	init_gwave();
 	init_cmd();
 	init_wavewin();
@@ -191,6 +193,8 @@ void gwave_main(int argc, char **argv)
 	gtk_rc_parse_string(gwave_base_gtkrc);
 	gtk_rc_parse("gwave.gtkrc");
 	gwave_tooltips = gtk_tooltips_new();
+	assert( SCM_CONSP(scm_gwave_tooltips) );
+
 /*	SCM_SETCDR(scm_gwave_tooltips, sgtk_wrap_gtkobj(GTK_OBJECT(gwave_tooltips))); */
 
 #ifdef GUILE_GTK_EXTRA_LOADPATH

@@ -20,6 +20,12 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.12  2000/08/10 04:43:27  sgt
+ * Extend our documentation-snarfing mechanism to handle hooks,
+ * variables, and concepts; changed various .c files to use new system.
+ * guile-ext.h contains additions to libguile/snarf.h for this.
+ * scwm-snarf.h is no longer neeeded.
+ *
  * Revision 1.11  2000/08/08 06:41:24  sgt
  * Convert to guile-1.4 style SCM_DEFINE macros, where the docstrings
  * are strings, not comments.  Remove some unused functions.
@@ -71,9 +77,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <assert.h>
 #include <sys/time.h>
 
 #include <gtk/gtk.h>
+#include <guile-gtk.h>
 #include <config.h>
 #include <scwm_guile.h>
 #include <gwave.h>
@@ -301,6 +309,25 @@ SCM_DEFINE(datafile_reload_x, "wavefile-reload!", 1, 0, 0,
 #undef FUNC_NAME
 
 /*
+ * Return the GtkTooltips object used for gwave.
+ */
+GtkTooltips *
+get_gwave_tooltips()
+{
+	extern SCM scm_gwave_tooltips;
+	SCM scm_tt;
+	assert( SCM_CONSP(scm_gwave_tooltips) );
+	scm_tt = SCM_CDR(scm_gwave_tooltips);
+	
+	if( sgtk_is_a_gtkobj (GTK_TYPE_TOOLTIPS, scm_tt))
+		return (GtkTooltips *) sgtk_get_gtkobj (scm_tt);
+	else {
+		fprintf(stderr, "not a GtkTooltips");
+		exit(0);
+	}
+}
+
+/*
  * Add a button for each variable in the file 
  * to the win_wlist box for it.  
  * Arrange for the buttons to be drag-and-drop sources for placing the
@@ -311,6 +338,8 @@ add_variables_to_list(GWDataFile *wdata)
 {
 	int i;
 	GtkWidget *button;
+	GtkTooltips *gw_tooltips;
+	gw_tooltips = get_gwave_tooltips();
 
 	for(i = 0; i < wdata->wf->wf_ndv; i++) {
 		WaveVar *dv = &wdata->wf->dv[i];
@@ -318,6 +347,11 @@ add_variables_to_list(GWDataFile *wdata)
 		
 		gtk_box_pack_start (GTK_BOX (wdata->wlist_box), button, FALSE, FALSE, 0);
 		gtk_widget_show (button);
+
+		gtk_tooltips_set_tip(GTK_TOOLTIPS(gw_tooltips), button,
+				     "Wavefile Variable.\nDrag-and-Drop to a WavePanel.",
+				     "");
+
 		dnd_setup_source(wdata->wlist_win, button, dv);
 
 		gtk_signal_connect (GTK_OBJECT(button), "button-press-event",
