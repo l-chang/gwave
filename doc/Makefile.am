@@ -1,9 +1,12 @@
-## $Id: Makefile.am,v 1.1 2000-05-19 06:51:06 sgt Exp $
+## $Id: Makefile.am,v 1.2 2000-08-08 06:41:49 sgt Exp $
 ## process this file with automake to create Makefile.in
 ## (You should run ./autogen.sh from the top level directory)
 
-gwavedoc_DATA=gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt gwave.sgml
-EXTRA_DIST=Guile.notes HPUX.notes hspice.txt spice.txt $(gwavedoc_DATA)
+# Lots of this documentation stuff was borrowed from scwm.  It doesn't 
+# all work yet.
+
+gwavedocDATA=gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt gwave.sgml
+EXTRA_DIST=Guile.notes HPUX.notes hspice.txt spice.txt sp2sp.stml $(gwavedocDATA)
 
 # Use scwmdoc to build the documentation files
 # Set envvar $SCWMDOC_TEST_OPTIONS to  "-F" for a faster test
@@ -33,6 +36,11 @@ ps gwave.ps: gwave.dvi
 
 pdf gwave.pdf: gwave.sgml
 	db2pdf $<
+
+SUFFIXES=.sgml .1 .5
+
+.sgml.1:
+	docbook-to-man $*.sgml > $@
 
 .PHONY: html tex dvi ps pdf
 
