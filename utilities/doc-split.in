@@ -1,0 +1,84 @@
+#!@PERL@ -w
+# -*- mode: perl -*-
+# $Id: doc-split.in,v 1.1 2000-08-10 04:39:27 sgt Exp $
+# doc-split
+# Copyright (C) 2000 Steve Tell
+#
+# doc-split devides one or more files containing extracted documentation
+# into seperate files for each type of documented object.
+# 
+
+use Getopt::Long;
+
+use vars qw( $debug $verbose $basename );
+
+sub usage {
+        print STDERR "doc-split [options] files\n";
+        print STDERR "options:
+  -b|--basename   S  name output files S-procedures.txt, S-hooks.txt, etc.
+  -v|--verbose       verbose debugging output 
+";
+}
+
+#############################################################################
+# Options and arguments
+#
+
+%optctl = ("D|debug!"   => \$debug,
+           "b|basename=s" => \$basename,
+           "v|verbose!" => \$verbose
+);
+
+Getopt::Long::config('no_auto_abbrev',
+                     'no_ignore_case',
+                     'no_ignore_case_always');
+# defaults
+$basename = "X";
+$verbose = 0;
+$debug = 0;
+
+if(!GetOptions(%optctl)) {
+        &usage();
+        exit 1;
+}
+
+if($#ARGV < 0) {
+        &usage();
+        exit 1;
+}
+
+open('C', ">${basename}-concepts.txt") || die "${basename}-concepts.txt: $!";
+open('H', ">${basename}-hooks.txt") || die "${basename}-hooks.txt: $!";
+open('P', ">${basename}-procedures.txt") || die "${basename}-procedures.txt: $!";
+open('V', ">${basename}-variables.txt") || die "${basename}-variables.txt: $!";
+
+$outf = '';
+
+while($_ = <>) {
+	if($_ =~ m/^/) {
+		$_ = <>;
+		if($_ =~ m/^CONCEPT/) {
+			$outf = 'C';
+			print $outf "\n";
+		} elsif($_ =~ m/^HOOK/) {
+			$outf = 'H';
+			print $outf "\n";
+		} elsif($_ =~ m/^VARIABLE/) {
+			$outf = 'V';
+			print $outf "\n";
+		} elsif($_ =~ m/^\(/) {
+			$outf = 'P';
+			print $outf "\n";
+		} else {
+			$outf = '';
+		}
+		if($outf) { print $outf $_; }
+	} elsif($outf) {
+		print $outf $_;
+	}
+}
+
+close('C');
+close('H');
+close('P');
+close('V');
