@@ -21,6 +21,15 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  1998/12/26 04:38:58  tell
+ * Initial revision
+ *
+ * Revision 1.3  1998/09/30 21:58:15  tell
+ * Reorganization of mouse-button event handling to support both dragging of
+ * cursors and select_x_range primitive used to get the range for cmd_zoom_window.
+ * add supress_redraw and some misc stuff while tracking down some bugs.
+ * Attempt to make drawing the waveforms a bit more efficient.
+ *
  * Revision 1.2  1998/09/17 18:35:49  tell
  * wrap DnD message as type GWDnDData.
  * Split cursor draw/update into several functions in preparation for
@@ -95,7 +104,7 @@ set_all_wp_cursors(int cnum)
 	else
 		cursor = gdk_cursor_new(cnum);
 	for(i = 0; i < wtable->npanels; i++) {
-		wp = &wtable->panels[i];
+		wp = wtable->panels[i];
 		gdk_window_set_cursor(wp->drawing->window, cursor);
 	}
 	if(cursor)
@@ -153,7 +162,7 @@ draw_cursor(VBCursor *csp)
 	int h, x, i;
 	WavePanel *wp;
 	for(i = 0; i < wtable->npanels; i++) {
-		wp = &wtable->panels[i];
+		wp = wtable->panels[i];
 		h = wp->drawing->allocation.height;
 		if(wp->start_xval <= csp->xval 
 		   && csp->xval <= wp->end_xval) {
@@ -190,7 +199,7 @@ update_cursor(VBCursor *csp, double xval)
 	gtk_container_disable_resize(GTK_CONTAINER(win_main));
 	if(csp == wtable->cursor[0]) {
 		for(i = 0; i < wtable->npanels; i++) {
-			wp = &wtable->panels[i];
+			wp = wtable->panels[i];
 			g_list_foreach(wp->vwlist, vw_wp_visit_update_labels, wp);
 		}
 	}
@@ -270,6 +279,15 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 			break;
 			
 		}
+		break;
+	case 3:
+		if(wtable->mstate == M_NONE) {
+			wtable->popup_panel = wp;
+			gtk_menu_popup (GTK_MENU (wtable->popup_menu),
+					NULL, NULL, NULL, NULL, 
+					event->button, event->time);
+		}
+		break;
 	default:
 		break;
 	}
@@ -356,7 +374,7 @@ gint scroll_handler(GtkWidget *widget)
 
 	if(wtable->suppress_redraw == 0)
 		for(i = 0; i < wtable->npanels; i++) {
-			wp = &wtable->panels[i];
+			wp = wtable->panels[i];
 			wp->start_xval = wtable->start_xval;
 			wp->end_xval = wtable->end_xval;
 			draw_wavepanel(wp->drawing, NULL, wp);
