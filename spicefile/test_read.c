@@ -1,7 +1,10 @@
 /*
- * test routine for analog file readers
+ * test routine for WaveFile data file readers
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  1998/09/17 18:25:09  tell
+ * prints out variable type
+ *
  * Revision 1.1  1998/08/31 21:00:28  tell
  * Initial revision
  *
@@ -11,12 +14,13 @@
 #include <string.h>
 #include <errno.h>
 #include <glib.h>
-#include "reader.h"
+
+#include "wavefile.h"
 
 int
 main(int argc, char **argv)
 {
-	DataFile *df;
+	WaveFile *wf;
 	int i, j;
 	extern int optind;
 	extern char *optarg;
@@ -48,77 +52,85 @@ main(int argc, char **argv)
 	}
 
 	if(errflg || optind >= argc)  {
-		fprintf(stderr, "usage: %s [-l] file\n", argv[0]);
+		fprintf(stderr, "usage: %s [-ltvx] file\n", argv[0]);
 		exit(1);
 	}
-
-	analog_read_debug = 1;
-	df = analog_read_file(argv[optind], filetype);
-	if(!df) {
+	
+	spicestream_msg_level = DBG;
+	wf = wf_read(argv[optind], filetype);
+	if(!wf) {
 		if(errno)
 			perror(argv[1]);
-		fprintf(stderr, "unable to read file\n");
+		fprintf(stderr, "test_read: unable to read file\n");
 		exit(1);
 	}
-	printf("filename: \"%s\"\n", df->filename);
+	printf("filename: \"%s\"\n", wf->wf_filename);
 	printf("independent variable:\n");
-	printf("  name: \"%s\"\n", df->iv->d.name);
-	printf("  type: %s\n", vartype_name_str(df->iv->d.type));
-	printf("  npts: %d\n", df->iv->d.nvalues);
-	printf("  min: %g\n", df->iv->d.min);
-	printf("  max: %g\n", df->iv->d.max);
-	printf("  blocks: %d/%d\n", df->iv->d.bpused, df->iv->d.bpsize);
+	printf("  name: \"%s\"\n", wf->iv->wv_name);
+	printf("  type: %s\n", vartype_name_str(wf->iv->wv_type));
+	printf("  npts: %d\n", wf->nvalues);
+	printf("  min: %g\n", wf->iv->wds->min);
+	printf("  max: %g\n", wf->iv->wds->max);
+	printf("  blocks: %d/%d\n", wf->iv->wds->bpused, wf->iv->wds->bpsize);
 
-	printf("dependent variables: %d\n", df->ndv);
-	for(i = 0; i < df->ndv; i++) {
-		printf(" dv[%d] \"%s\" ", i, df->dv[i]->d.name);
-		printf(" (type=%s)", vartype_name_str(df->dv[i]->d.type));
-		printf("(%d values) ", df->dv[i]->d.nvalues);
-		printf("blocks=%d/%d\n",
-		       df->dv[i]->d.bpused, df->dv[i]->d.bpsize);
-		printf("   min=%g ", df->dv[i]->d.min);
-		printf("max=%g ", df->dv[i]->d.max);
-		printf("first=%g ", an_get_point(&df->dv[i]->d, 0));
-		printf("last=%g\n", an_get_point(&df->dv[i]->d, df->dv[i]->d.nvalues-1));
+	printf("columns: %d\n", wf->wf_ncols);
+	printf("dependent variables: %d\n", wf->wf_ndv);
+	for(i = 0; i < wf->wf_ndv; i++) {
+		printf(" dv[%d] \"%s\" ", i, wf->dv[i].wv_name);
+		printf(" (type=%s)", vartype_name_str(wf->dv[i].wv_type));
+		if(wf->dv[i].wv_ncols > 1)
+			printf(" (%d columns)\n", wf->dv[i].wv_ncols);
+		for(j = 0; j < wf->dv[i].wv_ncols; j++) {
+			if(wf->dv[i].wv_ncols > 1)
+				printf("    col[%d] ", j);
+			printf("blocks=%d/%d ",
+			       wf->dv[i].wds[j].bpused, wf->dv[i].wds[j].bpsize);
+			printf("min=%g ", wf->dv[i].wds[j].min);
+			printf("max=%g ", wf->dv[i].wds[j].max);
+			printf("first=%g ", wds_get_point(&wf->dv[i].wds[j], 0));
+			printf("last=%g\n", wds_get_point(&wf->dv[i].wds[j],
+						 wf->nvalues-1));
+		}
 	}
 
 	if(l_flag) {
 		putchar('\n');
-		printf("      %10s", df->iv->d.name);
-		for(i = 0; i < df->ndv; i++) {
-			printf("%10s", df->dv[i]->d.name);
+		printf("      %10s", wf->iv->wv_name);
+		for(i = 0; i < wf->wf_ndv; i++) {
+			printf(" %10s", wf->dv[i].wv_name);
 		}
 		putchar('\n');
-		for(j = 0; j < df->iv->d.nvalues; j++) {
-			printf("[%3d] %10g", j, an_get_point(&df->iv->d, j));
-			for(i = 0; i < df->ndv; i++) {
-				printf(" %10g", an_get_point((DataSet *)df->dv[i], j));
+		for(j = 0; j < wf->nvalues; j++) {
+			printf("[%3d] %10g", j, wds_get_point(wf->iv->wds, j));
+			for(i = 0; i < wf->wf_ndv; i++) {
+				printf(" %10g", 
+				       wds_get_point(&wf->dv[i].wds[0], j));
 			}
 			putchar('\n');
 		}
 	}
+
 	if(v_flag) {
 		double mytm;
 		double delta;
 		int idx;
 
-		mytm = an_get_point((DataSet *)df->iv, 0);
-		delta = (an_get_point((DataSet *)df->iv, 0)
-			+ an_get_point((DataSet *)df->iv, df->iv->d.nvalues-1)) / 40;
+		mytm = wds_get_point(wf->iv->wds, 0);
+		delta = (wds_get_point(wf->iv->wds, wf->nvalues-1) - mytm) / 40;
 		printf("40 divisions, delta=%g\n", delta);
 		for(i = 0; i < 41; i++, mytm += delta) {
-			idx = an_find_point(df->iv, mytm);
-			printf("last %s < %g is %g at [%d];",
-			       df->iv->d.name,
+			idx = wf_find_point(wf->iv, mytm);
+			printf("last %8s < %8.4g is %8.4g at [%2d];",
+			       wf->iv->wv_name,
 			       mytm,
-			       an_get_point((DataSet *)df->iv, idx),
+			       wds_get_point(wf->iv->wds, idx),
 			       idx);
 			fflush(stdout);
-			printf("%s at %s=%g is %g\n",
-			       df->dv[0]->d.name,
-			       df->iv->d.name,
+			printf("%8s at %8s=%8.4g is %8.4g\n",
+			       wf->dv[0].wv_name,
+			       wf->iv->wv_name,
 			       mytm,
-			       an_interp_value(df->dv[0], mytm));
+			       wv_interp_value(&wf->dv[0], mytm));
 		}
    	}
 
