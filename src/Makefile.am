@@ -60,4 +60,4 @@ CLEANFILES = core *~ $(BUILT_SOURCES)
 DISTCLEANFILES = core *~
 MAINTAINERCLEANFILES = core *~
 
-EXTRA_DIST=$(noinst_SCRIPTS) gwave.gtkrc generate_scm_init_funcs 
+EXTRA_DIST=$(noinst_SCRIPTS) gwave.gtkrc generate_scm_init_funcs

@@ -3,7 +3,7 @@
 
 SUBDIRS=spicefile utilities src scheme doc remote
 
-EXTRA_DIST=autogen.sh gwave.spec TODO
+EXTRA_DIST=autogen.sh gwave.spec TODO plotutils-2.4.1.patch
 
 # distribute some extra directories that don't have anything to build 
 # or install in them
