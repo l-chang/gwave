@@ -163,6 +163,7 @@ void gwave_main(int argc, char **argv)
 	init_cmd();
 	init_wavewin();
 	init_wavelist();
+	init_wavepanel();
 	init_event();
 	init_draw();
 	init_print();
