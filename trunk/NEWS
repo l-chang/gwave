@@ -1,5 +1,10 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20000509:
+- First public guile/guile-gtk release.
+- Popup menu on visible-wave button can activate per-waveform dialog box
+- Logarithmic scale on Y axis working; on X axis it isn't quite there yet.
+
 New in 20000108:
 - Merged in guile and guile-gtk; the GUI is mostly written in guile now.
 - Some additional improvements to reading of HSPICE input.  Reading partial
