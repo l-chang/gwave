@@ -154,8 +154,10 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 	sf->lbufsize = linesize;
 	sf->ntables = ntables;
 	sf->read_tables = 0;
+	sf->read_rows = 0;
 	sf->read_sweepparam = 0;
 	sf->readsweep = sf_readsweep_hsascii;
+	sf->lineno = lineno;
 
 	ss_msg(DBG, "rdhdr_hsascii", "expect %d columns", sf->ncols);
 
@@ -255,6 +257,7 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 
 	sf->ntables = ntables;
 	sf->read_tables = 0;
+	sf->read_rows = 0;
 	sf->read_sweepparam = 0;
 
 	return sf;
@@ -386,7 +389,8 @@ hs_process_header(int nauto, int nprobe, int nsweepparam, char *line, char *name
  * Lines may look like either of these two examples:
 0.66687E-090.21426E+010.00000E+000.00000E+000.25000E+010.71063E-090.17877E+01
  .00000E+00 .30000E+01 .30000E+01 .30000E+01 .30000E+01 .30000E+01 .30092E-05
-
+ *
+ * Returns 0 on EOF, 1 on success.
  */
 static int
 sf_getval_hsascii(SpiceStream *sf, double *val)
@@ -436,13 +440,15 @@ sf_readrow_hsascii(SpiceStream *sf, double *ivar, double *dvars)
 			return 0; /* EOF */
 		else
 			sf->read_sweepparam = 0;
+			sf->read_rows = 0;
 			return -2;  /* end of table, more tables follow */
 	}
 
+	sf->read_rows++;
 	for(i = 0; i < sf->ncols-1; i++) {
 		if(sf_getval_hsascii(sf, &dvars[i]) == 0) {
-			ss_msg(ERR, "sf_readrow_hsascii", "%s: data field %d missing", sf->filename, i);
-			return -1;
+			ss_msg(WARN, "sf_readrow_hsascii", "%s: EOF or error reading data field %d in row %d of table %d; file is incomplete.", sf->filename, i, sf->read_rows, sf->read_tables);
+			return 0;
 		}
 	}
 	return 1;

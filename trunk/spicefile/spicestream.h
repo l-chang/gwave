@@ -63,6 +63,7 @@ struct _SpiceStream {
 	int lbufsize;
 	int expected_vals;
 	int read_vals;
+	int read_rows;
 	int read_tables;
 	int read_sweepparam;
 	char *linep;

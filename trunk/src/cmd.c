@@ -360,6 +360,11 @@ wavepanel_update_data(WavePanel *wp)
 	if((wp->max_yval - wp->min_yval) < DBL_EPSILON) {
 		wp->max_yval *= 1.001;
 		wp->min_yval *= 0.999;
+		/* still zero?  maybe there's a waveform that is stuck at 0.000 */
+		if((wp->max_yval - wp->min_yval) < DBL_EPSILON) {
+			wp->max_yval += 1e-6;
+			wp->min_yval -= 1e-6;
+		}
 	}
 
 	/* if start & end were the same, try updating them
