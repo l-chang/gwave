@@ -17,6 +17,9 @@
 /* do we have Gtk+? */
 #undef HAVE_GTK
 
+/* do we have sys/types.h? */
+#undef HAVE_SYS_TYPES_H
+
 /* does the Gtk+ we found have the new drag-and-drop stuff?
  * do we need to use gtk_scrolled_window_add_with_viewport()?
  */
