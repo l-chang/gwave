@@ -1,4 +1,4 @@
-## $Id: Makefile.am,v 1.4 2000-08-10 04:36:46 sgt Exp $
+## $Id: Makefile.am,v 1.5 2000-11-24 05:00:26 sgt Exp $
 ## process this file with automake to create Makefile.in
 ## (You should run ./autogen.sh from the top level directory)
 
@@ -9,11 +9,12 @@
 # If you have docbook-to-man, you should be able to build
 # sp2sp.1 from sp2sp.sgml, however.
 
-pkgdata_DATA=gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt
+noinst_DATA=gwave-procedures.txt gwave-variables.txt gwave-hooks.txt \
+	gwave-concepts.txt
 
 man_MANS=sp2sp.1
 
-EXTRA_DIST=Guile.notes HPUX.notes hspice.txt hspice-output.txt spice.txt sp2sp.sgml
+EXTRA_DIST=Guile.notes HPUX.notes hspice.txt hspice-output.txt spice3.txt sp2sp.sgml sp2sp.1
 
 # Make the reference-document textfiles
 gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt:

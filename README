@@ -48,13 +48,81 @@ and delete waveform panels.  Some of the zoom commands are also
 replicated on this menu.
 
 
------------------------------------------------------------------------------
+Configuration save/restore
+
+A gwave panel and VisibleWave setup can be saved and restored.  To save 
+all settings for all data files, use the "Save Configuration as Script" from
+the man window's File menu.   To save the configuration for one file only,
+use the "Save" option on that file's scrolling variable-list window.
+
+Scripts saved by either method can be run to restore gwave
+configuration in two ways: 
+- From the main window of a fresh gwave session, use the "File->Execute
+  Script" menu item.  
+- From the unix shell command line.  Either type "gwave -s <script>," or
+simply type the name of the script.  Either way, gwave will start and run the
+named script, producing wave panels set up exactly as they were when saved.
+
+Scripts written by gwave that restore only a single file's
+configuration can also be applied to another file, provided that the
+second data file has variables with the same names as those in the
+first.  Load the new data file, using the main window File->Read menu
+item.  Then, from the variable-list File menu, pick "Apply Script to
+File" and choose the script.  Variables in the new data file will be
+displayed in panels in the same manner as those from the original
+file.  This can be extremely useful, say for comparing the results of
+simulating the same circuit under different temperature or component-value
+conditions.
+
+In addition to the configuration-script-writing facilities described
+here, you are welcome to create your own guile scripts for specialized
+gwave applications.  For general guile information, see
+http://www.gnu.org/software/guile/guile.html For information on
+gwave-specfic features available for scripting gwave using guile, see
+the text files gwave-concepts.txt, gwave-hooks.txt,
+gwave-procedures.txt, and gwave-variables.txt All of gwave's menus and
+many of its user-interface features are written in guile; the code in
+the scheme subdirectory may also be useful as an example.
+
+
+Remote Control
+
+A running gwave process may be remotely controlled by any process that
+has permission to connect to the same X server.  Use the "xauth" and
+"xhost" utilities carefully to control access to your X server at all
+times.  This is especialy true when running gwave; anyone who can
+connect to your X server can cause your gwave to execute arbitrary
+guile code.
+
+The gwave-exec command sends a single guile expression to gwave to
+be executed, and displays the result and output of that command.
+
+For example 
+	gwave-exec '(x-zoom! 10e-6 20e-6)'
+
+will zoom gwave's display so that the region of time from 10 to 20
+nanoseconds is visible.
+
+The gwaverepl program enters an interactive "read-evaluate-print" loop
+in which multiple guile expressions may be entered.  Each expression
+is evaultated, and the results printed.  Gwaverepl uses the GNU
+Readline facility for input line-editing and history scrollback, so
+all of the usual emacs (or vi) editing keys may be used.  Type the
+End-Of-File character (usually Control-D) to exit gwaverepl.
+
+
+Bug: do not use gwave-exec or gwaverepl when running multiple
+instances of gwave at a time on the same X server.
+
+
+
 Waveform Input files.
 
-Gwave understands CAzM transient output (.N/.B/.W) files, and the
-binary and ascii outputs from HSPICE (.tr0, .sw0, and .ac0) files.
-Gwave tries to guess the type of the file based on filename, and then
-tries all file formats until one succedes.
+Gwave understands CAzM transient output (.N/.B/.W) files, the binary
+and ascii outputs from HSPICE (.tr0, .sw0, and .ac0) files, and
+tabular ascii files with a header line.  Gwave tries to guess the type
+of the file based on filename, and then tries all file formats until
+one succedes.
 
 Details on using Gwave with the output of various simulators:
 
@@ -148,17 +216,11 @@ This tool is far from complete. Partial contents of the To Do list:
 - Override of wave and panel paramters, like min/max Y value, color, etc.
 	Many of these are done.... needs docs...
 - More guile methods to round out the interface, including:
-	SMOBs for WaveVars, access to selected-VisibleWave list, others.
-- Saving and restoring waveform/panel configuration 
+	access to selected-VisibleWave list, others.
 - Drawing a labeled graticule in the waveform area
 - Seperate lists for selecting voltage/current/etc. types of variables
-- Clean up reader code by collecting some idioms that appear again and again
-  into common subroutines.  This will make writing new readers a little easier.
 - Documentation, both user's manual and programmer's manual.
   Autodocs for guile primitives need to be extracted into text files.
-
-
-Feedback is welcome - tell@cs.unc.edu
 
 ----------------------------------------------------------------------
 Acknowledgements

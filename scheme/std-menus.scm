@@ -118,7 +118,7 @@
 				 #:default "gwave.gw")))
        (add-menuitem file-menu "Execute Guile Script..." 
 		     (lambda () (with-selected-filename 
-				 "Guile script to run" load)))
+				 "Guile script to run" execute-script)))
        (add-menuitem file-menu #f #f)
        (add-menuitem file-menu "Quit" (lambda () (gtk-main-quit)))
        )
@@ -228,6 +228,10 @@
 				 (lambda (fn) (write-filerestore-script df fn))
 				 #:default (string-append 
 					    (wavefile-file-name df) ".gw"))))
+       (add-menuitem menu "Apply Script to File"
+     		     (lambda () (with-selected-filename "Guile script to run"
+				 (lambda (fn) (apply-script-to-file fn df)))))
+
        (add-menuitem menu #f #f)
        (add-menuitem menu "Close"
 		 (lambda () (wavefile-remove-listwin! df)))

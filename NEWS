@@ -1,5 +1,10 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20001123:
+- Saving wave and panel configuration as guile scripts.
+- Executing guile scripts from menu or command line (-s <script> option)
+- Remote control using the gwave-exec and gwaverepl utilities
+
 New in 20001004:
 - Spice3/Ngspice rawfile improvements: binary files now work!
 - Other minor file-reading improvements.
