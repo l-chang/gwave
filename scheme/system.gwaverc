@@ -13,7 +13,7 @@
  (app gwave std-args)
  (app gwave std-toolbar)
  (app gwave cmds)
- (app gwave options)
+ (app gwave visiblewave-ops)
 )
 
 ; wavepanel type: 0=original, tall, with min/max labels.  Good for analog.
