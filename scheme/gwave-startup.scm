@@ -3,14 +3,15 @@
 ; gwave-startup.scm - this is called with (load ...) from minimal.scm
 ; 
 ; Outline:
-; - whatever setup is required before we can load a .gwavers
-; - find and load a .gwaverc
-; - load fallback stuff if the user's .gwaverc omitted important things.
+; 1. whatever setup is required before we can load a .gwavers
+; 2. find and load a .gwaverc
+; 3. load fallback stuff if the user's .gwaverc omitted important things.
 ;
-; The point of the last item is to allow both "simple" user .gwaverc's
+; The point of #3 is to allow both "simple" user .gwaverc's
 ; that only set some configuration variables, and also "full-blown" ones
 ; where we assume the user really knows what they're doing and will
-; take care of all gwave-specific initializtion that they want.
+; take care of all gwave-specific initializtion that they want, including
+; loading of specific gwave core modules.
 ;
 
 (use-modules 
