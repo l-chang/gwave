@@ -45,7 +45,7 @@
 #define WAVEPANEL_MIN_HEIGHT 20
 #define WAVEPANEL_MAX_REQHEIGHT 400
 
-SCM_HOOK(new_wavepanel_hook,"new-wavepanel-hook", 1, (SCM wp),
+XSCM_HOOK(new_wavepanel_hook,"new-wavepanel-hook", 1, (SCM wp),
 "This hook is invoked with one WavePanel argument, WP, when the
 WavePanel is first created and added to the waveform window.
 The main purpose of this hook is to allow creation of 
@@ -282,7 +282,7 @@ void destroy_wave_panel(WavePanel *wp)
 		g_free(wp);
 }
 
-SCM_DEFINE(wavepanel_y_zoom_x, "wavepanel-y-zoom!", 3, 0, 0, 
+XSCM_DEFINE(wavepanel_y_zoom_x, "wavepanel-y-zoom!", 3, 0, 0, 
 	   (SCM wavepanel, SCM miny, SCM maxy),
 	   "zoom/rescale WAVEPANEL so that the y axis displays from MINY to MAXY")
 #define FUNC_NAME s_wavepanel_y_zoom_x
@@ -312,7 +312,7 @@ SCM_DEFINE(wavepanel_y_zoom_x, "wavepanel-y-zoom!", 3, 0, 0,
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(wavepanel_y_manual_p, "wavepanel-y-manual?", 1, 0, 0,
+XSCM_DEFINE(wavepanel_y_manual_p, "wavepanel-y-manual?", 1, 0, 0,
 	   (SCM wavepanel),
 "If WAVEPANEL's y extents have been zoomed manually, return #t.
 Otherwise, return #f to indicate automatic y-zoom to show the minimum
@@ -331,7 +331,7 @@ and maximum values of all dependent variables")
 #undef FUNC_NAME
 
 
-SCM_DEFINE(set_wavepanel_ylabels_visible_x, "set-wavepanel-ylabels-visible!", 2, 0, 0,
+XSCM_DEFINE(set_wavepanel_ylabels_visible_x, "set-wavepanel-ylabels-visible!", 2, 0, 0,
 	   (SCM wavepanel, SCM show),
 "If SHOW is #t, make the Y-axis labels on the left side of WAVEPANEL
 visible.  If show is #f, hide the labels.  Hiding the labels allows
@@ -355,7 +355,7 @@ a lot of panels, for example with digital circuits.")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(set_wavepanel_ylogscale_x, "set-wavepanel-ylogscale!", 2, 0, 0,
+XSCM_DEFINE(set_wavepanel_ylogscale_x, "set-wavepanel-ylogscale!", 2, 0, 0,
 	   (SCM wavepanel, SCM logscale),
 "If LOGSCALE is #t, The Y-axis of WAVEPANEL is set to have
 Logarithmic scaling.  Otherwise, scaling is linear.")
@@ -378,7 +378,7 @@ Logarithmic scaling.  Otherwise, scaling is linear.")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(wavepanel_ylogscale_p, "wavepanel-ylogscale?", 1, 0, 0,
+XSCM_DEFINE(wavepanel_ylogscale_p, "wavepanel-ylogscale?", 1, 0, 0,
 	   (SCM wavepanel),
 	   "If WAVEPANEL is set to Logarithmic scaling, return #t.")
 #define FUNC_NAME s_wavepanel_ylogscale_p
@@ -401,7 +401,7 @@ wavepanel_to_scm(WavePanel *wp)
 	return wp->smob;
 }
 
-SCM_DEFINE(wavepanel_visiblewaves, "wavepanel-visiblewaves", 1, 0, 0,
+XSCM_DEFINE(wavepanel_visiblewaves, "wavepanel-visiblewaves", 1, 0, 0,
 	   (SCM wavepanel),
 	   "Return a list of the VisibleWaves contained in WAVEPANEL.")
 #define FUNC_NAME s_wavepanel_visiblewaves
@@ -421,7 +421,7 @@ SCM_DEFINE(wavepanel_visiblewaves, "wavepanel-visiblewaves", 1, 0, 0,
  * But the scheme interface here isn't too far from what that would implement,
  * and this simple thing lets us get the rest of the old menus into guile.
  */
-SCM_DEFINE(wavepanel_bind_mouse, "wavepanel-bind-mouse", 2, 0, 0,
+XSCM_DEFINE(wavepanel_bind_mouse, "wavepanel-bind-mouse", 2, 0, 0,
            (SCM button, SCM proc),
 "binds a mouse BUTTON to the procedure PROC in all wavepanels. 
 PROC is called with 1 argument, the wavepanel that the mouse was in.")
@@ -445,7 +445,7 @@ PROC is called with 1 argument, the wavepanel that the mouse was in.")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(wavepanel_x2val, "wavepanel-x2val", 2, 0, 0,
+XSCM_DEFINE(wavepanel_x2val, "wavepanel-x2val", 2, 0, 0,
 	   (SCM wavepanel, SCM xpixel),
 "Given an XPIXEL coordinate in WAVEPANEL, 
 return the value of the independent variable at that position
@@ -462,7 +462,7 @@ in the waveform.")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(wavepanel_y2val, "wavepanel-y2val", 2, 0, 0,
+XSCM_DEFINE(wavepanel_y2val, "wavepanel-y2val", 2, 0, 0,
 	   (SCM wavepanel, SCM ypixel),
 "Given a YPIXEL screen-space coordinate in WAVEPANEL, 
 return the value that the dependent variable would have
@@ -479,7 +479,7 @@ at that position.")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(wavepanel_disp_rect, "wavepanel-disp-rect", 1, 0, 0,
+XSCM_DEFINE(wavepanel_disp_rect, "wavepanel-disp-rect", 1, 0, 0,
 	   (SCM wavepanel),
 "Return a list containing coordinates of the space displayed 
 currently displayed by the current zoom setting of WAVEPANEL.  
@@ -497,7 +497,7 @@ The list contains four elements, startX, startY, endX, endY")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(wavepanel_max_rect, "wavepanel-max-rect", 1, 0, 0,
+XSCM_DEFINE(wavepanel_max_rect, "wavepanel-max-rect", 1, 0, 0,
 	   (SCM wavepanel),
 "Return a list containing coordinates of the bounding box of all waveforms
 displayed in WAVEPANEL.
@@ -515,7 +515,7 @@ The list contains four elements, minX, minY, maxX, maxY")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(set_wavepanel_minheight_x, "set-wavepanel-minheight!", 2, 0, 0,
+XSCM_DEFINE(set_wavepanel_minheight_x, "set-wavepanel-minheight!", 2, 0, 0,
 	   (SCM wavepanel, SCM height),
 "Set the minimum height of WAVEPANEL to HEIGHT pixels.  Adding multiple
 VisibleWaves to the wavepanel can cause the actual height to increase
@@ -571,7 +571,7 @@ print_WavePanel(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
 	return 1;
 }
 
-SCM_DEFINE(WavePanel_p, "WavePanel?", 1, 0, 0,
+XSCM_DEFINE(WavePanel_p, "WavePanel?", 1, 0, 0,
            (SCM obj),
 	   "Returns #t if OBJ is a gwave data file object, otherwise #f.")
 #define FUNC_NAME s_WavePanel_p
@@ -616,7 +616,7 @@ print_VisibleWave(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
 	return 1;
 }
 
-SCM_DEFINE(VisibleWave_p, "VisibleWave?", 1, 0, 0,
+XSCM_DEFINE(VisibleWave_p, "VisibleWave?", 1, 0, 0,
            (SCM obj),
 	   "Returns #t if OBJ is a gwave data file object, otherwise #f.")
 #define FUNC_NAME s_VisibleWave_p
@@ -637,7 +637,7 @@ void init_wavepanel()
         REGISTER_SCWMSMOBFUNS(WavePanel);
         REGISTER_SCWMSMOBFUNS(VisibleWave);
 
-#ifndef SCM_MAGIC_SNARFER
+#ifndef XSCM_MAGIC_SNARF_INITS
 #include "wavepanel.x"
 #endif
 }

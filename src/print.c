@@ -102,7 +102,7 @@ export_graph_data(char *file, WavePanel *wp)
  * print/export a representation of what is shown on the screen.
  * Only a minimum of options are available so far.
  */
-SCM_DEFINE(export_waveimage_x, "export-waveimage!", 2, 2, 0, 
+XSCM_DEFINE(export_waveimage_x, "export-waveimage!", 2, 2, 0, 
 	   (SCM file, SCM format, SCM color, SCM landscape),
 "Export a picture of the current waveform display to FILE, using FORMAT.
 if COLOR is t, render the image in color.  If LANDSCAPE is t, the
@@ -251,7 +251,7 @@ else portrait orientation")
 /* guile initialization */
 void init_print()
 {
-#ifndef SCM_MAGIC_SNARFER
+#ifndef XSCM_MAGIC_SNARF_INITS
 #include "print.x"
 #endif
 }

@@ -1,4 +1,4 @@
-/* $Id: guile-compat.c,v 1.2 2002-01-10 04:04:26 sgt Exp $ */
+/* $Id: guile-compat.c,v 1.3 2002-03-28 06:35:21 sgt Exp $ */
 /*
  * Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
  *
@@ -53,108 +53,6 @@ cwdr_no_unwind_handler (void *data, SCM tag, SCM args)
   c->args = args;
   return SCM_UNSPECIFIED;
 }
-
-
-SCM 
-scm_internal_cwdr_no_unwind (scm_catch_body_t body, void *body_data,
-			     scm_catch_handler_t handler, void *handler_data,
-			     SCM_STACKITEM *stack_start)
-{
-#ifdef USE_STACKJMPBUF
-  scm_contregs static_jmpbuf;
-#endif
-  int old_ints_disabled = scm_ints_disabled;
-  SCM old_rootcont;
-  struct cwdr_no_unwind_handler_data my_handler_data;
-  SCM answer;
-  void *pRootContinuation = NULL;
-
-  /* Create a fresh root continuation.  */
-  { /* scope */
-    SCM new_rootcont;
-    SCM_NEWCELL (new_rootcont);
-    SCM_REDEFER_INTS;
-#ifdef USE_STACKJMPBUF
-    SCM_SETJMPBUF (new_rootcont, &static_jmpbuf);
-#else
-    /* GJB:FIXME:MS:: this was leaking, but now I explicitly
-       deallocate it, below.  Not sure what fix you were looking
-       for so it should probably still be revisited. */
-    pRootContinuation =
-      scm_must_malloc ((long) sizeof (scm_contregs),
-                       "inferior root continuation");
-#if 0
-    scwm_msg(DBG,"scm_internal_cwdr_no_unwind","+");
-#endif
-    SCM_SETJMPBUF (new_rootcont,pRootContinuation);
-#endif
-    SCM_SETCAR (new_rootcont, scm_tc7_contin);
-    SCM_DYNENV (new_rootcont) = SCM_EOL;
-    SCM_BASE (new_rootcont) = stack_start;
-    SCM_SEQ (new_rootcont) = -1;
-#ifdef DEBUG_EXTENSIONS
-    SCM_DFRAME (new_rootcont) = 0;
-#endif
-    old_rootcont = scm_rootcont;
-    scm_rootcont = new_rootcont;
-    SCM_REALLOW_INTS;
-  }
-
-#ifdef DEBUG_EXTENSIONS
-  SCM_DFRAME (old_rootcont) = scm_last_debug_frame;
-  scm_last_debug_frame = 0;
-#endif
-
-  /* now invoke the function */
-  my_handler_data.run_handler = 0;
-  answer = scm_internal_catch (SCM_BOOL_T,
-                               body, body_data,
-                               cwdr_no_unwind_handler, &my_handler_data);
-
-  SCM_REDEFER_INTS;
-#if 0
-  scwm_msg(DBG,"scm_internal_cwdr_no_unwind","-");
-#endif
-  scm_must_free(pRootContinuation);
-  SCM_SETJMPBUF (scm_rootcont, NULL);
-#ifdef DEBUG_EXTENSIONS
-  scm_last_debug_frame = SCM_DFRAME (old_rootcont);
-#endif
-  scm_rootcont = old_rootcont;
-  SCM_REALLOW_INTS;
-  scm_ints_disabled = old_ints_disabled;
-
-  /* Now run the real handler iff the body did a throw. */
-  if (my_handler_data.run_handler)
-    return handler (handler_data, my_handler_data.tag, my_handler_data.args);
-  else
-    return answer;
-}
-
-#ifndef HAVE_SCM_LOAD_STARTUP_FILES
-/*
- *  Procedures:
- *	scwm_gh_enter, scwm_gh_launch_pad - Replacement for gh_enter that 
- *      guarantees loading of boot-9.scm
- */
-
-static void 
-scwm_gh_launch_pad (void *closure, int argc, char **argv)
-{
-  main_prog_t c_main_prog = (main_prog_t) closure;
-
-  gh_eval_str ("(primitive-load-path \"ice-9/boot-9.scm\")");
-  c_main_prog (argc, argv);
-  exit (0);
-}
-
-void 
-scwm_gh_enter (int argc, char *argv[], main_prog_t c_main_prog)
-{
-  scm_boot_guile (argc, argv, scwm_gh_launch_pad, (void *) c_main_prog);
-  /* never returns */
-}
-#endif /* !HAVE_SCM_LOAD_STARTUP_FILES */
 
 SCM make_output_strport(char *fname)
 {

@@ -21,6 +21,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.16  2002/01/10 04:04:26  sgt
+ * Get Y and XY zoom working, along with zoom dialog box
+ * start attempting to get things building with guile-1.5.4, but not done yet.
+ *
  * Revision 1.15  2001/12/24 04:10:09  sgt
  * Add primitives and GUI menu items for Y-zoom and XY-area zoom
  * add save/restore of Y-zoom state of wavepanels
@@ -137,7 +141,7 @@ set_all_wp_cursors(int cnum)
  * selecting a subset of the visible part of the X axis by dragging
  * with button 1.
  */
-SCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
+XSCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
            (SCM proc),
 "Prompt the user to select a range of the visible X axis using 
 button 1 of the mouse.  
@@ -157,7 +161,7 @@ begining and ending X pixel value of the selection.")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
+XSCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
            (SCM proc),
 "Prompt the user to select a range of the visible Y axis using 
 button 1 of the mouse.  
@@ -177,7 +181,7 @@ begining and ending Y pixel value of the selection.")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(select_range_xy, "select-range-xy", 1, 0, 0,
+XSCM_DEFINE(select_range_xy, "select-range-xy", 1, 0, 0,
            (SCM proc),
 "Prompt the user to select a region of the 
 visible XY plane using button 1 of the mouse.  
@@ -559,7 +563,7 @@ gint expose_handler(GtkWidget *widget, GdkEventExpose *event,
 void init_event()
 {
 
-#ifndef SCM_MAGIC_SNARFER
+#ifndef XSCM_MAGIC_SNARF_INITS
 #include "event.x"
 #endif
 }

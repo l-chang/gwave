@@ -41,7 +41,7 @@
 #include <wavewin.h>
 #include <measurebtn.h>
 
-SCM_HOOK(new_visiblewave_hook, "new-visiblewave-hook", 1, (SCM vw),
+XSCM_HOOK(new_visiblewave_hook, "new-visiblewave-hook", 1, (SCM vw),
 "This hook is invoked with one VisibleWave argument, VW,
 when the VisibleWave is first created.   The main purpose of this hook 
 will be to create the button and menus attached to the VisibleWave.");
@@ -91,7 +91,7 @@ gint cmd_zoom_absolute(double start, double end)
 	return 0;
 }
 
-SCM_DEFINE(x_zoom_x, "x-zoom!", 2, 0, 0, (SCM start, SCM end),
+XSCM_DEFINE(x_zoom_x, "x-zoom!", 2, 0, 0, (SCM start, SCM end),
 	   "zoom/rescale all wavepanels so that the x axis displays from START to END")
 #define FUNC_NAME s_x_zoom_x
 {
@@ -130,7 +130,7 @@ vw_wp_list_if_selected(gpointer p, gpointer d)
 	}
 }
 
-SCM_DEFINE(delete_selected_waves_x, "delete-selected-waves!", 0, 0, 0, (),
+XSCM_DEFINE(delete_selected_waves_x, "delete-selected-waves!", 0, 0, 0, (),
   "Remove from panels any VisibleWaves that have been
 selected by clicking on their label-buttons.")
 #define FUNC_NAME s_delete_selected_waves_x
@@ -306,7 +306,7 @@ update_wfile_waves(GWDataFile *wdata)
 	}
 }
 
-SCM_DEFINE(wavepanel_add_variable_x, "wavepanel-add-variable!", 2, 0, 0,
+XSCM_DEFINE(wavepanel_add_variable_x, "wavepanel-add-variable!", 2, 0, 0,
 	   (SCM wavepanel, SCM var),
 	   "Add variable VAR to the display in WAVEPANEL.")
 #define FUNC_NAME s_wavepanel_add_variable_x
@@ -523,7 +523,7 @@ wavetable_update_data()
 
 /* access routines for VisibleWave */
 
-SCM_DEFINE(visiblewave_delete_x, "visiblewave-delete!", 1, 0, 0, (SCM vw),
+XSCM_DEFINE(visiblewave_delete_x, "visiblewave-delete!", 1, 0, 0, (SCM vw),
 	   "Delete VisibleWave VW from its WavePanel")
 #define FUNC_NAME s_visiblewave_delete_x
 {
@@ -536,7 +536,7 @@ SCM_DEFINE(visiblewave_delete_x, "visiblewave-delete!", 1, 0, 0, (SCM vw),
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(visiblewave_file, "visiblewave-file", 1, 0, 0, (SCM vw),
+XSCM_DEFINE(visiblewave_file, "visiblewave-file", 1, 0, 0, (SCM vw),
 	   "Given a VisibleWave VW, return the DataFile the waveform comes from")
 #define FUNC_NAME s_visiblewave_file
 {
@@ -554,7 +554,7 @@ SCM_DEFINE(visiblewave_file, "visiblewave-file", 1, 0, 0, (SCM vw),
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(visiblewave_varname, "visiblewave-varname", 1, 0, 0, (SCM vw),
+XSCM_DEFINE(visiblewave_varname, "visiblewave-varname", 1, 0, 0, (SCM vw),
 	   "Given a VisibleWave VW, return wave's variable name as found in the original data file")
 #define FUNC_NAME s_visiblewave_varname
 {
@@ -569,7 +569,7 @@ SCM_DEFINE(visiblewave_varname, "visiblewave-varname", 1, 0, 0, (SCM vw),
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(visiblewave_panel, "visiblewave-panel", 1, 0, 0, (SCM vw),
+XSCM_DEFINE(visiblewave_panel, "visiblewave-panel", 1, 0, 0, (SCM vw),
 	   "Given a VisibleWave VW, return the WavePanel the waveform is displayed in")
 #define FUNC_NAME s_visiblewave_panel
 {
@@ -585,7 +585,7 @@ SCM_DEFINE(visiblewave_panel, "visiblewave-panel", 1, 0, 0, (SCM vw),
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(visiblewave_button, "visiblewave-button", 1, 0, 0, (SCM vw),
+XSCM_DEFINE(visiblewave_button, "visiblewave-button", 1, 0, 0, (SCM vw),
 "Given a VisibleWave VW, return the Gtk button associated with the
 wave.  Since the button already has a label, all you can do is
 add events to the button.")
@@ -602,7 +602,7 @@ add events to the button.")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(visiblewave_color, "visiblewave-color", 1, 0, 0, (SCM vw),
+XSCM_DEFINE(visiblewave_color, "visiblewave-color", 1, 0, 0, (SCM vw),
 	   "Given a VisibleWave VW, return color number it is currently drawn with")
 #define FUNC_NAME s_visiblewave_color
 {
@@ -616,7 +616,7 @@ SCM_DEFINE(visiblewave_color, "visiblewave-color", 1, 0, 0, (SCM vw),
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(wavevar_min, "wavevar-min", 1, 0, 0, (SCM wv),
+XSCM_DEFINE(wavevar_min, "wavevar-min", 1, 0, 0, (SCM wv),
 	   "Given a VisibleWave or WaveVar VW, return its minimum value")
 #define FUNC_NAME s_wavevar_min
 {
@@ -631,7 +631,7 @@ SCM_DEFINE(wavevar_min, "wavevar-min", 1, 0, 0, (SCM wv),
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(wavevar_max, "wavevar-max", 1, 0, 0, (SCM wv),
+XSCM_DEFINE(wavevar_max, "wavevar-max", 1, 0, 0, (SCM wv),
 	   "Given a VisibleWave or WaveVar VW, return its minimum value")
 #define FUNC_NAME s_wavevar_max
 {
@@ -645,7 +645,7 @@ SCM_DEFINE(wavevar_max, "wavevar-max", 1, 0, 0, (SCM wv),
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(set_visiblewave_color_x, "set-visiblewave-color!", 2, 0, 0, (SCM vw, SCM num),
+XSCM_DEFINE(set_visiblewave_color_x, "set-visiblewave-color!", 2, 0, 0, (SCM vw, SCM num),
 	 "Change VW so that it is drawn with color NUM")
 #define FUNC_NAME s_set_visiblewave_color_x
 {
@@ -673,7 +673,7 @@ SCM_DEFINE(set_visiblewave_color_x, "set-visiblewave-color!", 2, 0, 0, (SCM vw, 
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(set_visiblewave_measure_x, "set-visiblewave-measure!", 3, 0, 0, 
+XSCM_DEFINE(set_visiblewave_measure_x, "set-visiblewave-measure!", 3, 0, 0, 
 	   (SCM vw, SCM n, SCM func),
  "Change the measurement box numbered N (0 or 1) of displayed waveform
  VW to display the result of the measurement function FUNC")
@@ -697,7 +697,7 @@ SCM_DEFINE(set_visiblewave_measure_x, "set-visiblewave-measure!", 3, 0, 0,
 /* guile initialization */
 void init_cmd()
 {
-#ifndef SCM_MAGIC_SNARFER
+#ifndef XSCM_MAGIC_SNARF_INITS
 #include "cmd.x"
 #endif
 }

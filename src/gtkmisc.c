@@ -283,7 +283,7 @@ shape_create_icon_d (char     **xpm_data,
   return window;
 }
 
-SCM_DEFINE(gtk_tooltips_enabled_p, "gtk-tooltips-enabled?", 1, 0, 0, (SCM tt),
+XSCM_DEFINE(gtk_tooltips_enabled_p, "gtk-tooltips-enabled?", 1, 0, 0, (SCM tt),
  "Return #t if the GtkTooltips object TT is enabled, otherwise
 return #f.  See gtk-tooltips-enable in the guile-gtk documentation,
 or gtk_tooltips_enable in the Gtk+ documentation for GtkTooltips.")
@@ -304,7 +304,7 @@ or gtk_tooltips_enable in the Gtk+ documentation for GtkTooltips.")
 /* guile initialization */
 void init_gtkmisc()
 {
-#ifndef SCM_MAGIC_SNARFER
+#ifndef XSCM_MAGIC_SNARF_INITS
 #include "gtkmisc.x"
 #endif
 }

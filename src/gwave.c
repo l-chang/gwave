@@ -35,7 +35,7 @@
 #include <scwm_guile.h>
 #include "guile-compat.h"
 
-#ifndef SCM_MAGIC_SNARFER
+#ifndef XSCM_MAGIC_SNARF_INITS
 #include <scm_init_funcs.h>
 #endif
 
@@ -73,29 +73,29 @@ GtkWidget *win_xlabel_left, *win_xlabel_right;
 
 /* variables accessible from C and guile */
 
-SCM_VCELL_INIT(scm_gwave_version, "gwave-version-string",  gh_str02scm(VERSION),
+XSCM_VCELL_INIT(scm_gwave_version, "gwave-version-string",  gh_str02scm(VERSION),
 "This variable is initialized to contain the version string for gwave, as
 set in configure.in.");
 
-SCM_VCELL_INIT(scm_gwave_datadir, "gwave-datadir",  gh_str02scm(DATADIR),
+XSCM_VCELL_INIT(scm_gwave_datadir, "gwave-datadir",  gh_str02scm(DATADIR),
 "This variable is initialized to contain the compiled-in pathname to
 the installed data directory, typicaly PREFIX/share, as set by configure.
 It is used by the startup code as a default location for finding gwave's
 guile modules.");
 
-SCM_VCELL_INIT(scm_gwave_bingwave, "gwave-bin-gwave-path", gh_str02scm(BINGWAVE),
+XSCM_VCELL_INIT(scm_gwave_bingwave, "gwave-bin-gwave-path", gh_str02scm(BINGWAVE),
 "This variable is initialized to contain the compiled-in pathname to
 the installed gwave executable, typicaly PREFIX/bin/gwave, as set by configure.
 It is used by the procedures that write out gwave configuration-restoring
 scripts so that when run from the command line command line, the scripts
 can use gwave as their interpreter.");
 
-SCM_VCELL(scm_gwave_debug, "gwave-debug",
+XSCM_VCELL(scm_gwave_debug, "gwave-debug",
 "This variable is set to #t very early in gwave's startup when the -x flag
 is passed on the command line.  It enables debugging output to stdout
 in the startup code and in various modules.");
 
-SCM_GLOBAL_VCELL(scm_gwave_tooltips, "gwave-tooltips",
+XSCM_GLOBAL_VCELL(scm_gwave_tooltips, "gwave-tooltips",
 "This variable is a GtkTooltips object used for controlling all
 of the popup tooltips in the user interface.");
 
@@ -161,6 +161,17 @@ void gwave_main(int argc, char **argv)
 	int i;
 	int nobacktrace = 0;
 
+/* #ifdef HAVE_SCM_C_READ_STRING */
+	/* In guile-1.5 and later, need to use scm_primitive_eval_x
+	 * in order to change modules so that our C primitives
+	 * registered below become globals, instead of hidden away
+	 * in the guile-user module
+	 */
+	{
+		SCM exp = scm_c_read_string("(define-module (guile))");
+		scm_primitive_eval_x(exp);
+	}
+/*#endif */
 	SCM_REDEFER_INTS;
 	init_scwm_guile();
 	init_gtkmisc();
@@ -250,7 +261,7 @@ void gwave_main(int argc, char **argv)
 /* guile initialization */
 void init_gwave()
 {
-#ifndef SCM_MAGIC_SNARFER
+#ifndef XSCM_MAGIC_SNARF_INITS
 #include "gwave.x"
 #endif
 }

@@ -13,8 +13,8 @@
 
 #include "arg_unused.h"
 #include <guile/gh.h>
-#include "guile-ext.h"
 #include "validate.h"
+#include <xsnarf.h>
 
 #ifndef False
 #define False 0
