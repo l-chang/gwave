@@ -112,15 +112,28 @@
     (gtk-widget-show vbox)
     (gtk-container-add window vbox)
     (let ((llab (gtk-label-new 
-		 (string-append "gwave version " gwave-version-string))))
+		 (string-append "Gwave version " gwave-version-string))))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
-    (let ((llab (gtk-label-new "by Steve Tell")))
+    (let ((llab (gtk-label-new "Copyright 2000 Steve Tell")))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
-    (let ((llab (gtk-label-new "tell@cs.unc.edu")))
+
+    (let ((llab (gtk-label-new "steve@telltronics.org")))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
+
+    (let ((llab (gtk-label-new "Gwave comes with ABSOLUTELY NO WARRANTY.")))
+      (gtk-widget-show llab)
+      (gtk-container-add vbox llab))
+
+    (let ((llab (gtk-label-new "This is Free Software, and you are welcome to distribute")))
+      (gtk-widget-show llab)
+      (gtk-container-add vbox llab))
+    (let ((llab (gtk-label-new "it under the terms of the GNU General Public License.")))
+      (gtk-widget-show llab)
+      (gtk-container-add vbox llab))
+
     (make-button vbox "Close" (lambda () (gtk-widget-destroy window)))
     (gtk-widget-show window)))
 
@@ -202,18 +215,19 @@
     (with-output-to-port p 
       (lambda () 
 	(write-script-header)
-	(write-wfr-script df)
+	(write-wfr-script df #t)
 	(write-script-trailer)
 	))
     (close-port p)))
 
 ; Similar, but writes configuration-restoring script for all datafiles
 (define-public (write-allrestore-script sname)
-  (let ((p (open sname (logior O_WRONLY O_CREAT) #o0777)))
+  (let ((p (open sname (logior O_WRONLY O_CREAT) #o0777))
+	(mfs (eqv? 1 (length (wavefile-list)) )))
     (with-output-to-port p 
       (lambda () 
 	(write-script-header)
-	(for-each (lambda (df) (write-wfr-script df))
+	(for-each (lambda (df) (write-wfr-script df mfs))
 		  (wavefile-list))
 	(write-script-trailer)
 	))
@@ -256,9 +270,18 @@
 )
 
 ; write portion of script to restore waves for a single wavefile
-(define (write-wfr-script df)
-  (print "(let ((df (find-or-load-wavefile \"")
-  (print (wavefile-file-name df) "\")))\n")
+; If "multi" is #t, mutiple file-restoration sections will be written
+; to this script.  In this case, we don't provide for the "apply script
+; to (already loaded) file" function.
+(define (write-wfr-script df multi)
+  (if multi
+      (begin
+	(print "(let ((df (if script-target-datafile\n"
+	       "           script-target-datafile\n"
+	       "           (find-or-load-wavefile \""
+	       (wavefile-file-name df)  "\"))))\n"))
+      (print "(let ((df (find-or-load-wavefile \""
+	     (wavefile-file-name df) "\")))\n"))
   (let ((panels (wtable-wavepanels)))
     (write-wfrp-lines df panels 0))
   (print ")\n")
@@ -278,3 +301,19 @@
 	       ))
 	 (wavepanel-visiblewaves (car panels)))
 	(write-wfrp-lines df (cdr panels) (+ n 1)))))
+
+; execute guile script, ignoring errors.
+(define-public (execute-script fname)
+  (false-if-exception (load fname))
+)
+
+; global to pass target datafile smob to scripts executed
+; by apply-script-to-file.
+(define-public script-target-datafile #f)
+
+; execute a script, passing it a data file to operate on.
+(define-public (apply-script-to-file fname dfile)
+  (set! script-target-datafile dfile)
+  (false-if-exception (load fname))
+  (set! script-target-datafile #f)
+)
