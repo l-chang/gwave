@@ -18,6 +18,9 @@
  *
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  1998/09/01 21:27:43  tell
+ * Move most all functions out into seperate, more managably-sized files
+ *
  * Revision 1.7  1998/08/31 20:56:10  tell
  * Various things as we rename from wv to gwave, implement drag-and-drop
  * for adding signals to WavePanels, and finish making the file-reader handle
@@ -66,9 +69,9 @@
 
 /* globals */
 char *prog_name = "gwave";
+char *prog_version = "0.3";
 int colors_initialized = 0;
 int x_flag, v_flag;
-WData *waveData;
 WaveTable *wtable;
 const int NWColors = 6;  /* # of wavecolorN styles expected in the .gtkrc */
 
@@ -97,10 +100,11 @@ static void usage(char *fmt, ...)
 		fprintf(stderr, "\n");
 		va_end(args);
 	}
-	fprintf(stderr, "Usage: %s [options] waveform-file\n", prog_name);
+	fprintf(stderr, "Usage: %s [options] [initial-waveform-file] ...\n", prog_name);
 	fprintf(stderr, " options:\n");
 	fprintf(stderr, " -p N     Use N panels\n");
-	fprintf(stderr, " -t T     Specify that the file is of type T\n");
+	fprintf(stderr, " -t T     Specify that files are of type T\n");
+	fprintf(stderr, "(%s version %s)\n", prog_name, prog_version);
 	exit(EXIT_FAILURE);
 }
 
@@ -108,7 +112,7 @@ static void usage(char *fmt, ...)
  * waves on black background
  */
 static const gchar *gwave_base_gtkrc = "
-style wavecolor0 { fg[NORMAL] = {0.0, 0.0, 1.0} }
+style wavecolor0 { fg[NORMAL] = {0.4, 0.5, 1.0} }
 style wavecolor1 { fg[NORMAL] = {1.0, 0.0, 0.0} }
 style wavecolor2 { fg[NORMAL] = {0.0, 1.0, 0.0} }
 style wavecolor3 { fg[NORMAL] = {1.0, 1.0, 0.0} }
@@ -120,6 +124,8 @@ widget '*wavecolor2' style wavecolor2
 widget '*wavecolor3' style wavecolor3
 widget '*wavecolor4' style wavecolor4
 widget '*wavecolor5' style wavecolor5
+style 'wavebutton' { bg[NORMAL] = { 0.25, 0.25, 0.25 } }
+widget '*wavebutton' style 'wavebutton'
 ";
 
 int main(int argc, char **argv)
@@ -163,18 +169,13 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if(optind >= argc)  {
-		usage("no waveform file specified");
-		exit(1);
-	}
 	gtk_rc_parse_string(gwave_base_gtkrc);
 	gtk_rc_parse("gwave.gtkrc");
 
-	waveData = g_new(WData, 1);
-	waveData->df = analog_read_file(argv[optind], filetype);
-	if(!waveData->df) {
-		fprintf(stderr, "unable to read data file; goodbye!\n");
-		exit(1);
+	for(; optind < argc; optind++) {
+		if(load_wave_file(argv[optind], filetype) < 0) {
+			fprintf(stderr, "unable to read data file: %s\n", argv[optind]);
+		}
 	}
 	if(npanels > 8)
 		npanels = 8;
@@ -188,13 +189,15 @@ int main(int argc, char **argv)
 	/* manualy set up the waves into specific WavePanels
 	* Now that the gui allows (re)configuration of the wave/panel setup,
 	* I've made this optional.  A few bugs in that stuff remain, 
-	* and this might aid testing.  Later, when we allow restoring
-	* a configuration from a file, we'll do it this way.
+	* and this might aid testing.
 	*/
 	if(fillpanels) {
-		for(i = 0; i < waveData->df->ndv; i++) {
-			add_var_to_panel(&wtable->panels[i % npanels],
-					 waveData->df->dv[i]);
+		GWDataFile *wdata = g_list_nth_data(wdata_list, 0);
+		if(wdata) {
+			for(i = 0; i < wdata->df->ndv; i++) {
+				add_var_to_panel(&wtable->panels[i % npanels],
+						 wdata->df->dv[i]);
+			}
 		}
 	}
 	wtable->start_xval = wtable->min_xval;
