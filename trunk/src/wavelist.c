@@ -20,6 +20,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.18  2002/03/28 06:35:21  sgt
+ * Snarfing overhaul to make it guile-version-independent
+ * now compiles and runs under guile-1.5.6
+ * some issues remain - bound? in cmds.scm for example.
+ *
  * Revision 1.17  2001/06/01 16:11:56  sgt
  * create mbtn_update_var() subroutine, and use it to fix up measure-button
  * pointers into wave data after a reaload.  This avoids a crash after reloading.
@@ -533,7 +538,7 @@ can be dragged into a waveform display panel.")
 #undef FUNC_NAME
 
 /* maybe I should just expose the GTkWindow itself, and destroy from guile */
-SCM_DEFINE(wavefile_remove_listwin_x, "wavefile-remove-listwin!", 1, 0, 0,
+XSCM_DEFINE(wavefile_remove_listwin_x, "wavefile-remove-listwin!", 1, 0, 0,
            (SCM obj),
 	   "Removes the variable-list window for OBJ")
 #define FUNC_NAME s_wavefile_remove_listwin_x

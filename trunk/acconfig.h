@@ -120,4 +120,7 @@
 /* define this if libguile has scm_the_last_stack_fluid_var */
 #undef HAVE_SCM_THE_LAST_STACK_FLUID_VAR
 
+/* define this if libguile has scm_c_read_string */
+#undef HAVE_SCM_C_READ_STRING
+
 
