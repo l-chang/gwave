@@ -37,7 +37,40 @@
 #define EXTERN_SET(x,y) extern x
 #endif
 
-/* Stuff to wrap GwDataFile as a SMOB */
+/*
+ * WavePanel -- describes a single panel containing zero or more waveforms.
+ */
+struct _WavePanel {
+	SCM smob;
+	int outstanding_smob;	/* if guile has a pointer, defer freeing. */
+	int valid;	/* 1 if valid, 0 if awaiting deletion */
+	int ptype;	/* panel type: 0=original 1=short/digital */
+
+	GList *vwlist;	/* list of VisibleWaves shown in this panel.
+			   Line any GList, NULL if list empty */
+	double min_yval; /* min/max data x/y values over whole vwlist */
+	double max_yval;
+	double min_xval;	
+	double max_xval;
+
+	/* starting and ending drawn x-value (independent var),
+	* copied from corresponding wtable values when we scroll/zoom,
+	* later we may allow individual panels to be "locked" 
+	* from global scroll/zoom or otherwise controlled independently */
+	double start_xval;	
+	double end_xval;
+
+	GtkWidget *lvbox;	/* for Y-labels */
+	GtkWidget *lab_min, *lab_max;
+	GtkWidget *lab_min_hbox, *lab_max_hbox;
+	GtkWidget *drawing; /* DrawingArea for waveforms */
+	GdkPixmap *pixmap;
+	int req_height;	/* requested height */
+	int width, height; /* actual size */
+	int nextcolor;	/* color to use for next added waveform */
+};
+
+/* Stuff to wrap WavePanel as a SMOB */
 
 EXTERN long scm_tc16_scwm_WavePanel;
 
@@ -63,39 +96,53 @@ EXTERN long scm_tc16_scwm_WavePanel;
   else cvar = WavePanel(scm); \
   } while (0)
 
-/*
- * WavePanel -- describes a single panel containing zero or more waveforms.
+
+/***********************************************************************
+ * VisibleWave -- a waveform shown in a panel.
  */
-struct _WavePanel {
+
+struct _VisibleWave {
 	SCM smob;
 	int outstanding_smob;	/* if guile has a pointer, defer freeing. */
 	int valid;	/* 1 if valid, 0 if awaiting deletion */
-	int ptype;	/* panel type: 0=original 1=short/digital */
-
-	GList *vwlist;	/* list of VisibleWaves shown in this panel. NULL if none */
-	double min_yval; /* min/max data x/y values over whole vwlist */
-	double max_yval;
-	double min_xval;	
-	double max_xval;
-
-	/* starting and ending drawn x-value (independent var),
-	* copied from corresponding wtable values when we scroll/zoom,
-	* later we may allow individual panels to be "locked" 
-	* from global scroll/zoom or otherwise controlled independently */
-	double start_xval;	
-	double end_xval;
-
-	GtkWidget *lvbox;	/* for Y-labels */
-	GtkWidget *lab_min, *lab_max;
-	GtkWidget *lab_min_hbox, *lab_max_hbox;
-	GtkWidget *drawing; /* DrawingArea for waveforms */
-	GdkPixmap *pixmap;
-	int req_height;	/* requested height */
-	int width, height; /* actual size */
-	int nextcolor;	/* color to use for next added waveform */
+	WaveVar *var;
+	GWDataFile *gdf;
+	WavePanel *wp;
+	char *varname;	/* the variable name from the file */
+	int colorn;
+	GdkGC *gc;
+	GtkWidget *button;
+	GtkWidget *label;
 };
 
-/* selecting a portion of the X axis 
+/* VisibleWave as a SMOB */ 
+EXTERN long scm_tc16_scwm_VisibleWave;
+
+#define VisibleWave_P(X) (SCM_NIMP(X) && gh_car(X) == (SCM)scm_tc16_scwm_VisibleWave)
+#define VisibleWave(X)  ((VisibleWave *)gh_cdr(X))
+#define SAFE_VisibleWave(X)  (VisibleWave_P((X))? VisibleWave((X)) : NULL)
+
+#define VALIDATE_ARG_VisibleWave(pos,scm) \
+  do { \
+  if (!VisibleWave_P(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
+  } while (0)
+
+#define VALIDATE_ARG_VisibleWave_COPY(pos,scm,cvar) \
+  do { \
+  if (!VisibleWave_P(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
+  else cvar = VisibleWave(scm); \
+  } while (0)
+
+#define VALIDATE_ARG_VisibleWave_COPY_USE_NULL(pos,scm,cvar) \
+  do { \
+  if (UNSET_SCM(scm) || scm == SCM_BOOL_F) cvar = NULL; \
+  else if (!VisibleWave_P(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
+  else cvar = VisibleWave(scm); \
+  } while (0)
+
+
+/***********************************************************************
+ * state related to selecting a portion of the X axis.
  * Maybe someday: selecting Y ranges and XY regions
  */
 struct _SelRange {

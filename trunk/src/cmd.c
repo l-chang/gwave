@@ -40,6 +40,12 @@
 #include <wavelist.h>
 #include <wavewin.h>
 
+SCWM_HOOK(new_visiblewave_hook, "new-visiblewave-hook", 1);
+  /** This hook is invoked with one VisibleWave argument
+when the VisibleWave is created.   The main purpose of this hook 
+will be to create the button and menus attached to the VisibleWave.
+*/
+
 gint cmd_zoom_absolute(double start, double end)
 {
 	if(start <= end) {
@@ -152,10 +158,25 @@ remove_wave_from_panel(WavePanel *wp, VisibleWave *vw)
 
 	gdk_gc_destroy(vw->gc);
 	g_free(vw->varname);
-	g_free(vw);
+
+	vw->valid = 0;
+	scm_unprotect_object(vw->smob);
+	if(vw->outstanding_smob == 0)
+		g_free(vw);
 
 	wavepanel_update_data(wp);
 	wavetable_update_data();
+}
+/* delete the indicated VisibleWave.
+ * TODO: replace calls to remove_wave_from_panel with this.
+ */
+void
+visiblewave_delete(VisibleWave *vw)
+{
+	WavePanel *wp = vw->wp;
+	remove_wave_from_panel(wp, vw);
+
+	draw_wavepanel(wp->drawing, NULL, wp);
 }
 
 /*
@@ -261,9 +282,10 @@ update_wfile_waves(GWDataFile *wdata)
 }
 
 /*
- * Add a new waveform to a WavePanel
+ * Add a new waveform to a WavePanel, creating a new VisibleWave.
  * If no wavepanel is specified, try to use the "current" wavepanel,
  * defined for now to be the last one where a signal was dropped.
+ * This is the only place that VisibleWave structures are created.
  */
 void
 add_var_to_panel(WavePanel *wp, WaveVar *dv)
@@ -279,6 +301,7 @@ add_var_to_panel(WavePanel *wp, WaveVar *dv)
 	}
 
 	vw = g_new0(VisibleWave, 1);
+	vw->wp = wp;
 	vw->var = dv;
 	vw->varname = g_strdup(dv->wv_name);
 	vw->gdf = (GWDataFile *)dv->udata;
@@ -289,8 +312,14 @@ add_var_to_panel(WavePanel *wp, WaveVar *dv)
 	wavepanel_update_data(wp);
 	wavetable_update_data();
 
+	vw->valid = 1;
+	SGT_NEWCELL_SMOB(vw->smob, VisibleWave, vw);
+	scm_protect_object(vw->smob);
+	vw->outstanding_smob = 1;
+
 	if(wp->lvbox)  /* add button to Y-label box */
 		vw_wp_create_button(vw, wp);
+	call1_hooks(new_visiblewave_hook, vw->smob);
 	if(wp->drawing && (wtable->suppress_redraw == 0)) {
 		/* redraw whole panel.
 		 * Perhaps this is too much extra work, but it seems fast
@@ -458,6 +487,152 @@ wavetable_update_data()
 		wp->end_xval = wtable->end_xval;
 	}
 }
+
+/* access routines for VisibleWave */
+
+SCWM_PROC(visiblewave_delete_x, "visiblewave-delete!", 1, 0, 0, (SCM vw))
+/** Delete VisibleWave VW from its WavePanel */
+#define FUNC_NAME s_visiblewave_delete_x
+{
+	VisibleWave *cvw;
+	VALIDATE_ARG_VisibleWave_COPY(1,vw,cvw);
+	if(v_flag)
+		fprintf(stderr, "visiblewave_delete(0x%x)\n", cvw);
+	visiblewave_delete(cvw);
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+SCWM_PROC(visiblewave_file, "visiblewave-file", 1, 0, 0, (SCM vw))
+/** Given a VisibleWave VW, return the DataFile the waveform comes from */
+#define FUNC_NAME s_visiblewave_file
+{
+	VisibleWave *cvw;
+	VALIDATE_ARG_VisibleWave_COPY(1,vw,cvw);
+	if(v_flag)
+		fprintf(stderr, "visiblewave_file(0x%x) -> 0x%x \n",
+			cvw, cvw->gdf->smob);
+	if(!cvw->valid) 
+		return SCM_BOOL_F;
+	else {
+		cvw->gdf->outstanding_smob = 1;
+		return cvw->gdf->smob;
+	}
+}
+#undef FUNC_NAME
+
+SCWM_PROC(visiblewave_varname, "visiblewave-varname", 1, 0, 0, (SCM vw))
+/** Given a VisibleWave VW, return the DataFile the waveform comes from */
+#define FUNC_NAME s_visiblewave_varname
+{
+	VisibleWave *cvw;
+	VALIDATE_ARG_VisibleWave_COPY(1,vw,cvw);
+
+	if(!cvw->valid) 
+		return SCM_BOOL_F;
+	else
+		return gh_str02scm(cvw->varname);
+
+}
+#undef FUNC_NAME
+
+SCWM_PROC(visiblewave_panel, "visiblewave-panel", 1, 0, 0, (SCM vw))
+/** Given a VisibleWave VW, return the WavePanel the waveform
+ * is displayed in */
+#define FUNC_NAME s_visiblewave_panel
+{
+	VisibleWave *cvw;
+	VALIDATE_ARG_VisibleWave_COPY(1,vw,cvw);
+
+	if(!cvw->valid) 
+		return SCM_BOOL_F;
+	else {
+		cvw->wp->outstanding_smob = 1;
+		return cvw->wp->smob;
+	}
+}
+#undef FUNC_NAME
+
+SCWM_PROC(visiblewave_button, "visiblewave-button", 1, 0, 0, (SCM vw))
+/** Given a VisibleWave VW, return the Gtk button associated with the
+ * wave.  Since the button already has a label, all you can do is
+ * add events to the button.
+ */
+#define FUNC_NAME s_visiblewave_button
+{
+	VisibleWave *cvw;
+	VALIDATE_ARG_VisibleWave_COPY(1,vw,cvw);
+
+	if(!cvw->valid || !cvw->button) 
+		return SCM_BOOL_F;
+	else {
+		return sgtk_wrap_gtkobj(GTK_OBJECT(cvw->button));
+	}
+}
+#undef FUNC_NAME
+
+SCWM_PROC(visiblewave_color, "visiblewave-color", 1, 0, 0, (SCM vw))
+/** Given a VisibleWave VW, return color number it is currently drawn with */
+#define FUNC_NAME s_visiblewave_color
+{
+	VisibleWave *cvw;
+	VALIDATE_ARG_VisibleWave_COPY(1,vw,cvw);
+
+	if(!cvw->valid)
+		return SCM_BOOL_F;
+	else
+		return gh_int2scm(cvw->colorn);
+}
+#undef FUNC_NAME
+
+SCWM_PROC(wavevar_min, "wavevar-min", 1, 0, 0, (SCM wv))
+/** Given a VisibleWave or WaveVar VW, return its minimum value */
+#define FUNC_NAME s_wavevar_min
+{
+	VisibleWave *cvw;
+	VALIDATE_ARG_VisibleWave_COPY(1,wv,cvw);
+	/* TODO: smobify WaveVar, and let this function work on both,
+	 as a sort of fake inheritance */
+	if(!cvw->valid)
+		return SCM_BOOL_F;
+	else
+		return gh_double2scm(cvw->var->wds->min);
+}
+#undef FUNC_NAME
+
+SCWM_PROC(wavevar_max, "wavevar-max", 1, 0, 0, (SCM wv))
+/** Given a VisibleWave or WaveVar VW, return its minimum value */
+#define FUNC_NAME s_wavevar_max
+{
+	VisibleWave *cvw;
+	VALIDATE_ARG_VisibleWave_COPY(1,wv,cvw);
+
+	if(!cvw->valid)
+		return SCM_BOOL_F;
+	else
+		return gh_double2scm(cvw->var->wds->max);
+}
+#undef FUNC_NAME
+
+SCWM_PROC(set_visiblewave_color_x, "set-visiblewave-color!", 2, 0, 0, (SCM vw, SCM num))
+/** Change VW so that it is drawn with color NUM */
+#define FUNC_NAME s_set_visiblewave_color_x
+{
+	VisibleWave *cvw;
+	int colorn;
+	VALIDATE_ARG_VisibleWave_COPY(1,vw,cvw);
+	VALIDATE_ARG_INT_RANGE_COPY(2,num, 0, NWColors, colorn);
+
+	if(cvw->valid) {
+		cvw->colorn = colorn;
+		/* This sets the internal state, how to set the
+		   button, get new style, and allocate new gc */
+		/* draw_wavepanel(cvw->wp->drawing, NULL, cvw->wp); */
+	}
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 
 /* guile initialization */
 void init_cmd()
