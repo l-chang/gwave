@@ -3,7 +3,7 @@
 ; gwave-startup.scm - this is called with (load ...) from minimal.scm
 ; 
 ; Outline:
-; 1. whatever setup is required before we can load a .gwavers
+; 1. whatever setup is required before we can load a .gwaverc
 ; 2. find and load a .gwaverc
 ; 3. load fallback stuff if the user's .gwaverc omitted important things.
 ;

@@ -112,7 +112,7 @@
 				 (lambda (fn) (export-waveimage! fn "pnm"))
 				 #:default "gwave_out.pnm")))
        (add-menuitem file-menu #f #f)
-       (add-menuitem file-menu "Save Configuration as script"
+       (add-menuitem file-menu "Save Configuration as Script"
 		     (lambda () (with-selected-filename "Scriptfile to write"
 				 (lambda (fn) (write-allrestore-script fn))
 				 #:default "gwave.gw")))
