@@ -24,6 +24,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <float.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <config.h>
 #ifdef HAVE_GTK
@@ -33,9 +35,9 @@
 #endif
 #include "spicestream.h"
 
-extern SpiceStream *sf_rdhdr_hspice(char *name, FILE *fp);
-extern SpiceStream *sf_rdhdr_hsascii(char *name, FILE *fp);
-extern SpiceStream *sf_rdhdr_hsbin(char *name, FILE *fp);
+SpiceStream *sf_rdhdr_hspice(char *name, FILE *fp);
+SpiceStream *sf_rdhdr_hsascii(char *name, FILE *fp);
+SpiceStream *sf_rdhdr_hsbin(char *name, FILE *fp);
 
 static int sf_readrow_hsascii(SpiceStream *sf, double *ivar, double *dvars);
 static int sf_readrow_hsbin(SpiceStream *sf, double *ivar, double *dvars);
@@ -44,6 +46,7 @@ static SpiceStream *hs_process_header(int nauto, int nprobe,
 static int sf_readsweep_hsascii(SpiceStream *sf, double *svar);
 static int sf_readsweep_hsbin(SpiceStream *sf, double *svar);
 static int sf_endblock_hsbin(SpiceStream *sf);
+static int sf_readblock_hsbin(FILE *fp, char **bufp, int *bufsize, int offset);
 
 struct hsblock_header {  /* structure of binary tr0 block headers */
 	gint32 h1;
@@ -663,4 +666,31 @@ sf_readsweep_hsbin(SpiceStream *sf, double *svar)
 	
 	sf->read_sweepparam = 1;
 	return 1;
+}
+
+
+/*
+ * Estimate how many rows are in the file associated with sf.
+ * We base our estimate on the size of the file.
+ * This can be useful to aid in memory-use planning by programs planning to
+ * read the entire file.
+ * 
+ * If the file descriptor is not associated with an ordinary file, we return 0
+ * to indicate that the length cannot be estimated.
+ * If an error occurs, -1 is returned. 
+ */
+static long
+sf_guessrows_hsbin(SpiceStream *sf)
+{
+	long pos;
+	int rc;
+	struct stat st;
+
+	rc = fstat(fileno(sf->fp), &st);
+	if(rc < 0)
+		return -1;
+	if((st.st_mode & S_IFMT) != S_IFREG)
+		return 0;
+	
+	return st.st_size / (sizeof(float)  * sf->ncols);
 }

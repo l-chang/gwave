@@ -2,6 +2,9 @@
  * test routine for WaveFile data file readers
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2000/01/07 05:04:48  tell
+ * updating with old changes as we construct the CVS
+ *
  * Revision 1.2  1998/09/17 18:25:09  tell
  * prints out variable type
  *
@@ -72,6 +75,7 @@ main(int argc, char **argv)
 	printf("  min: %g\n", wf->iv->wds->min);
 	printf("  max: %g\n", wf->iv->wds->max);
 	printf("  blocks: %d/%d\n", wf->iv->wds->bpused, wf->iv->wds->bpsize);
+	printf("  reallocs: %d\n", wf->iv->wds->nreallocs);
 
 	printf("columns: %d\n", wf->wf_ncols);
 	printf("dependent variables: %d\n", wf->wf_ndv);
