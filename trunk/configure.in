@@ -51,7 +51,8 @@ esac
 dnl check for guile
 GUILE_FLAGS
 
-dnl check for guile version-specific features
+dnl checks for guile version-specific features
+dnl most of these cribbed from scwm by Greg Badros and Maciej Stachowiak
 
 dnl This checks (roughly) if the guile lib is a sufficiently recent snapshot
 dnl to have a scm_eval_string that is safe against re-entry by continuations. 
@@ -88,6 +89,12 @@ AC_CHECK_LIB(guile, scm_internal_parse_path, AC_DEFINE(HAVE_SCM_INTERNAL_PARSE_P
 AC_CHECK_LIB(guile, scm_load_startup_files, AC_DEFINE(HAVE_SCM_LOAD_STARTUP_FILES), ,$GUILE_LDFLAGS)
 
 AC_CHECK_LIB(guile, scm_make_hook, AC_DEFINE(HAVE_SCM_MAKE_HOOK), ,$GUILE_LDFLAGS)
+
+AC_CHECK_LIB(guile, scm_create_hook, AC_DEFINE(HAVE_SCM_CREATE_HOOK), ,$GUILE_LDFLAGS)
+
+AC_CHECK_LIB(guile, scm_hook_empty_p, AC_DEFINE(HAVE_SCM_HOOK_EMPTY_P), ,$GUILE_LDFLAGS)
+
+AC_CHECK_LIB(guile, scm_make_smob_type_mfpe, AC_DEFINE(HAVE_SCM_MAKE_SMOB_TYPE_MFPE), ,$GUILE_LDFLAGS)
 
 AC_CHECK_LIB(guile, scm_strport_to_string, AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING), ,$GUILE_LDFLAGS)
 
