@@ -94,6 +94,7 @@ EXTERN long scm_tc16_scwm_WaveVar;
 #define WaveVarH_P(X) (SCM_NIMP(X) && gh_car(X) == (SCM)scm_tc16_scwm_WaveVar)
 #define WaveVarH(X)  ((WaveVarH *)gh_cdr(X))
 #define SAFE_WaveVarH(X)  (WaveVarH_P((X))? WaveVarH((X)) : NULL)
+#define SAFE_WaveVar(X)  (WaveVarH_P((X)) ? WaveVarH((X))->wv : NULL)
 
 #define VALIDATE_ARG_WaveVarH(pos,scm) \
   do { \

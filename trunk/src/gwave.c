@@ -172,7 +172,7 @@ void gwave_main(int argc, char **argv)
 		scm_primitive_eval_x(exp);
 	}
 #endif
-	SCM_REDEFER_INTS;
+/*	SCM_REDEFER_INTS; */
 	init_scwm_guile();
 	init_gtkmisc();
 	init_gwave();
@@ -183,7 +183,7 @@ void gwave_main(int argc, char **argv)
 	init_event();
 	init_draw();
 	init_print();
-	gh_allow_ints();
+/*	SCM_REALLOW_INTS; */
 	
 	gtk_init(&argc, &argv);
 

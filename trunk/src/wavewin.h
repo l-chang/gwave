@@ -154,7 +154,7 @@ EXTERN long scm_tc16_scwm_VisibleWave;
 #define VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(pos,scm,cvar) \
   do { \
   if (VisibleWave_P(scm)) cvar = VisibleWave(scm)->var; \
-  else if(WaveVarH_P(scm)) cvar = WaveVarH(scm); \
+  else if(WaveVarH_P(scm)) cvar = SAFE_WaveVar(scm); \
   else scm_wrong_type_arg(FUNC_NAME,pos,scm); \
   } while (0)
 
