@@ -118,9 +118,13 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 	if(fgets(lbuf, sizeof(lbuf), fp) == NULL) /* date, time etc. */
 		return NULL;
 	lineno++;
-	if(fgets(lbuf, sizeof(lbuf), fp) == NULL) /*always just a single '0'?*/
+	/* number of sweeps, possibly with cruft at the start of the line */
+	if(fgets(lbuf, sizeof(lbuf), fp) == NULL)
 		return NULL;
-	ntables = atoi(lbuf);
+	cp = strchr(lbuf, ' ');
+	if(!cp)
+		cp = lbuf;
+	ntables = atoi(cp);
 	if(ntables == 0)
 		ntables = 1;
 	lineno++;
@@ -176,7 +180,8 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 	sf->readsweep = sf_readsweep_hsascii;
 	sf->lineno = lineno;
 
-	ss_msg(DBG, "rdhdr_hsascii", "expect %d columns", sf->ncols);
+	ss_msg(DBG, "rdhdr_hsascii", "ntables=%d; expect %d columns", 
+	       sf->ntables, sf->ncols);
 
 	return sf;
 
