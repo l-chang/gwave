@@ -16,30 +16,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Library General Public
+ * You should have received a copy of the GNU General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- * $Log: not supported by cvs2svn $
- * Revision 1.4  1999/01/08 22:41:41  tell
- * button-3 popup menu in wavepanel windows
- *
- * Revision 1.1  1998/12/26 04:38:58  tell
- * Initial revision
- *
- * Revision 1.3  1998/09/30 21:58:15  tell
- * Reorganization of mouse-button event handling to support both dragging of
- * cursors and select_x_range primitive used to get the range for cmd_zoom_window.
- * add supress_redraw and some misc stuff while tracking down some bugs.
- * Attempt to make drawing the waveforms a bit more efficient.
- *
- * Revision 1.2  1998/09/17 18:35:49  tell
- * wrap DnD message as type GWDnDData.
- * Split cursor draw/update into several functions in preparation for
- * support of dragging.
- *
- * Revision 1.1  1998/09/01 21:28:20  tell
- * Initial revision
  *
  */
 
@@ -192,15 +171,18 @@ update_cursor(VBCursor *csp, double xval)
 	/* update status label */
 	lbuf[0] = 0;
 	if(wtable->cursor[0]->shown) {
-		sprintf(abuf, "cursor1: %s", val2txt(wtable->cursor[0]->xval));
+		sprintf(abuf, "cursor1: %s", 
+			val2txt(wtable->cursor[0]->xval, 0));
 		strcat(lbuf, abuf);
 	}
 	if(wtable->cursor[1]->shown) {
-		sprintf(abuf, " cursor2: %s", val2txt(wtable->cursor[1]->xval));
+		sprintf(abuf, " cursor2: %s", 
+			val2txt(wtable->cursor[1]->xval, 0));
 		strcat(lbuf, abuf);
 	}
 	if(wtable->cursor[0]->shown && wtable->cursor[1]->shown) {
-		sprintf(abuf, " delta: %s", val2txt(wtable->cursor[1]->xval - wtable->cursor[0]->xval));
+		sprintf(abuf, " delta: %s", 
+		 val2txt(wtable->cursor[1]->xval - wtable->cursor[0]->xval,0));
 		strcat(lbuf, abuf);
 	}
 
