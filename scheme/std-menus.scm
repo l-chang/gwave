@@ -102,6 +102,8 @@
        (add-menuitem file-menu "Read File..." 
 		     (lambda () (with-selected-filename "Datafile to load"
 				 (lambda (fn) (load-wavefile! fn)))))
+       (add-menuitem file-menu "Plot..." 
+		     (lambda () (popup-plot-dialog (wtable-wavepanels))))
        (add-menuitem file-menu "Export Postscript..." 
 		     (lambda () (with-selected-filename 
 				 "Postscript file name"
@@ -278,6 +280,8 @@
 		   (lambda () (wtable-insert-typed-panel! wp default-wavepanel-type)))
      (add-menuitem menu "Delete this Panel"
 		   (lambda () (wtable-delete-panel! wp)))
+     (add-menuitem menu "Plot..." 
+		   (lambda () (popup-plot-dialog (list wp))))
      (add-menuitem 
       menu 
       (string-append "Set type " (list-ref wavepanel-type-names next-ptype))

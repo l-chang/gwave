@@ -13,10 +13,8 @@
 (read-set! keywords 'prefix)
 
 
-;
-; export a wavepanel's data in the format needed by gnu graph's "a"
-; input format.
-;
+; export a wavepanel's data in the format needed by gnu graph's 
+; "a" input format.
 (define (export-wavepanel-to-ggfile f wp)
   (let ((p (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777))
 	(minx (wtable-start-xval))
@@ -28,17 +26,18 @@
     (close-port p)
   ))
 
-
 ; export-wavepanels-gnugraph - 
 ;
-; generate hardcopy or documentation representation of the displayed
+; generate hardcopy or documentary representation of the displayed
 ; waveforms on one or more wavepanels, using gnu graph as
 ; the formatting backend.
 
-(define-public (export-wavepanels-gnugraph fname outformat color landscape panellist)
-  (let* ((args (list "-T" outformat 
-		     "--input-format" "a"
-		     "--width-of-plot" "0.9"))
+(define-public (export-wavepanels-gnugraph fname panellist options)
+  (let* ((outformat (car options))
+	 (args (list "graph"
+		"-T" outformat 
+		"--input-format" "a"
+		"--width-of-plot" "0.9"))
 	 (ngraphs (length panellist))
 	 (idx 0))
 
@@ -47,6 +46,10 @@
     (append! args '("--toggle-round-to-next-tick" "X"
 		    "--font-size" "0.03"
 		    "--grid-style" "3"))
+;    (if color
+;	(append! args '("-C")))
+;    (if landscape
+;	(append! args '("--rotation" "90")))
     (if (wtable-xlogscale?)
 	(append! args '("-l" "X")))
     (for-each (lambda (wp)
@@ -66,5 +69,6 @@
 		 )
 	      panellist)
     ; finally we have the arglist
-    (print "running" args)
+    (print "running graph"  args)
+    (subprocess-to-file fname "graph" args)
 ))
