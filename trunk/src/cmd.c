@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <gtk/gtk.h>
+#include <guile-gtk.h>
 
 #include <scwm_guile.h>
 #include <gwave.h>
@@ -42,9 +43,9 @@
 #include <measurebtn.h>
 
 XSCM_HOOK(new_visiblewave_hook, "new-visiblewave-hook", 1, (SCM vw),
-"This hook is invoked with one VisibleWave argument, VW,
-when the VisibleWave is first created.   The main purpose of this hook 
-will be to create the button and menus attached to the VisibleWave.");
+"This hook is invoked with one VisibleWave argument, VW,"
+"when the VisibleWave is first created.   The main purpose of this hook "
+"will be to create the button and menus attached to the VisibleWave.");
 
 /* reset the x zoom scale of all panels */
 gint cmd_zoom_absolute(double start, double end)
@@ -131,8 +132,8 @@ vw_wp_list_if_selected(gpointer p, gpointer d)
 }
 
 XSCM_DEFINE(delete_selected_waves_x, "delete-selected-waves!", 0, 0, 0, (),
-  "Remove from panels any VisibleWaves that have been
-selected by clicking on their label-buttons.")
+  "Remove from panels any VisibleWaves that have been"
+"selected by clicking on their label-buttons.")
 #define FUNC_NAME s_delete_selected_waves_x
 {
 	int i;
@@ -612,9 +613,9 @@ XSCM_DEFINE(visiblewave_panel, "visiblewave-panel", 1, 0, 0, (SCM vw),
 #undef FUNC_NAME
 
 XSCM_DEFINE(visiblewave_button, "visiblewave-button", 1, 0, 0, (SCM vw),
-"Given a VisibleWave VW, return the Gtk button associated with the
-wave.  Since the button already has a label, all you can do is
-add events to the button.")
+"Given a VisibleWave VW, return the Gtk button associated with the"
+"wave.  Since the button already has a label, all you can do is"
+"add events to the button.")
 #define FUNC_NAME s_visiblewave_button
 {
 	VisibleWave *cvw;
@@ -715,8 +716,8 @@ XSCM_DEFINE(set_visiblewave_color_x, "set-visiblewave-color!", 2, 0, 0, (SCM vw,
 
 XSCM_DEFINE(set_visiblewave_measure_x, "set-visiblewave-measure!", 3, 0, 0, 
 	   (SCM vw, SCM n, SCM func),
- "Change the measurement box numbered N (0 or 1) of displayed waveform
- VW to display the result of the measurement function FUNC")
+ "Change the measurement box numbered N (0 or 1) of displayed waveform"
+ "VW to display the result of the measurement function FUNC")
 #define FUNC_NAME s_set_visiblewave_measure_x
 {
 	VisibleWave *cvw;

@@ -21,6 +21,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.17  2002/03/28 06:35:21  sgt
+ * Snarfing overhaul to make it guile-version-independent
+ * now compiles and runs under guile-1.5.6
+ * some issues remain - bound? in cmds.scm for example.
+ *
  * Revision 1.16  2002/01/10 04:04:26  sgt
  * Get Y and XY zoom working, along with zoom dialog box
  * start attempting to get things building with guile-1.5.4, but not done yet.
@@ -143,11 +148,11 @@ set_all_wp_cursors(int cnum)
  */
 XSCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
            (SCM proc),
-"Prompt the user to select a range of the visible X axis using 
-button 1 of the mouse.  
-When finished, PROC is called with 3 arguments, the
-WavePanel where the range is located, and the
-begining and ending X pixel value of the selection.")
+"Prompt the user to select a range of the visible X axis using"
+"button 1 of the mouse.  "
+"When finished, PROC is called with 3 arguments, the"
+"WavePanel where the range is located, and the"
+"begining and ending X pixel value of the selection.")
 #define FUNC_NAME s_select_range_x
 {
 	VALIDATE_ARG_PROC(1, proc);
@@ -163,11 +168,11 @@ begining and ending X pixel value of the selection.")
 
 XSCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
            (SCM proc),
-"Prompt the user to select a range of the visible Y axis using 
-button 1 of the mouse.  
-When finished, PROC is called with 3 arguments, the
-WavePanel where the range is located, and the
-begining and ending Y pixel value of the selection.")
+"Prompt the user to select a range of the visible Y axis using"
+"button 1 of the mouse. " 
+"When finished, PROC is called with 3 arguments, the"
+"WavePanel where the range is located, and the"
+"begining and ending Y pixel value of the selection.")
 #define FUNC_NAME s_select_range_y
 {
 	VALIDATE_ARG_PROC(1, proc);
@@ -183,11 +188,11 @@ begining and ending Y pixel value of the selection.")
 
 XSCM_DEFINE(select_range_xy, "select-range-xy", 1, 0, 0,
            (SCM proc),
-"Prompt the user to select a region of the 
-visible XY plane using button 1 of the mouse.  
-When finished, PROC is called with 5 arguments, the
-WavePanel where the range is located, and the
-begining and ending X and Y pixel values of the selection.")
+"Prompt the user to select a region of the "
+"visible XY plane using button 1 of the mouse.  "
+"When finished, PROC is called with 5 arguments, the"
+"WavePanel where the range is located, and the"
+"begining and ending X and Y pixel values of the selection.")
 #define FUNC_NAME s_select_range_xy
 {
 	VALIDATE_ARG_PROC(1, proc);
@@ -444,6 +449,7 @@ button_release_handler(GtkWidget *widget, GdkEventButton *event,
 		callback_srange();
 		break;
 	default:
+		break;
 	}
 	wtable->mstate = M_NONE;
 	wtable->button_down = -1;

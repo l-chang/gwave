@@ -224,7 +224,7 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 				      &vw->label->style->fg[GTK_STATE_NORMAL]);
 	}
 	g_assert(vw->gc != NULL);
-	if(gtk_toggle_button_get_active(vw->button))
+	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vw->button)))
                  gdk_gc_set_line_attributes(vw->gc,
                                             2, GDK_LINE_SOLID, GDK_CAP_BUTT,
                                             GDK_JOIN_ROUND);
@@ -503,8 +503,8 @@ double spice2val(char *s)
 }
 
 XSCM_DEFINE(spice_number, "spice->number", 1, 0, 0, (SCM str),
-"Given a string SSTR containing a representation of a number,
-possibly containing spice-style multiplier suffixes, return a real number.")
+"Given a string SSTR containing a representation of a number,"
+"possibly containing spice-style multiplier suffixes, return a real number.")
 #define FUNC_NAME s_spice_number
 {
 	double dval;
@@ -518,8 +518,8 @@ possibly containing spice-style multiplier suffixes, return a real number.")
 #undef FUNC_NAME
 
 XSCM_DEFINE(number_spice, "number->spice", 1, 0, 0, (SCM val),
- "Given a real number VAL, return a string representation 
-in spice suffix syntax.")
+ "Given a real number VAL, return a string representation "
+"in spice suffix syntax.")
 #define FUNC_NAME s_number_spice
 {
 	double dval;
