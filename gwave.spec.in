@@ -1,6 +1,6 @@
 # Note that this is NOT a relocatable package
 %define ver @VERSION@
-%define rel 3
+%define rel 4
 %define prefix /usr
 
 Name: gwave
@@ -16,8 +16,8 @@ URL: http://www.geda.seul.org/tools/gwave/index.html
 Distribution: gwave
 Requires: gtk+ >= 1.2.3
 Requires: glib >= 1.2.3
-Requires: guile >= 1.3.4
-Requires: guile-gtk >= 0.18
+Requires: guile >= 1.4
+Requires: guile-gtk >= 0.19
 Docdir: %{prefix}/share/doc
 
 %description
@@ -32,6 +32,9 @@ Install gwave if you need 2-D interactive display of analog waveforms or
 other tabluar data.
 
 %changelog
+* Mon Aug  4 2003 Steve Tell <steve@telltronics.org>
+- updates for Redhat 9, gwave-20030804
+
 * Thu Nov 23 2000 Steve Tell <steve@telltronics.org>
 - Created spec file for first RPM.
 
