@@ -13,7 +13,7 @@ gwave_SOURCES = cmd.c wavewin.c draw.c gwave.c event.c \
 	gwave.h gtkmisc.h wavewin.h wavelist.h  wavepanel.c \
 	guile-compat.h arg_unused.h scwm_guile.h validate.h guile-ext.h \
 	rgeval.c xgserver.c measurebtn.c measurebtn.h \
-	GtkTable_indel.c 
+	GtkTable_indel.c xsnarf.h
 
 gwave_LDADD = ../spicefile/libspicefile.a  @GTK_LIBS@ @GUILEGTK_LIBS@ 
 gwave_LDFLAGS =  @GUILE_LDFLAGS@
@@ -26,6 +26,8 @@ DOT_X_FILES = gwave.x cmd.x wavewin.x wavelist.x scwm_guile.x event.x \
 
 DOT_DOC_FILES = gwave.doc cmd.doc wavewin.doc wavelist.doc scwm_guile.doc \
 	event.doc draw.doc print.doc
+
+noinst_SCRIPTS = xguile-snarf
 
 BUILT_SOURCES=init_scheme_string.c scm_init_funcs.h $(DOT_X_FILES) 
 # $(DOT_DOC_FILES)
@@ -59,4 +61,4 @@ CLEANFILES = core *~ $(BUILT_SOURCES)
 DISTCLEANFILES = core *~
 MAINTAINERCLEANFILES = core *~
 
-EXTRA_DIST=gwave.gtkrc generate_scm_init_funcs
+EXTRA_DIST=$(noinst_SCRIPTS) gwave.gtkrc generate_scm_init_funcs 
