@@ -18,6 +18,9 @@
  *
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.10  1998/09/30 21:42:13  tell
+ * Add stuff for zoom-window, and update version to 0.0.4
+ *
  * Revision 1.9  1998/09/17 18:36:56  tell
  * Changed default "blue" color for better contrast.
  * Support for multiple files.
@@ -73,7 +76,7 @@
 
 /* globals */
 char *prog_name = "gwave";
-char *prog_version = "0.0.4";
+char *prog_version = "0.0.5";
 int colors_initialized = 0;
 int x_flag, v_flag;
 WaveTable *wtable;
