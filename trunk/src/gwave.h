@@ -4,6 +4,13 @@
  * Steve Tell
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  1998/12/26 02:56:16  tell
+ * Initial revision
+ *
+ * Revision 1.3  1998/09/30 21:50:41  tell
+ * Add stuff for dragging of cursors and zoom-to-window,
+ * and associated restructuring of zoom commands and mouse-button event handling
+ *
  * Revision 1.2  1998/09/17 18:30:19  tell
  * Lots of changes.  multiple panels, multiple files, etc.
  *
@@ -97,7 +104,10 @@ struct _WavePanel {
 
 struct _WaveTable {
 	int npanels;
-	WavePanel *panels;
+	WavePanel **panels;
+	GtkWidget *vbox;	/* GtkVBox containing most elements
+				   in main window. */
+	GtkWidget *xlhbox;	/* GtkHBox containing x-axis labels */
 	GtkWidget *table;
 	VBCursor *cursor[2];
 	SelRange *srange;
@@ -107,6 +117,8 @@ struct _WaveTable {
 	double end_xval;	/* ending drawn x-value */
 	int suppress_redraw;	/* don't re-draw if 1 */
 
+	GtkWidget *popup_menu;
+	WavePanel *popup_panel; /*panel cursor was in when panel-popup popped*/
 	GWMouseState mstate;
 	VBCursor *drag_cursor;
 	int button_down;
@@ -202,6 +214,10 @@ extern void create_wdata_submenuitem(GWDataFile *wdata, GtkWidget *submenu);
 extern void setup_waveform_window();
 extern void vw_get_label_string(char *buf, int buflen, VisibleWave *vw);
 extern void vw_wp_create_button(VisibleWave *vw, WavePanel *wp);
-
+extern void wavewin_insert_panel(WavePanel *wp);
+extern void wavewin_delete_panel(WavePanel *wp);
+extern void cmd_popup_delete_panel(GtkWidget *w);
+extern void cmd_popup_insert_panel(GtkWidget *w);
+extern void cmd_append_panel(GtkWidget *w);
 
 #endif
