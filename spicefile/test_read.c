@@ -2,6 +2,9 @@
  * test routine for analog file readers
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  1998/08/31 21:00:28  tell
+ * Initial revision
+ *
  */
 
 #include <stdio.h>
@@ -60,6 +63,7 @@ main(int argc, char **argv)
 	printf("filename: \"%s\"\n", df->filename);
 	printf("independent variable:\n");
 	printf("  name: \"%s\"\n", df->iv->d.name);
+	printf("  type: %s\n", vartype_name_str(df->iv->d.type));
 	printf("  npts: %d\n", df->iv->d.nvalues);
 	printf("  min: %g\n", df->iv->d.min);
 	printf("  max: %g\n", df->iv->d.max);
@@ -68,6 +72,7 @@ main(int argc, char **argv)
 	printf("dependent variables: %d\n", df->ndv);
 	for(i = 0; i < df->ndv; i++) {
 		printf(" dv[%d] \"%s\" ", i, df->dv[i]->d.name);
+		printf(" (type=%s)", vartype_name_str(df->dv[i]->d.type));
 		printf("(%d values) ", df->dv[i]->d.nvalues);
 		printf("blocks=%d/%d\n",
 		       df->dv[i]->d.bpused, df->dv[i]->d.bpsize);
@@ -87,7 +92,7 @@ main(int argc, char **argv)
 		for(j = 0; j < df->iv->d.nvalues; j++) {
 			printf("[%3d] %10g", j, an_get_point(&df->iv->d, j));
 			for(i = 0; i < df->ndv; i++) {
-				printf("%10g", an_get_point((DataSet *)df->dv[i], j));
+				printf(" %10g", an_get_point((DataSet *)df->dv[i], j));
 			}
 			putchar('\n');
 		}
