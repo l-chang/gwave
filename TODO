@@ -1,26 +1,31 @@
 
 ability to get wave data from guile
 	(wavevar-value x) - return value at x-coord.
+	what else? how to expose the structure of wavevars?
 
 survey existing guile primitives and add new ones to fill out a useful set
 for scripting in general, not just what the GUI offers at the moment.
 
+overhaul plotting
+	move mostly into scheme
+	keep "wave data export" function in C, make availble in guile
+	dialog box for options
+
+move to top, move to bottom to alter drawing order for visiblewaves in panel
+
 custom measurements
 
+waveform calculations
+	- display-functions of a single wavevar and scalars
+	- display-functions of wavevars sharing the same independent var
+	- more general stuff that computes a new wavevar
+
 Y zoom methods:
-	manual: type in min and max for panel
-	automatic-global: what we do now
+	manual: type in min and max for panel DONE
+	automatic-global: (original)
 	automatic-window: alway show min, max in current window zoom extents
 	oneshot-global: compute min,max when clicked, not continually.
 	oneshot-window: 
-
-plotting quick-fix
-	make log-scale work in plots
-
-overhaul plotting
-	move mostly into scheme
-	keep "wave data export" function in C
-	dialog box for options
 
 documentation
 	docstring extraction from guile
@@ -31,8 +36,6 @@ example guile scripts for useful functions
 
 draw a real graticule in wave panels
 
-move to top, move to bottom to select drawing order for visiblewaves in panel
-
 "envelope" drawing algorithm (that doesn't alias when too many
 datapoints for current zoom) 
 Add an indication that there may be too many points on screen (simply
@@ -41,6 +44,7 @@ look at number of ivar points vs. number of pixels)
 additional drawing styles
 	linestyles - dashed, etc.
 	symbols showing actual datapoints
+	a means to highlight selected visiblewaves - draw with thicker lines?
 
 prevent switching to log-scale if the axis includes 0 or negative values.
 

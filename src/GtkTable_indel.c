@@ -9,6 +9,71 @@
 
 #include <gtk/gtk.h>
 
+static GtkTableChild *
+collect_children(GtkTable *table, int row, int *nchp)
+{
+	GtkTableChild *row_children;
+	GtkTableChild *table_child;
+	int nch;
+	int i;
+	GList *list;
+
+	row_children = g_new0(GtkTableChild, table->ncols);
+	nch = 0;
+
+	/* locate all of the relevant children, and add an extra reference
+	   to them */
+	for (list = table->children; list; list = list->next) {
+		table_child = list->data;
+
+		if(table_child->top_attach == row) {
+			if(nch == table->ncols) {
+				g_error("collect_children: too many children on row %d\n", row);
+				abort();
+			}
+			row_children[nch++] = *table_child;
+			gtk_widget_ref(table_child->widget);
+		}
+	}
+	if(nchp)
+		*nchp = nch;
+	return row_children;
+}
+
+static void
+reattach_children(GtkTable *table, GtkTableChild *row_children,	int nch,
+		  int row) 
+{
+	int i;
+	GtkAttachOptions xoptions;
+	GtkAttachOptions yoptions;
+
+	/* add in new position and unref */
+	for(i = 0; i < nch; i++) {
+		xoptions = row_children[i].xexpand 
+			| row_children[i].xshrink<<1
+			| row_children[i].xfill<<2;
+		yoptions = row_children[i].yexpand 
+			| row_children[i].yshrink<<1
+			| row_children[i].yfill<<2;
+
+		gtk_table_attach(table, row_children[i].widget,
+				 row_children[i].left_attach,
+ 				 row_children[i].right_attach,
+				 row,
+				 row + (row_children[i].bottom_attach -
+				       row_children[i].top_attach),
+				 xoptions,
+				 yoptions,
+				 row_children[i].xpadding,
+				 row_children[i].ypadding);
+
+		gtk_widget_unref(row_children[i].widget);
+	}
+}
+
+
+
 /*
  * move a table row to another row position.
  */
@@ -139,6 +204,62 @@ gtk_table_delete_row(GtkWidget *widget, int row)
 	}
 
 	gtk_table_resize(table, old_nrows-1, old_ncols);
+}
+
+/*
+ * Reorder a table, moving row FROM to position TO, and shifting
+ * all rows in between up or down one row.
+ * given this arrangement:
+0 A
+1 B
+2 C
+3 D
+rotate_rows(, 2, 0) produces this result:  ("up" case)
+0 C
+1 A
+2 B
+3 D
+while applying rotate_rows(, 1, 3) to the original produces: ("down" case)
+0 A
+1 C
+2 D
+3 B
+ */
+void
+gtk_table_rotate_rows(GtkWidget *widget, int from, int to)
+{
+	GtkTable *table = GTK_TABLE(widget);
+	int down;  /* does the named "jumping" row move up or down? */
+	GtkTableChild *moving_children;
+	int nch, i;
+
+	if(to == from) return;
+	else if(to > from) down = 1;
+	else down = 0;
+
+	/* collect the children in the row that's jumping */
+	moving_children = collect_children(table, from, &nch);
+	/* remove them from their old row */
+	for(i = 0; i < nch; i++) {
+		gtk_container_remove(GTK_CONTAINER(table), moving_children[i].widget);
+	}
+
+	/* now move the other ones one position.
+	* if the "jumping" row moves down, thers move up, etc. */
+	if(down) {
+		for(i = from; i < to; i++) {
+			gtk_table_move_row(table, i+1, i);
+		}
+	} else { /* up*/
+		for(i = from; i > to; i--) {
+			gtk_table_move_row(table, i-1, i);
+		}
+	}
+
+	/* finally, put those children back down in the vacated target row */
+	reattach_children(table, moving_children, nch, to);
+	g_free(moving_children);
+	
 }
 
 /*

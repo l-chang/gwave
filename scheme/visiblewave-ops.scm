@@ -54,6 +54,8 @@
     (gtk-widget-show menu)
     (add-menuitem menu "Wave Options"
 		  (lambda () (popup-vw-options vw)))
+    (add-menuitem menu "Move to Top" 
+		  (lambda () (visiblewave-on-top! vw)))
     (add-menuitem menu "Delete" 
 		  (lambda () (visiblewave-delete! vw)))
     menu))
