@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Library General Public
+ * You should have received a copy of the GNU General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
@@ -37,6 +37,7 @@
 #include <gwave.h>
 
 GtkWidget *var_list_submenu;
+WavePanel *last_drop_wavepanel;
 
 /* Create a (sub)menu and the item that activates it.
  * Returns GtkMenu widget pointer.
@@ -120,6 +121,10 @@ create_gwave_menu()
 	create_menuitem("About Gwave", menu, create_about_window, NULL);
 	create_menuitem("Read File...", menu, 
 			GTK_SIGNAL_FUNC(get_fname_load_file), NULL);
+	create_menuitem("Export Postscript", menu, 
+			GTK_SIGNAL_FUNC(cmd_export_postscript), NULL);
+	create_menuitem("Export PNM", menu, 
+			GTK_SIGNAL_FUNC(cmd_export_pnm), NULL);
 	create_menuitem(NULL, menu, NULL, NULL); /* separator */
 	create_menuitem("Quit", menu, GTK_SIGNAL_FUNC(destroy_handler), NULL);
 	
@@ -178,8 +183,7 @@ vw_get_label_string(char *buf, int buflen, VisibleWave *vw)
 
 		dval = wv_interp_value(vw->var, xval);
 		sprintf(buf, "%s: %.*s %s",
-			gdf->ftag, l, vw->varname, 
-			val2txt(dval));
+			gdf->ftag, l, vw->varname, val2txt(dval, 0));
 	} else {
 		/* should keep track of label state (name vs. name+val)
 		 * and only re-do this if necessary */
@@ -280,11 +284,11 @@ void setup_wave_panel(WavePanel *wp)
 	wp->end_xval = wtable->end_xval;
 	/* y-axis labels and signal names, all in a vbox */
 	wp->lvbox = gtk_vbox_new(FALSE, 0);
-	gtk_widget_set_usize(wp->lvbox, 140, -1);
+	gtk_widget_set_usize(wp->lvbox, 160, -1);
 	gtk_widget_show(wp->lvbox);
 
 	hbox = gtk_hbox_new(FALSE, 0);
-	sprintf(lbuf, "%.3f", wp->max_yval);
+	strcpy(lbuf, val2txt(wp->max_yval, 0));
 	wp->lab_max = gtk_label_new(lbuf);
 	gtk_box_pack_start(GTK_BOX(wp->lvbox), hbox,
 			   FALSE, FALSE, 0);
@@ -294,7 +298,7 @@ void setup_wave_panel(WavePanel *wp)
 	gtk_widget_show(wp->lab_max);
 
 	hbox = gtk_hbox_new(FALSE, 0);
-	sprintf(lbuf, "%.3f", wp->min_yval);
+	strcpy(lbuf, val2txt(wp->min_yval, 0));
 	wp->lab_min = gtk_label_new(lbuf);
 	gtk_box_pack_end(GTK_BOX(wp->lvbox), hbox,
 			 FALSE, FALSE, 0);
@@ -591,6 +595,8 @@ wavewin_delete_panel(WavePanel *dwp)
 		return;
 	}
 
+	if(dwp == last_drop_wavepanel)
+		last_drop_wavepanel = NULL;
 	wavewin_destroy_table();
 
 	nwp = g_new0(WavePanel*, wtable->npanels - 1);
