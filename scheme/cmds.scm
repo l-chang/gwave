@@ -211,7 +211,7 @@
 ; Write out a guile script that when executed by a future gwave,
 ; will restore the configuration of waves displayed from a particular datafile
 (define-public (write-filerestore-script df fname)
-  (let ((p (open fname (logior O_WRONLY O_CREAT) #o0777)))
+  (let ((p (open fname (logior O_WRONLY O_CREAT O_TRUNC) #o0777)))
     (with-output-to-port p 
       (lambda () 
 	(write-script-header)
@@ -222,7 +222,7 @@
 
 ; Similar, but writes configuration-restoring script for all datafiles
 (define-public (write-allrestore-script sname)
-  (let ((p (open sname (logior O_WRONLY O_CREAT) #o0777))
+  (let ((p (open sname (logior O_WRONLY O_CREAT O_TRUNC) #o0777))
 	(mfs (eqv? 1 (length (wavefile-list)) )))
     (with-output-to-port p 
       (lambda () 
