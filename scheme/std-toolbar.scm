@@ -6,7 +6,7 @@
   :use-module (gtk gtk)
   :use-module (app gwave cmds))
 
-(display "std-toolbar.scm running\n")
+(dbprint "std-toolbar.scm running\n")
 
 (define (button label proc)
   (let ((item (gtk-button-new-with-label label)))
@@ -29,4 +29,4 @@
      (gtk-container-add tbar (button "Reload All" reload-all-files!))
 )))
 
-(display "std-toolbar.scm done\n")
+(dbprint "std-toolbar.scm done\n")

@@ -6,16 +6,13 @@
   :use-module (gtk gtk)
   :use-module (gtk gdk)
   :use-module (app gwave cmds)
-  :use-module (app gwave options)
+;  :use-module (app gwave options)
 )
 
 (debug-enable 'debug)
 (read-enable 'positions)
 
-(display "std-menus.scm running\n")
-
-;(set! default-wavepanel-type 0)
-(define-public default-wavepanel-type 0)
+(dbprint "std-menus.scm running\n")
 
 
 ;*****************************************************************************
@@ -93,7 +90,7 @@
 (add-hook! 
  new-wavewin-hook
  (lambda ()
-   (display "in std-menus new-wavewin-hook") (newline)
+   (dbprint "in std-menus new-wavewin-hook\n")
    (let ((win (get-wavewin))
 	 (mbar (get-wavewin-menubar)))
      (let ((file-menu (gtk-menu-new)))
@@ -113,7 +110,7 @@
        (gtk-widget-show view-menu)
        (gtk-menu-item-set-submenu (add-menuitem mbar "View" #f) view-menu)
        (add-menuitem view-menu "Add Panel" 
-		     (lambda () (wtable-insert-panel! #f default-wavepanel-type)))
+		     (lambda () (wtable-insert-typed-panel! #f default-wavepanel-type)))
        (add-menuitem view-menu "Zoom Full" x-zoom-full!)
        (add-menuitem view-menu "Zoom Cursors" x-zoom-cursors!)
        (add-menuitem view-menu "Zoom Area..." x-zoom-area!)
@@ -128,10 +125,10 @@
 	     (group #f))
 	 (gtk-widget-show ptmenu)
 	 (set! group (add-radio-menuitem 
-		      ptmenu group "Std" 
+		      ptmenu group (list-ref wavepanel-type-names 0)
 		      (lambda () (set! default-wavepanel-type 0))))
 	 (set! group (add-radio-menuitem 
-		      ptmenu group "Jge"
+		      ptmenu group (list-ref wavepanel-type-names 1)
 		      (lambda () (set! default-wavepanel-type 1))))
 	 (gtk-menu-item-set-submenu 
 	  (add-menuitem menu "Default Panel Type" #f) ptmenu))
@@ -157,7 +154,7 @@
 (add-hook! 
  new-wavefile-hook
  (lambda (df)
-   (display "in std-menus new-wavefile-hook for ") (display df) (newline)
+   (dbprint "in std-menus new-wavefile-hook " df "\n")
    (add-menuitem var-list-submenu 
 		 (string-append (wavefile-tag df)
 				": "
@@ -180,34 +177,35 @@
        (add-menuitem menu #f #f)
        (add-menuitem menu "Close"
 		 (lambda () (wavefile-remove-listwin! df)))
-;       (add-menuitem menu "foo" #f)
        )))
 
 ;
-; Popup menu on button 3 in a wavepanel.
+; Popup menu on button 3 in a wavepanel.  
+; Note that the menu is constructed anew each time, so that it can be
+; context-sensitive.  So far this hasn't produced any noticable popup delay.
 ;
 
 (wavepanel-bind-mouse 3
  (lambda (wp event)
-;   (display "in wavepanel-mouse ")(display wp)(display event) (newline)
-   (let ((menu (gtk-menu-new)))
+;   (display "in wavepanel menu ")(display wp) 
+;   (display " type=") (display (wavepanel-type wp))   (newline)
+   (let ((menu (gtk-menu-new))
+	 (next-ptype (remainder (+ 1 (wavepanel-type wp)) wavepanel-num-types)))
      (gtk-widget-show menu)
      (add-menuitem menu "Zoom Cursors" x-zoom-cursors!)
      (add-menuitem menu "Zoom Area..." x-zoom-area!)
      (add-menuitem menu "Zoom Full" x-zoom-full!)
      (add-menuitem menu "Insert Panel Above" 
-		   (lambda () (wtable-insert-panel! wp default-wavepanel-type)))
+		   (lambda () (wtable-insert-typed-panel! wp default-wavepanel-type)))
      (add-menuitem menu "Delete this Panel"
 		   (lambda () (wtable-delete-panel! wp)))
-
-     (case (wavepanel-type wp)
-       ((0) (add-menuitem menu "Set type jge"
-			  (lambda () (set-wavepanel-type! wp 1))))
-       ((1) (add-menuitem menu "Set type std"
-			  (lambda () (set-wavepanel-type! wp 0)))))
+     (add-menuitem 
+      menu 
+      (string-append "Set type " (list-ref wavepanel-type-names next-ptype))
+      (lambda () (set-wavepanel-type! wp next-ptype)))
 	       
      (gtk-menu-popup menu #f #f
 		     (gdk-event-button event)
 		     (gdk-event-time event)))))
 
-(display "std-menus.scm done\n")
+(dbprint "std-menus.scm done\n")

@@ -1,6 +1,6 @@
 ;-*- mode: scheme -*-
 
-(display "in my experimental .gwaverc") (newline)
+(dbprint "in my experimental .gwaverc\n")
 
 (debug-enable 'debug)
 (read-enable 'positions)
@@ -39,7 +39,7 @@
 
 )))
 
-; hook called when main window opened.  Main purpose is creating the menus.
+; hook called when new VisibleWave is added.
 (add-hook! 
  new-visiblewave-hook
  (lambda (vw)
@@ -238,5 +238,4 @@
      (gtk-widget-show window)
 ))
 
-
-(display "experimental .gwaverc done\n")
+(dbprint "experimental .gwaverc done\n")

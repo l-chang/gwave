@@ -87,6 +87,11 @@ Run PROC immediately if MODULE has already been loaded."
 		  (lambda (key . args) #t))
 	   #f)))
 
+; print list if debug flag is set
+(define (dbprint . l)
+  (if gwave-debug
+      (for-each (lambda (e) (display e (current-output-port))) l)))
+
 (define-public (process-use-gwave-modules module-list)
   "Returns a list of all the modules loaded in successfully.
 Modules that failed to load have #f in their place in the
@@ -96,7 +101,7 @@ list instead of the module."
 (defmacro use-gwave-modules modules
   `(process-use-gwave-modules ',modules))
 
-; TODO: check to see if gwave-guiledir is already present,
+; TODO: check to see if gwave-guiledir is already present in the load-path,
 ; and if so, don't add it.
 (let* ((genv (getenv "GWAVE_GUILE_DIR"))
        (gwave-guiledir (if genv
@@ -104,7 +109,7 @@ list instead of the module."
 			   (string-append gwave-datadir "/guile"))))
   (set! %load-path (cons gwave-guiledir %load-path)))
 
-(display "%load-path=")(display %load-path)(newline)
+(dbprint "%load-path=" %load-path "\n")
 ;
 ; Find a .gwaverc file to load, loading only the first one found.
 ; I'm not sure this is quite the model I want:

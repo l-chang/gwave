@@ -20,15 +20,15 @@
 (define-public (x-zoom-area!)
   (select-range-x 
    (lambda (wp x1 x2)
-;     (display "zoom-area-callback ")
+;     (display "in zoom-area callback ")
 ;     (display wp) (display " ")
 ;     (display x1) (display " ")
 ;     (display x2) (newline)
      (x-zoom! (wavepanel-x2val wp x1) (wavepanel-x2val wp x2)))))
 
 ; zoom relative to current position.
-; zf>1 zooms in
-; zf<1 zooms out
+; if zoom factor > 1,  zooms in
+; if zoom factor < 1,  zooms out
 (define-public (x-zoom-relative! zf)
   (let* ((sx (wtable-start-xval))
 	 (ex   (wtable-end-xval))
@@ -49,8 +49,43 @@
     (if (and c0 c1)
 	(x-zoom! c0 c1))))
 
+;
+; Implement a simple notion of WavePanel "type" that changes
+; several of the lower-level options together.   Earlier versions
+; had this in C.
+;
+(define-public default-wavepanel-type 0)
+; these should be a real data structure of some kind
+(define-public wavepanel-type-names    (list "Std"	"Jge"))
+(define-public wavepanel-num-types (length wavepanel-type-names))
+(define            panel-type-heights  (list 100 	25))
+(define            panel-type-showlabs (list #t  	#f))
 
-; Make a simple button with a textual label
+(define-public (set-wavepanel-type! wp type)
+  (set-object-property! wp 'wp-type type)
+  (set-wavepanel-minheight! wp (list-ref panel-type-heights type))
+  (set-wavepanel-ylabels-visible! wp (list-ref panel-type-showlabs type)))
+
+(define-public (wavepanel-type wp) (object-property wp 'wp-type))
+
+; wrapper around wtable-insert-panel that pays attention to this type business
+(define-public (wtable-insert-typed-panel! wp type)
+  (wtable-insert-panel! wp
+		       (list-ref panel-type-heights type)
+		       (list-ref panel-type-showlabs type)))
+
+; Add the panel-type property to a new wavepanel, so the context-sensitive
+; menu works properly.
+; For the moment, the standard GUI stuff only calls 
+; wtable-insert-typed-panel! with the default type, so this comes out OK.
+; Really need to pass the type through from wtable-insert-typed-panel
+; somehow.  Or else, change the interface.
+(add-hook! new-wavepanel-hook 
+	   (lambda (wp)
+	     (dbprint "in cmds.scm new-wavepanel-hook " wp "\n")
+	     (set-object-property! wp 'wp-type default-wavepanel-type)))
+
+; GTK+ helper: make a simple button with a textual label
 (define (make-button parent txt func) 
   (let* ((btn (gtk-button-new-with-label txt)))
     (gtk-container-add parent btn)
