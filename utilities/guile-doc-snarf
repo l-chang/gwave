@@ -20,7 +20,7 @@ trap "rm -f $temp" 0 1 2 15
 
 ## Let the user override the preprocessor & awk autoconf found.
 test -n "${CPP+set}" || CPP="gcc -E"
-test -n "${AWK+set}" || AWK="gawk"
+test -n "${AWK+set}" || AWK="@AWK@"
 
 ## Must run guile-func-name-check on the unpreprocessed source
 ${AWK} -f ${utildir}/guile-func-name-check "$fullfilename"
@@ -30,4 +30,3 @@ ${AWK} -f ${utildir}/guile-func-name-check "$fullfilename"
 ${CPP} -DSCM_MAGIC_SNARFER "$@" > ${temp} || exit $?
 cat ${temp} | sed 's/^\(.\{128\}.\{128\}.\{128\}.\{128\}.\{128\}.\{128\}.\{128\}.\{128\}\).*/\1/g' | \
 ${AWK} -f ${utildir}/guile-snarf.awk `basename ${dot_doc}`
-
