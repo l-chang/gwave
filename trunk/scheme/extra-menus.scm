@@ -55,7 +55,7 @@
 	  (menu (menu-create mbar "Debug")))
        (add-menuitem menu "List Variables" 
 		     (lambda () 
-		       (display (wavefile-variables df))
+		       (display (wavefile-all-variables df))
 		       (newline)
 		     ))
        (add-menuitem menu #f #f)
