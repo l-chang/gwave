@@ -1,4 +1,4 @@
-/* $Id: guile-compat.h,v 1.3 2000-08-10 04:43:27 sgt Exp $ */
+/* $Id: guile-compat.h,v 1.4 2001-08-20 04:27:58 sgt Exp $ */
 /*
  * Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
  *
@@ -129,7 +129,7 @@ SCM make_output_strport(char *fname);
 SCM scm_strport_to_string(SCM port);
 #endif
 
-#endif GUILE_COMPAT_H
+#endif /* GUILE_COMPAT_H */
 
 /* Local Variables: */
 /* tab-width: 8 */
