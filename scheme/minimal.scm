@@ -10,8 +10,13 @@
 (debug-enable 'debug)
 (read-enable 'positions)
 
+; print list if debug flag is set
+(define (dbprint . l)
+  (if gwave-debug
+      (for-each (lambda (e) (display e (current-output-port))) l)))
+
+; Guile compatibility stuff borrowed from scwm.  Not tested recently.
 (if (not (defined? 'run-hook))
-    ;; GJB:FIXME:MS: I'd like a backtrace when a hook fails
     (define-public (run-hook hook-list . args)
       "Runs the procedures in HOOK-LIST, each getting ARGS as their arguments.
 If any error, the others still run.  The procedures are executed in the
@@ -39,69 +44,6 @@ order in which they appear in HOOK-LIST"
     (define-public (hook? h) 
       (and (pair? h) (eq? (car h) 'hook))))
 
-; 
-; use-gwave-modules facility; copied and renamed from scwm.
-; tries to keep going if there are errors.
-;
-;; GJB:FIXME:: this should not be public,
-;; but I leave it public for now for easier debugging --07/03/99 gjb
-(define-public *gwave-modules* '())
-
-(define-public (gwave-module-loaded? module)
-  "Return #t iff MODULE has been loaded."
-  (let ((entry (assoc module *gwave-modules*))) 
-    (and entry (null? (cdr entry)))))
-
-(define (use-gwave-module-note-success module)
-  (let ((entry (assoc module *gwave-modules*)))
-    (if (not entry)
-	(set! *gwave-modules* (cons (cons module '()) *gwave-modules*))
-	(let ((eval-after-load-proc (cdr entry)))
-	  (if (not (null? eval-after-load-proc))
-	      (let ((answer (eval-after-load-proc)))
-		(set-cdr! entry '())
-		answer))))))
-
-(define-public (eval-after-load module proc)
-  "Run PROC after MODULE is loaded.
-Run PROC immediately if MODULE has already been loaded."
-  (if (gwave-module-loaded? module)
-      (proc)
-      (set! *gwave-modules* (cons (cons module proc) *gwave-modules*))))
-
-(define (process-use-gwave-module module)
-  (if (symbol? module)
-      (set! module (append '(app gwave) (list module))))
-  (catch #t
-	 (lambda ()
-	   (process-use-modules (list module))
-	   (use-gwave-module-note-success module)
-	   (run-hook load-processing-hook -1)
-	   module)
-	 (lambda (key . args)
-	   (display "Error loading module: ")
-	   (display module) (newline)
-	   (catch #t
-		  (lambda () 
-		    (apply handle-system-error (cons key args))
-		    (display "attempting backtrace\n")
-		    (backtrace))
-		  (lambda (key . args) #t))
-	   #f)))
-
-; print list if debug flag is set
-(define (dbprint . l)
-  (if gwave-debug
-      (for-each (lambda (e) (display e (current-output-port))) l)))
-
-(define-public (process-use-gwave-modules module-list)
-  "Returns a list of all the modules loaded in successfully.
-Modules that failed to load have #f in their place in the
-list instead of the module."
-  (map process-use-gwave-module (reverse module-list)))
-
-(defmacro use-gwave-modules modules
-  `(process-use-gwave-modules ',modules))
 
 ; TODO: check to see if gwave-guiledir is already present in the load-path,
 ; and if so, don't add it.
