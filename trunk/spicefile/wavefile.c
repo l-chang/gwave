@@ -325,6 +325,9 @@ wds_get_point(WDataSet *ds, int n)
 /*
  * Use a binary search to return the index of the point 
  * whose value is the largest not greater than ival.  
+ * if ival is equal or greater than the max value of the
+ * independent variable, return the index of the last point.
+ *
  * Only works on independent-variables, which we require to
  * be nondecreasing and have only a single column.
  * 
@@ -338,9 +341,11 @@ wf_find_point(WaveVar *iv, double ival)
 	double cval;
 	int a, b;
 	int n = 0;
+
 	a = 0;
 	b = iv->wfile->nvalues - 1;
-
+	if(ival >= ds->max)
+		return b;
 	while(a+1 < b) {
 		cval = wds_get_point(ds, (a+b)/2);
 /*		printf(" a=%d b=%d ival=%g cval=%g\n", a,b,ival,cval); */
@@ -364,8 +369,8 @@ wf_find_point(WaveVar *iv, double ival)
  * one for each column in the specified dependent variable.
  * This will be better than making the client call us once for each column,
  * because we'll only have to search for the independent value once.
- * (quick hack: just return first column's value.)
- *
+ * (quick hack until we need support for complex and other multicolumn vars:
+ * just return first column's value.)
  */
 double
 wv_interp_value(WaveVar *dv, double ival)
@@ -377,10 +382,10 @@ wv_interp_value(WaveVar *dv, double ival)
 
 	iv = dv->wv_iv;
 
-	li = wf_find_point(iv, ival);
+   	li = wf_find_point(iv, ival);
 	ri = li + 1;
 	if(ri >= dv->wfile->nvalues)
-		return wds_get_point(dv->wds, ri);
+		return wds_get_point(dv->wds, dv->wfile->nvalues-1);
 
 	lx = wds_get_point(&iv->wds[0], li);
 	rx = wds_get_point(&iv->wds[0], ri);
