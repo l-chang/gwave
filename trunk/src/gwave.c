@@ -3,6 +3,12 @@
  * 	and waveform-drawing strategies.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  1998/08/24 17:48:03  tell
+ * Convert to table for arranging wavepanel and labels
+ * Got basic Y labels working, although not arranged quite perfectly
+ * Now reads a wv.gtkrc file
+ * Added basic status-label to show times, etc.
+ *
  * Revision 1.1  1998/08/21 19:11:38  tell
  * Initial revision
  *
@@ -24,16 +30,11 @@
 #include "reader.h"
 
 static char *prog_name = "wv";
-static int post_init = 0;
 int x_flag, v_flag;
 
-static char *bg_color_name = "black";
+static char *bg_color_name  = "black" ;
 static GdkColor bg_gdk_color;
 static GdkGC *bg_gdk_gc;
-
-static char *crs_color_name = "yellow";
-static GdkColor crs_gdk_color;
-static GdkGC *crs_gdk_gc;
 
 static GtkAdjustment *win_hsadj;
 static GtkWidget *win_hsbar;
@@ -41,9 +42,19 @@ static GtkWidget *win_xlabel_left, *win_xlabel_right;
 static GtkWidget *win_table;
 static GtkWidget *win_status_label;
 
+/* Vertical bar cursor */
+typedef struct {
+	int shown;	/* vertical bar cursor */
+	double xval;
+	char *color_name;
+	GdkColor gdk_color;
+	GdkGC *gdk_gc;
+} VBCursor;
+
 /*
  * WavePanel -- describes a single panel containing one waveform
- *	later will be expanded to multiple waveforms
+ *	later will be split into several linked structures as we expand
+ *	to multiple waveforms.
  */
 typedef struct
 {
@@ -54,9 +65,8 @@ typedef struct
 	double max_xval;
 	double start_xval;	/* starting drawn x-value (independent var) */
 	double end_xval;	/* ending drawn x-value */
-	int cursor_shown;	/* vertical bar cursor */
-	double cursor_xval;
 
+	VBCursor *cursor[2];
 	/* using hbox for labels and waveforms doesn't work well,
 	 * because the bottom (X) labels then don't line up right.
 	 * Perhaps a table will do the right thing
@@ -64,7 +74,6 @@ typedef struct
 	GtkWidget *lvbox;	/* for labels */
 	GtkWidget *lab_min, *lab_max;
 	GtkWidget *lab_wavename;
-/*	GtkWidget *lab_drawing; *//* for labels */
 	GtkWidget *win_drawing; /* DrawingArea for waveform */
 
 	/* will need a color per var */
@@ -137,38 +146,65 @@ static void destroy_handler(GtkWidget *widget, gpointer data)
 	gtk_main_quit();
 }
 
+/*
+ * TODO: implement dragging cursors around instead of this 
+ * simple click-to-place stuff.
+ */
 static gint click_handler(GtkWidget *widget, GdkEventButton *event, 
 			  gpointer data)
 {
 	double xval, dval;
 	WavePanel *wp = (WavePanel *)data;
+	VBCursor *csp;
 	int h, x;
+	char abuf[128];
 	char lbuf[128];
 	
 	h = wp->win_drawing->allocation.height;
-	
 	xval = x2val(wp, event->x);
-	if(wp->cursor_shown) {
-		x = val2x(wp, wp->cursor_xval);
-		/* undraw old cursor */
-		gdk_draw_line(wp->win_drawing->window, crs_gdk_gc, x, 0, x, h);
+	switch(event->button) {
+	case 1:
+		csp = wp->cursor[0];
+		break;
+	case 2:
+		csp = wp->cursor[1];
+		break;
+	default:
+		return 0;
 	}
-	wp->cursor_xval = xval;
-	wp->cursor_shown = 1;
+
+	if(csp->shown) {
+		x = val2x(wp, csp->xval);
+		/* undraw old cursor */
+		gdk_draw_line(wp->win_drawing->window, csp->gdk_gc, x, 0, x, h);
+	}
+	csp->xval = xval;
+	csp->shown = 1;
 	dval = cz_interp_value(wpanel->var, xval);
-/*	printf("click x=%.1f y=%.1f xval=%g yval=%g\n",
-	       event->x, event->y, xval, dval); */
 
 	/* draw new cursor */
-	x = val2x(wp, wp->cursor_xval);
-	gdk_draw_line(wp->win_drawing->window, crs_gdk_gc, x, 0, x, h);
+	x = val2x(wp, csp->xval);
+	gdk_draw_line(wp->win_drawing->window, csp->gdk_gc, x, 0, x, h);
 
 	/* update value-label */
 	sprintf(lbuf, "%.15s %.3f", wpanel->var->d.name, dval);
 	gtk_label_set(GTK_LABEL(wpanel->lab_wavename), lbuf);
 
 	/* update status label */
-	sprintf(lbuf, "cursor: %s", val2txt(xval));
+	lbuf[0] = 0;
+	if(wp->cursor[0]->shown) {
+		sprintf(abuf, "cursor1: %s", val2txt(wp->cursor[0]->xval));
+		strcat(lbuf, abuf);
+	}
+	if(wp->cursor[1]->shown) {
+		sprintf(abuf, " cursor2: %s", val2txt(wp->cursor[1]->xval));
+		strcat(lbuf, abuf);
+	}
+	if(wp->cursor[0]->shown && wp->cursor[1]->shown) {
+		sprintf(abuf, " delta: %s", val2txt(wp->cursor[1]->xval - wp->cursor[0]->xval));
+		strcat(lbuf, abuf);
+	}
+
 	gtk_label_set(GTK_LABEL(win_status_label), lbuf);
 	
 	return 0;
@@ -247,6 +283,7 @@ static gint expose_handler(GtkWidget *widget, GdkEventExpose *event)
      black gc into it. Subsequently, free any previous pixmap, create
      a pixmap of window size and depth, and fill it with bg color. */
 	if ( pixmap == NULL) {
+		int i;
 		colormap = gdk_window_get_colormap(widget->window);
 
 		gdk_color_alloc(colormap, &wpanel->gdk_color);
@@ -258,20 +295,25 @@ static gint expose_handler(GtkWidget *widget, GdkEventExpose *event)
 			bg_gdk_gc = gdk_gc_new(widget->window);
 			gdk_gc_set_foreground(bg_gdk_gc, &bg_gdk_color);
 		} else {
+			bg_gdk_color = widget->style->bg[GTK_WIDGET_STATE(widget)];
 			bg_gdk_gc = widget->style->bg_gc[GTK_WIDGET_STATE(widget)];
 		}
 
-		gdk_color_alloc(colormap, &crs_gdk_color);
-		crs_gdk_gc = gdk_gc_new(widget->window);
-		if(!crs_gdk_gc) {
-			fprintf(stderr, "couldn't allocate cursor gc\n");
-			exit(2);
+		for(i = 0; i < 2; i++) {
+			VBCursor *csp = wpanel->cursor[i];
+			gdk_color_alloc(colormap, &csp->gdk_color);
+ 			csp->gdk_gc = gdk_gc_new(widget->window);
+			if(!csp->gdk_gc) {
+				fprintf(stderr, "couldn't allocate cursor %d gc\n", i);
+				exit(2);
+			}
+			gdk_gc_set_foreground(csp->gdk_gc, &csp->gdk_color);
+			/* FIX: this GDK_XOR gc doesn't work right unless
+			   background color is explicitly set to "black",
+			   but sometimes it happens to at least be visible */
+			gdk_gc_set_background(csp->gdk_gc, &bg_gdk_color);
+			gdk_gc_set_function(csp->gdk_gc, GDK_XOR);
 		}
-		gdk_gc_set_foreground(crs_gdk_gc, &crs_gdk_color);
-		/* isn't right unless background color explicitly set,
-		   but sometimes happens to work */
-		gdk_gc_set_background(crs_gdk_gc, &bg_gdk_color);
-		gdk_gc_set_function(crs_gdk_gc, GDK_XOR);
 	} else {
 		/* FIX: probably only need to free/new if size changed */
 		gdk_pixmap_unref(pixmap);
@@ -326,9 +368,12 @@ draw_pixmap(GtkWidget *widget, GdkEventExpose *event)
 		gdk_draw_line(pixmap, wpanel->gdk_gc, x0,y0, x1,y1);
 	}
 
-	if(wpanel->cursor_shown) {
-		x1 = val2x(wpanel, wpanel->cursor_xval);
-		gdk_draw_line(pixmap, crs_gdk_gc, x1, 0, x1, h);
+	for(i = 0; i < 2; i++) {
+		VBCursor *csp = wpanel->cursor[i];
+		if(csp->shown) {
+			x1 = val2x(wpanel, csp->xval);
+			gdk_draw_line(pixmap, csp->gdk_gc, x1, 0, x1, h);
+		}
 	}
 
 	if(event) {
@@ -433,15 +478,15 @@ static void gtk_display(void)
 */
 		gtk_table_attach(GTK_TABLE(win_table), wpanel->lvbox, 
 			 0, 1, 0, 1, 
-			 GTK_FILL, GTK_EXPAND|GTK_FILL, 0, 0);
+			 GTK_FILL, GTK_EXPAND|GTK_FILL, 4, 0);
 
-		sprintf(lbuf, "%.3f", wpanel->var->d.max);
+		sprintf(lbuf, "%.3f", wpanel->max_yval);
 		wpanel->lab_max = gtk_label_new(lbuf);
 		gtk_box_pack_start(GTK_BOX(wpanel->lvbox), wpanel->lab_max,
 			 FALSE, FALSE, 0);
 		gtk_widget_show(wpanel->lab_max);
 
-		sprintf(lbuf, "%.3f", wpanel->var->d.min);
+		sprintf(lbuf, "%.3f", wpanel->min_yval);
 		wpanel->lab_min = gtk_label_new(lbuf);
 		gtk_box_pack_end(GTK_BOX(wpanel->lvbox), wpanel->lab_min,
 			   FALSE, FALSE, 0);
@@ -543,6 +588,35 @@ static void usage(char *fmt, ...)
   exit(EXIT_FAILURE);
 }
 
+
+void setup_colors(WavePanel *wp)
+{
+	int i;
+/* TODO: figure out how to get these colors from styles in wv.gtkrc */
+	if(!gdk_color_parse("blue", &wp->gdk_color)) {
+		fprintf(stderr, "failed to parse fg color\n");
+		exit(1);
+	}
+	
+	wp->cursor[0]->color_name = "white";
+	wp->cursor[1]->color_name = "yellow";
+	for(i = 0; i < 2; i++) {
+		if(!gdk_color_parse(wp->cursor[i]->color_name, 
+				    &wp->cursor[i]->gdk_color)) {
+			fprintf(stderr, "failed to parse cursor %d color\n", i);
+			exit(1);
+		}
+	}
+
+	if(bg_color_name) {
+		if(!gdk_color_parse(bg_color_name, &bg_gdk_color)) {
+			fprintf(stderr, "failed to parse bg color\n");
+			exit(1);
+		}
+	}
+
+}
+
 int main(int argc, char **argv)
 {
 	int c;
@@ -604,25 +678,10 @@ int main(int argc, char **argv)
 	wpanel->max_xval = wpanel->var->iv->d.max;
 	wpanel->min_yval = wpanel->var->d.min;
 	wpanel->max_yval = wpanel->var->d.max;
+	wpanel->cursor[0] = g_new0(VBCursor, 1);
+	wpanel->cursor[1] = g_new0(VBCursor, 1);
 
-/* TODO: figure out how to get these colors from styles in wv.gtkrc */
-	if(!gdk_color_parse("blue", &wpanel->gdk_color)) {
-		fprintf(stderr, "failed to parse fg color\n");
-		exit(1);
-	}
-	if(!gdk_color_parse(crs_color_name, &crs_gdk_color)) {
-		fprintf(stderr, "failed to parse cursor color\n");
-		exit(1);
-	}
-	if(bg_color_name) {
-		if(!gdk_color_parse(bg_color_name, &bg_gdk_color)) {
-			fprintf(stderr, "failed to parse bg color\n");
-			exit(1);
-		}
-	}
-
-	post_init = 1;
-
+	setup_colors(wpanel);
 	gtk_display();
 
 	return EXIT_SUCCESS;
