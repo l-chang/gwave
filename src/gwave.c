@@ -18,6 +18,10 @@
  *
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.12  1999/01/08 22:39:32  tell
+ * minor changes to support wavepanel add/delete
+ * bring up wavelist windows after main window is built, so they're not obscured
+ *
  * Revision 1.1  1998/12/26 04:31:58  tell
  * Initial revision
  *
@@ -77,7 +81,6 @@
 
 #include <gtk/gtk.h>
 #include <config.h>
-#include "reader.h"
 #include "gwave.h"
 
 /* globals */
@@ -88,9 +91,13 @@ int x_flag, v_flag;
 WaveTable *wtable;
 const int NWColors = 6;  /* # of wavecolorN styles expected in the .gtkrc */
 
-char *bg_color_name  = "black" ;
+char *bg_color_name  = "black" ;  /* panel background color */
 GdkColor bg_gdk_color;
 GdkGC *bg_gdk_gc;
+
+char *pg_color_name  = "grey30" ;  /* panel graticule */
+GdkColor pg_gdk_color;
+GdkGC *pg_gdk_gc;
 
 GtkWidget *win_main;
 GdkColormap *win_colormap; /* colormap for main waveform window */
@@ -221,9 +228,9 @@ int main(int argc, char **argv)
 	if(fillpanels) {
 		GWDataFile *wdata = g_list_nth_data(wdata_list, 0);
 		if(wdata) {
-			for(i = 0; i < wdata->df->ndv; i++) {
+			for(i = 0; i < wdata->wf->wf_ndv; i++) {
 				add_var_to_panel(wtable->panels[i % npanels],
-						 wdata->df->dv[i]);
+						 &wdata->wf->dv[i]);
 			}
 		}
 	}
@@ -245,3 +252,45 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
+void
+create_about_window()
+{
+	GtkWidget *win, *box, *label, *btn;
+	char buf[256];
+
+	sprintf(buf, "About %s", PACKAGE);
+
+	win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_widget_set_name(win, "About GWave");
+	gtk_window_set_title(GTK_WINDOW(win), "About Gwave");
+	gtk_widget_set_usize(win, 200, 100);
+
+	box = gtk_vbox_new(FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(win), box);
+	gtk_widget_show(box);
+
+	sprintf(buf, "%s version %s", PACKAGE, VERSION);
+	label = gtk_label_new(buf);
+	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
+	gtk_widget_show(label);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 5);
+
+	label = gtk_label_new("By Steve Tell");
+	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
+	gtk_widget_show(label);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 5);
+
+	label = gtk_label_new("tell@cs.unc.edu");
+	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
+	gtk_widget_show(label);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 5);
+
+	btn = gtk_button_new_with_label ("Close");
+	gtk_box_pack_end(GTK_BOX(box), btn, FALSE, TRUE, 5);
+	gtk_signal_connect_object (GTK_OBJECT (btn), "clicked",
+                                 GTK_SIGNAL_FUNC(gtk_widget_destroy),
+                                 GTK_OBJECT (win));
+	gtk_widget_show (btn);
+
+	gtk_widget_show(win);
+}
