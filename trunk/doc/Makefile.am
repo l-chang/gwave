@@ -1,27 +1,23 @@
-## $Id: Makefile.am,v 1.3 2000-08-08 07:03:33 sgt Exp $
+## $Id: Makefile.am,v 1.4 2000-08-10 04:36:46 sgt Exp $
 ## process this file with automake to create Makefile.in
 ## (You should run ./autogen.sh from the top level directory)
 
 # Lots of this documentation stuff was borrowed from scwm.  It doesn't 
-# all work yet.  If you have docbook-to-man, you should be able to build
+# all work yet; the next big project is a tool to build gwave.sgml
+# in part from gwave-procedures.txt etc.
+#
+# If you have docbook-to-man, you should be able to build
 # sp2sp.1 from sp2sp.sgml, however.
 
-# gwavedocDATA=gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt gwave.sgml
+pkgdata_DATA=gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt
 
-EXTRA_DIST=Guile.notes HPUX.notes hspice.txt spice.txt sp2sp.sgml
+man_MANS=sp2sp.1
 
-# Use scwmdoc to build the documentation files
-# Set envvar $SCWMDOC_TEST_OPTIONS to  "-F" for a faster test
-gwave.sgml gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt : $(gwave_SOURCES)
-	abs_builddir_doc=`pwd`; \
-	outdir=$$abs_builddir_doc; \
-	echo Outputting to directory: $$outdir; \
-	cd $(top_builddir); abs_top_builddir=`pwd`; \
-	cd $$abs_builddir_doc; cd $(top_srcdir); \
-	abs_top_srcdir=`pwd`; \
-	echo 'make[99]: Entering directory `'$$abs_top_srcdir"'"; \
-	perl $$abs_top_builddir/utilities/scwmdoc $$SCWMDOC_TEST_OPTIONS -o $$outdir/gwave.sgml -O $$outdir/gwave-variables.txt -H $$outdir/gwave-hooks.txt -N $$outdir/gwave-concepts.txt </dev/null $$GWAVEDOC_ARGS src/*.c scheme/*.scm > $$outdir/gwave-procedures.txt; \
-	echo 'make[99]: Leaving directory `'$$abs_top_srcdir"'"
+EXTRA_DIST=Guile.notes HPUX.notes hspice.txt hspice-output.txt spice.txt sp2sp.sgml
+
+# Make the reference-document textfiles
+gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt:
+	$(top_srcdir)/utilities/doc-split --basename gwave $(top_srcdir)/src/*.doc
 
 html: gwave.sgml
 	mkdir -p html && cd html && \
