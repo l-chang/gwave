@@ -44,7 +44,7 @@
 
 extern char *prog_name;
 
-SCM_HOOK(error_hook, "error-hook", 5, (SCM a, SCM b, SCM c, SCM d, SCM e),
+XSCM_HOOK(error_hook, "error-hook", 5, (SCM a, SCM b, SCM c, SCM d, SCM e),
 "Called on all kinds of errors and exceptions.
 Whenever an error or other uncaught throw occurs on any callback,
 whether a hook, a mouse binding, a key binding, a menu entry, a file
@@ -103,7 +103,7 @@ scm_internal_stack_cwdr (scm_catch_body_t body,
   d.body = body;
   d.data = body_data;
   d.handler = handler;
-  return scm_internal_cwdr_no_unwind (cwssdr_body, &d, handler, handler_data, 
+  return scm_internal_cwdr(cwssdr_body, &d, handler, handler_data, 
 			    stack_item);
 }
 
@@ -133,7 +133,7 @@ scwm_safe_apply_message_only (SCM proc, SCM args)
   apply_data.proc = proc;
   apply_data.args = args;
 
-  return scm_internal_cwdr_no_unwind(scwm_body_apply, &apply_data,
+  return scm_internal_cwdr(scwm_body_apply, &apply_data,
 			   scm_handle_by_message_noexit, prog_name,
 			   &stack_item);
 }
@@ -208,7 +208,7 @@ scwm_safe_call7 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM
 
 /* FIXDOC: We need a way to cross-reference concepts in docs. */
 
-SCM_CONCEPT("Hooks",
+XSCM_CONCEPT("Hooks",
 "Hooks are used throughout gwave to provide a convenient mechanism for
 user callbacks on particular events. Fundamentally, a hook is just a
 variable that contains a list of procedures that are called in order
@@ -393,7 +393,7 @@ scwm_handle_error (void *ARG_IGNORE(data), SCM tag, SCM throw_args)
 }
 
 
-SCM_DEFINE(safe_load, "safe-load", 1, 0, 0,
+XSCM_DEFINE(safe_load, "safe-load", 1, 0, 0,
            (SCM fname),
 "Load file FNAME while trapping and displaying errors.
 Each individual top-level-expression is evaluated separately and all
@@ -404,7 +404,7 @@ errors.")
 {
   SCM_STACKITEM stack_item;
   VALIDATE_ARG_STR(1,fname);
-  return scm_internal_cwdr_no_unwind(scwm_body_load, &fname,
+  return scm_internal_cwdr(scwm_body_load, &fname,
 				     scm_handle_by_message_noexit, prog_name, 
 				     &stack_item);
 }
@@ -418,7 +418,7 @@ SCM scwm_safe_load (char *filename)
 SCM scwm_safe_eval_str (char *string)
 {
   SCM_STACKITEM stack_item;
-  return scm_internal_cwdr_no_unwind(scwm_body_eval_str, string,
+  return scm_internal_cwdr(scwm_body_eval_str, string,
 				     scm_handle_by_message_noexit, prog_name, 
 				     &stack_item);
 }
@@ -427,7 +427,7 @@ void init_scwm_guile()
 {
   run_hook_proc = gh_lookup("run-hook");
 
-#ifndef SCM_MAGIC_SNARFER
+#ifndef XSCM_MAGIC_SNARF_INITS
 #include "scwm_guile.x"
 #endif
 }

@@ -318,7 +318,7 @@ void draw_labels(void)
 /*
  * redraw contents of all wavepanels
  */
-SCM_DEFINE(wtable_redraw_x, "wtable-redraw!", 0, 0, 0, (),
+XSCM_DEFINE(wtable_redraw_x, "wtable-redraw!", 0, 0, 0, (),
 	   "Redraw the waveforms in all wavepanels")
 #define FUNC_NAME s_wtable_redraw_x
 {
@@ -493,7 +493,7 @@ double spice2val(char *s)
 	}
 }
 
-SCM_DEFINE(spice_number, "spice->number", 1, 0, 0, (SCM str),
+XSCM_DEFINE(spice_number, "spice->number", 1, 0, 0, (SCM str),
 "Given a string SSTR containing a representation of a number,
 possibly containing spice-style multiplier suffixes, return a real number.")
 #define FUNC_NAME s_spice_number
@@ -508,7 +508,7 @@ possibly containing spice-style multiplier suffixes, return a real number.")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(number_spice, "number->spice", 1, 0, 0, (SCM val),
+XSCM_DEFINE(number_spice, "number->spice", 1, 0, 0, (SCM val),
  "Given a real number VAL, return a string representation 
 in spice suffix syntax.")
 #define FUNC_NAME s_number_spice
@@ -525,7 +525,7 @@ in spice suffix syntax.")
 void init_draw()
 {
 
-#ifndef SCM_MAGIC_SNARFER
+#ifndef XSCM_MAGIC_SNARF_INITS
 #include "draw.x"
 #endif
 }
