@@ -1,6 +1,6 @@
 
-gwave - a  viewer for the output of spice-like simulators
-and other viewing of analog data.
+gwave - a  viewer for the output of spice-like simulators and other
+sorts of of analog data.
 
 by:
 
@@ -15,17 +15,19 @@ Installation:
 	See the INSTALL file
 
 Usage:
-	gwave [-t filetype] [-p number-of-panels] your-waveform-file ...
+	gwave [-p number-of-panels] [waveform-file ...]
 
 Number-of-panels defaults to 2.  It understands CAzM transient output
 (.N/.B/.W) files, and the binary and ascii outputs from HSPICE (.tr0,
-.sw0, and .ac0) files.  
-If the file type is unspecified, it tries to guess
+.sw0, and .ac0) files.  Gwave tries to guess the type of the file
 based on filename, and then tries all file formats until one succedes.
 
-Use the View->Variable List menu to see a list of a list of signals in
-your simulation files, then drag-and-drop signals into waveform
-panels.
+A scrolling list of variables in the file pops up; use the left mouse
+button to drag-and-drop variables into the waveform panels.
+Double-clicking a variable in the the list adds it to panel that most
+recently had a variable dropped in it.  If you choose to close the
+variable list to neaten up your desktop, use the View->Variable List
+menu to display it again.
 
 To delete waves, select one or more of them using the buttons down the
 left side of the main window, and then press the "delete" button.
@@ -55,6 +57,8 @@ This tool is far from complete. Partial contents of the To Do list:
 - Generate a postscript representation for printing or documentation.
 	(partly done)
 - Override of wave and panel paramters, like min/max Y value, color, etc.
+	Many of these are done.... needs docs...
+
 - Saving and restoring waveform/panel configuration 
 - Drawing a labeled graticule in the waveform area
 - Seperate lists for selecting voltage/current/etc. types of variables

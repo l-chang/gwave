@@ -42,6 +42,8 @@
  */
 struct _WavePanel {
 	SCM smob;
+	SCM scmdata;	/* we let guile hang additional data here,
+			   usualy an assoc list */
 	int outstanding_smob;	/* if guile has a pointer, defer freeing. */
 	int valid;	/* 1 if valid, 0 if awaiting deletion */
 	int ptype;	/* panel type: 0=original 1=short/digital */
@@ -161,7 +163,7 @@ extern void create_wdata_submenuitem(GWDataFile *wdata, GtkWidget *submenu);
 extern void setup_waveform_window();
 extern void vw_get_label_string(char *buf, int buflen, VisibleWave *vw);
 extern void vw_wp_create_button(VisibleWave *vw, WavePanel *wp);
-extern void wavewin_insert_panel(WavePanel *wp, int ptype);
+extern void wavewin_insert_panel(WavePanel *wp, int minheight, int showlabels);
 extern void wavewin_delete_panel(WavePanel *wp);
 extern void cmd_popup_delete_panel(GtkWidget *w);
 extern void cmd_popup_insert_panel(GtkWidget *w);

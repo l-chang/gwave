@@ -43,6 +43,8 @@
 #include <wavewin.h>
 
 #define WAVEPANEL_MIN_WIDTH 400
+#define WAVEPANEL_MIN_HEIGHT 20
+#define WAVEPANEL_MAX_REQHEIGHT 400
 #define WAVEPANEL_STD_HEIGHT 100
 #define WAVEPANEL_JGE_HEIGHT 25
 
@@ -165,40 +167,16 @@ new_wave_panel()
 }
 
 /*
- * set or change type-related stuff for new or existing wavepanel.
- * ptype: panel type
- *    0 - original
- *    1 - short; smaller minimum size, doesn't show Y min/max labels.
- *		lets more panels fit for digital signals.
- */
-void set_wave_panel_type(WavePanel *wp, int ptype)
-{
-	wp->ptype = ptype;
-	if(ptype == 1) {
-		gtk_widget_hide(wp->lab_min_hbox);
-		gtk_widget_hide(wp->lab_max_hbox);
-		wp->req_height = WAVEPANEL_JGE_HEIGHT;
-	} else {
-		gtk_widget_show(wp->lab_min_hbox);
-		gtk_widget_show(wp->lab_max_hbox);
-		wp->req_height = WAVEPANEL_STD_HEIGHT;
-	}
-	gtk_drawing_area_size(GTK_DRAWING_AREA(wp->drawing), 
-			      wp->width ? wp->width : WAVEPANEL_MIN_WIDTH,
-			      wp->req_height);
-}
-
-/*
  * Set up widgets for a newly-created WavePanel -
  *    construct lvbox and drawing area
  */ 
-void setup_wave_panel(WavePanel *wp, int ptype)
+void setup_wave_panel(WavePanel *wp, int minheight, int showlabels)
 {
 	char lbuf[128];
-	int min_h;
 
 	if(v_flag) {
-		fprintf(stderr, "setup_wave_panel ptype=%d min_h=%d\n", ptype, min_h);
+		fprintf(stderr, "setup_wave_panel minheight%d showlabels=%d\n",
+			minheight, showlabels);
 	}
 	wp->start_xval = wtable->start_xval;
 	wp->end_xval = wtable->end_xval;
@@ -243,7 +221,20 @@ void setup_wave_panel(WavePanel *wp, int ptype)
 		GTK_OBJECT(wp->drawing), "motion_notify_event", 
 		(GtkSignalFunc)motion_handler, (gpointer)wp);
 
-	set_wave_panel_type(wp, ptype);
+	if(showlabels) {
+		gtk_widget_show(wp->lab_min_hbox);
+		gtk_widget_show(wp->lab_max_hbox);
+	}
+	if(minheight < WAVEPANEL_MIN_HEIGHT)
+		wp->req_height = WAVEPANEL_MIN_HEIGHT;
+	else if(minheight > WAVEPANEL_MAX_REQHEIGHT)
+		wp->req_height = WAVEPANEL_MAX_REQHEIGHT;
+	else
+		wp->req_height = minheight;
+
+	gtk_drawing_area_size(GTK_DRAWING_AREA(wp->drawing), 
+			      wp->width ? wp->width : WAVEPANEL_MIN_WIDTH,
+			      wp->req_height);
 	gtk_widget_show(wp->drawing);
 
 	dnd_setup_target(wp->drawing, wp);
@@ -491,10 +482,10 @@ void setup_waveform_window(void)
 	gtk_box_pack_start(GTK_BOX(wtable->vbox), win_status_label, FALSE, FALSE, 0);
 	gtk_widget_show(win_status_label);
 
-	/* set up WavePanels */
+	/* set up initial WavePanels - remnant to be removed */
 	for(i = 0; i < wtable->npanels; i++) {
 		WavePanel *wp = wtable->panels[i];
-		setup_wave_panel(wp, 0);
+		setup_wave_panel(wp, 0, 0);
 	}
 
 	/* horizontal box for X-axis labels */
@@ -555,7 +546,7 @@ wavewin_rebuild_table()
  * or at the end if no panel specified.
  */
 void
-wavewin_insert_panel(WavePanel *ppos, int ptype)
+wavewin_insert_panel(WavePanel *ppos, int minheight, int showlabels)
 {
 	int p, n;
 	WavePanel **owp;
@@ -570,7 +561,7 @@ wavewin_insert_panel(WavePanel *ppos, int ptype)
 	for(p = 0, n = 0; p < wtable->npanels - 1 ; p++) {
 		if(ppos == owp[p]) {
 			wtable->panels[n] = new_wave_panel();
-			setup_wave_panel(wtable->panels[n], ptype);
+			setup_wave_panel(wtable->panels[n], minheight, showlabels);
 
 			/* protect new widgets from unref needed on old widgets
 			 * in finish_table_rebuild */
@@ -583,7 +574,7 @@ wavewin_insert_panel(WavePanel *ppos, int ptype)
 	}
 	if(!found) { /* add at end */
 		wtable->panels[n] = new_wave_panel();
-		setup_wave_panel(wtable->panels[n], ptype);
+		setup_wave_panel(wtable->panels[n], minheight, showlabels);
 
 		gtk_widget_ref(wtable->panels[n]->lvbox);
 		gtk_widget_ref(wtable->panels[n]->drawing);
@@ -592,8 +583,6 @@ wavewin_insert_panel(WavePanel *ppos, int ptype)
 	wavewin_build_table();
 	wavewin_finish_table_rebuild();
 }
-
-
 
 /*
  * Delete the specified WavePanel.
@@ -634,19 +623,25 @@ wavewin_delete_panel(WavePanel *dwp)
 	wavewin_finish_table_rebuild();
 }
 
-SCWM_PROC(wtable_insert_panel_x, "wtable-insert-panel!", 2, 0, 0, 
-	   (SCM wp, SCM type))
-/** Add a new panel of type TYPE to the waveform display after panel WP, or
- at the end if WP is #f */
+SCWM_PROC(wtable_insert_panel_x, "wtable-insert-panel!", 2, 1, 0, 
+	   (SCM wp, SCM minheight, SCM showlabels))
+/** Add a new panel after the existing panel WP, or
+ * at the end if WP is #f.
+ * The new panel has minimum height MINHEIGHT and has visible y-labels
+ * unless SHOWLABELS is #f 
+ */
 #define FUNC_NAME s_wtable_insert_panel_x
 {
 	WavePanel *cwp;
-	int ptype;
+	int iheight, ishow; 
 	VALIDATE_ARG_WavePanel_COPY_USE_NULL(1,wp,cwp);
-	VALIDATE_ARG_INT_RANGE_COPY(2,type,0,1,ptype);
+	VALIDATE_ARG_INT_RANGE_COPY(2,minheight,
+				    WAVEPANEL_MIN_HEIGHT,
+				    WAVEPANEL_MAX_REQHEIGHT, iheight);
+	VALIDATE_ARG_BOOL_COPY_USE_T(3,showlabels,ishow);
 	if(v_flag)
 		fprintf(stderr, "wtable_insert_panel(0x%x)\n", cwp);
-	wavewin_insert_panel(cwp, ptype);
+	wavewin_insert_panel(cwp, iheight, ishow);
 	return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
@@ -682,32 +677,52 @@ SCWM_PROC(wavepanel_x2val, "wavepanel-x2val", 2, 0, 0,
 }
 #undef FUNC_NAME
 
-SCWM_PROC(wavepanel_type, "wavepanel-type", 1, 0, 0,
-	  (SCM wavepanel))
-/** return the type of a WAVEPANEL, as an integer.
-*/
-#define FUNC_NAME s_wavepanel_type
+SCWM_PROC(set_wavepanel_minheight_x, "set-wavepanel-minheight!", 2, 0, 0,
+	  (SCM wavepanel, SCM height))
+/** Set the minimum height of WAVEPANEL to HEIGHT pixels.  Adding multiple
+ * VisibleWaves to the wavepanel can cause the actual height to increase
+ * beyond this minimum, but it will never be smaller.
+ */
+#define FUNC_NAME s_set_wavepanel_minheight_x
 {
 	WavePanel *wp;
+	int min_height;
 	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
-	return gh_int2scm(wp->ptype);
-}
-#undef FUNC_NAME
+	VALIDATE_ARG_INT_RANGE_COPY(2,height,WAVEPANEL_MIN_HEIGHT,400,min_height);
+	wp->req_height = min_height;
+	gtk_drawing_area_size(GTK_DRAWING_AREA(wp->drawing), 
+			      wp->width ? wp->width : WAVEPANEL_MIN_WIDTH,
+			      wp->req_height);
 
-SCWM_PROC(set_wavepanel_type_x, "set-wavepanel-type!", 2, 0, 0,
-	  (SCM wavepanel, SCM type))
-/** change the type of WAVEPANEL to TYPE.
-*/
-#define FUNC_NAME s_set_wavepanel_type_x
-{
-	WavePanel *wp;
-	int ptype;
-	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
-	VALIDATE_ARG_INT_RANGE_COPY(2,type,0,1,ptype);
-	set_wave_panel_type(wp, ptype);
 	return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
+
+SCWM_PROC(set_wavepanel_ylabels_visible_x, "set-wavepanel-ylabels-visible!", 2, 0, 0,
+	  (SCM wavepanel, SCM show))
+/** If SHOW is #t, make the Y-axis labels on the left side of WAVEPANEL
+ * visible.  If show is #f, hide the labels.  Hiding the labels allows
+ * shrinking WAVEPANEL's height a little further.  This is useful when you have
+ * a lot of panels, for example with digital circuits.
+ */
+#define FUNC_NAME s_set_wavepanel_ylabels_visible_x
+{
+	WavePanel *wp;
+	int ishow;
+	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+	VALIDATE_ARG_BOOL_COPY(2, show, ishow);
+
+	if(ishow) {
+		gtk_widget_show(wp->lab_min_hbox);
+		gtk_widget_show(wp->lab_max_hbox);
+	} else {
+		gtk_widget_hide(wp->lab_min_hbox);
+		gtk_widget_hide(wp->lab_max_hbox);
+	}
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 
 /* 
  * this binding stuff is really quite a hack; we should build a common
