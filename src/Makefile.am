@@ -15,7 +15,7 @@ gwave_SOURCES = cmd.c wavewin.c draw.c gwave.c event.c \
 	rgeval.c xgserver.c measurebtn.c measurebtn.h \
 	GtkTable_indel.c 
 
-gwave_LDADD = $(top_srcdir)/spicefile/libspicefile.a  @GTK_LIBS@ @GUILEGTK_LIBS@ 
+gwave_LDADD = ../spicefile/libspicefile.a  @GTK_LIBS@ @GUILEGTK_LIBS@ 
 gwave_LDFLAGS =  @GUILE_LDFLAGS@
 
 CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILEGTK_CFLAGS@ \

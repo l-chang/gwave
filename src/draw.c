@@ -209,7 +209,7 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 
 	x1 = 0;
 	yval = wv_interp_value(vw->var, wp->start_xval);
-	y1 = val2y(yval, wp->max_yval, wp->min_yval, h, wp->logy);
+	y1 = val2y(yval, wp->end_yval, wp->start_yval, h, wp->logy);
 
 	for(i = 0, xval = wp->start_xval; i < w; i++ ) {
 		x0 = x1; y0 = y1;
@@ -218,7 +218,7 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 		   && xval <= vw->var->wv_iv->wds->max) {
 
 			yval = wv_interp_value(vw->var, xval);
-			y1 = val2y(yval, wp->max_yval, wp->min_yval, h, wp->logy);
+			y1 = val2y(yval, wp->end_yval, wp->start_yval, h, wp->logy);
 			gdk_draw_line(wp->pixmap, vw->gc, x0,y0, x1,y1);
 		}
 		if(wtable->logx)
@@ -245,8 +245,8 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 	gdk_draw_rectangle(wp->pixmap, bg_gdk_gc, TRUE, 0,0, w,h);
 
 	/* draw horizontal line at y=zero */
-	if(wp->min_yval < 0 && wp->max_yval > 0) {
-		y = val2y(0, wp->max_yval, wp->min_yval, h, wp->logy);
+	if(wp->start_yval < 0 && wp->end_yval > 0) {
+		y = val2y(0, wp->end_yval, wp->start_yval, h, wp->logy);
 		gdk_draw_line(wp->pixmap, pg_gdk_gc, 0, y, w, y);
 	}
 
@@ -377,6 +377,7 @@ void alloc_colors(GtkWidget *widget)
 	}
 	gdk_gc_set_foreground(pg_gdk_gc, &pg_gdk_color);
 }
+
 
 /* TODO: figure out how to get these colors from styles in wv.gtkrc
  * without the hack that we use for waveform colors (picking them up from

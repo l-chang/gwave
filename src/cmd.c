@@ -46,6 +46,7 @@ SCM_HOOK(new_visiblewave_hook, "new-visiblewave-hook", 1, (SCM vw),
 when the VisibleWave is first created.   The main purpose of this hook 
 will be to create the button and menus attached to the VisibleWave.");
 
+/* reset the x zoom scale of all panels */
 gint cmd_zoom_absolute(double start, double end)
 {
  	double scroll_start, scroll_end;
@@ -91,7 +92,7 @@ gint cmd_zoom_absolute(double start, double end)
 }
 
 SCM_DEFINE(x_zoom_x, "x-zoom!", 2, 0, 0, (SCM start, SCM end),
-	   "return the GtkWindow object for the main waveform window")
+	   "zoom/rescale all wavepanels so that the x axis displays from START to END")
 #define FUNC_NAME s_x_zoom_x
 {
 	double dstart, dend;
@@ -428,14 +429,19 @@ wavepanel_update_data(WavePanel *wp)
 	if(wp->max_yval == -G_MAXDOUBLE)
 		wp->max_yval = 1.0;
 
+	if(wp->man_yzoom == 0) {
+		wp->start_yval = wp->min_yval;
+		wp->end_yval = wp->max_yval;
+	}
+
 	/* zero height? set to +- 0.1%  so a line is visible in the center */
-	if((wp->max_yval - wp->min_yval) < DBL_EPSILON) {
-		wp->max_yval *= 1.001;
-		wp->min_yval *= 0.999;
+	if((wp->end_yval - wp->start_yval) < DBL_EPSILON) {
+		wp->end_yval *= 1.001;
+		wp->start_yval *= 0.999;
 		/* still zero?  maybe there's a waveform that is stuck at 0.000 */
-		if((wp->max_yval - wp->min_yval) < DBL_EPSILON) {
-			wp->max_yval += 1e-6;
-			wp->min_yval -= 1e-6;
+		if((wp->end_yval - wp->start_yval) < DBL_EPSILON) {
+			wp->end_yval += 1e-6;
+			wp->start_yval -= 1e-6;
 		}
 	}
 
@@ -452,12 +458,7 @@ wavepanel_update_data(WavePanel *wp)
 		wp->end_xval = wp->max_xval;
 
 	/* Update y-axis labels */
-	if(wp->lab_min) {
-		gtk_label_set(GTK_LABEL(wp->lab_min), val2txt(wp->min_yval,0));
-	}
-	if(wp->lab_max) {
-		gtk_label_set(GTK_LABEL(wp->lab_max), val2txt(wp->max_yval,0));
-	}
+	draw_wavepanel_labels(wp);
 }
 
 /* Update parameters in wavetable that depend on all panels */

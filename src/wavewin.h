@@ -58,6 +58,13 @@ struct _WavePanel {
 	* from global scroll/zoom or otherwise controlled independently */
 	double start_xval;	
 	double end_xval;
+	/* ditto for the y-value dimension; start_yval is the bottom. 
+	 * invariant: if man_yzoom is false these are
+	 * the same as min_yval and max_yval.
+	 */
+	double start_yval;
+	double end_yval;
+	int man_yzoom;
 
 	GtkWidget *lmtable;	/* label and measurement table */
 	GtkWidget *lab_min, *lab_max;
@@ -70,6 +77,7 @@ struct _WavePanel {
 	int nextcolor;	/* color to use for next added waveform */
 	int logy;   /* Y axis scaling: 0=linear 1=log base 10 */
 };
+
 
 /* Stuff to wrap WavePanel as a SMOB */
 
@@ -169,6 +177,7 @@ extern void cmd_popup_delete_panel(GtkWidget *w);
 extern void cmd_popup_insert_panel(GtkWidget *w);
 extern void cmd_append_panel(GtkWidget *w);
 extern WavePanel *last_drop_wavepanel;
+extern void wavepanel_draw_labels(WavePanel *wp);
 
 extern SCM wavepanel_mouse_binding[];
 

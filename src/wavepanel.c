@@ -126,6 +126,16 @@ vw_wp_create_button(VisibleWave *vw, WavePanel *wp)
 	mbtn_update(vw->mbtn[1], NULL);
 }
 
+void
+draw_wavepanel_labels(WavePanel *wp)
+{
+	if(wp->lab_min) {
+		gtk_label_set(GTK_LABEL(wp->lab_min), val2txt(wp->start_yval,0));
+	}
+	if(wp->lab_max) {
+		gtk_label_set(GTK_LABEL(wp->lab_max), val2txt(wp->end_yval,0));
+	}
+}
 
 /* Allocate a new WavePanel and do basic setup */
 WavePanel *
@@ -171,7 +181,7 @@ void setup_wavepanel_lmtable(WavePanel *wp, int showlabels)
 			 0,
 			 0, 0 );
 
-	strcpy(lbuf, val2txt(wp->max_yval, 0));
+	strcpy(lbuf, val2txt(wp->end_yval, 0));
 	wp->lab_max = gtk_label_new(lbuf);
 	gtk_box_pack_end(GTK_BOX(wp->lab_max_hbox), wp->lab_max,
 			 FALSE, FALSE, 0);
@@ -181,7 +191,7 @@ void setup_wavepanel_lmtable(WavePanel *wp, int showlabels)
 	gtk_box_pack_start(GTK_BOX(wp->lab_max_hbox), wp->lab_logscale,
 			 FALSE, FALSE, 0);
 
-	strcpy(lbuf, val2txt(wp->min_yval, 0));
+	strcpy(lbuf, val2txt(wp->start_yval, 0));
 	wp->lab_min = gtk_label_new(lbuf);
 	gtk_widget_show(wp->lab_min);
 	wp->lab_min_hbox = gtk_hbox_new(FALSE, 0);
@@ -272,6 +282,30 @@ void destroy_wave_panel(WavePanel *wp)
 		g_free(wp);
 }
 
+SCM_DEFINE(wavepanel_y_zoom_x, "wavepanel-y-zoom!", 3, 0, 0, 
+	   (SCM wavepanel, SCM miny, SCM maxy),
+	   "zoom/rescale WAVEPANEL so that the y axis displays from MINY to MAXY")
+#define FUNC_NAME s_wavepanel_y_zoom_x
+{
+	WavePanel *wp;
+	double dmin, dmax;
+	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+	if(miny == SCM_BOOL_F) {
+		wp->man_yzoom = 0;
+		wp->start_yval = wp->min_yval;
+		wp->end_yval = wp->max_yval;
+	} else {
+		VALIDATE_ARG_DBL_COPY(1, miny, dmin);
+		VALIDATE_ARG_DBL_COPY(1, maxy, dmax);
+		wp->man_yzoom = 1;
+		wp->start_yval = dmin;
+		wp->end_yval = dmax;
+	}
+	draw_wavepanel(wp->drawing, NULL, wp);
+	draw_wavepanel_labels(wp);
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
 
 
 SCM_DEFINE(set_wavepanel_ylabels_visible_x, "set-wavepanel-ylabels-visible!", 2, 0, 0,
