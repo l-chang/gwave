@@ -1,6 +1,6 @@
 /*
  * gwave - waveform viewer
- * Copyright (C) 1998  University of North Carolina at Chapel Hill
+ * Copyright (C) 1998, 1999 Stephen G. Tell.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,59 +12,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Library General Public
+ * You should have received a copy of the GNU General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *
- * $Log: not supported by cvs2svn $
- * Revision 1.12  1999/01/08 22:39:32  tell
- * minor changes to support wavepanel add/delete
- * bring up wavelist windows after main window is built, so they're not obscured
- *
- * Revision 1.1  1998/12/26 04:31:58  tell
- * Initial revision
- *
- * Revision 1.11  1998/11/09 20:21:49  tell
- * bumped version to 0.0.5
- *
- * Revision 1.10  1998/09/30 21:42:13  tell
- * Add stuff for zoom-window, and update version to 0.0.4
- *
- * Revision 1.9  1998/09/17 18:36:56  tell
- * Changed default "blue" color for better contrast.
- * Support for multiple files.
- *
- * Revision 1.8  1998/09/01 21:27:43  tell
- * Move most all functions out into seperate, more managably-sized files
- *
- * Revision 1.7  1998/08/31 20:56:10  tell
- * Various things as we rename from wv to gwave, implement drag-and-drop
- * for adding signals to WavePanels, and finish making the file-reader handle
- * multiple formats.
- *
- * Revision 1.6  1998/08/26 19:13:58  tell
- * handles multiple VisibleWaves per WavePanel, and
- * can delete waveforms (but not add them)
- *
- * Revision 1.5  1998/08/25 21:17:25  tell
- * Revised handling of multiple waveform colors, now gets them from styles
- * on the waveform-label widgets, which are set from the wv.gtkrc.
- *
- * Revision 1.4  1998/08/25 17:29:31  tell
- * Support for multiple panels
- *
- * Revision 1.3  1998/08/25 13:49:47  tell
- * added support for second vertical-bar cursor
- *
- * Revision 1.2  1998/08/24 17:48:03  tell
- * Convert to table for arranging wavepanel and labels
- * Got basic Y labels working, although not arranged quite perfectly
- * Now reads a wv.gtkrc file
- * Added basic status-label to show times, etc.
- *
- * Revision 1.1  1998/08/21 19:11:38  tell
- * Initial revision
  *
  */
 
@@ -135,18 +85,18 @@ static void usage(char *fmt, ...)
  * waves on black background
  */
 static const gchar *gwave_base_gtkrc = "
-style wavecolor0 { fg[NORMAL] = {0.4, 0.5, 1.0} }
-style wavecolor1 { fg[NORMAL] = {1.0, 0.0, 0.0} }
-style wavecolor2 { fg[NORMAL] = {0.0, 1.0, 0.0} }
-style wavecolor3 { fg[NORMAL] = {1.0, 1.0, 0.0} }
-style wavecolor4 { fg[NORMAL] = {0.0, 1.0, 1.0} }
-style wavecolor5 { fg[NORMAL] = {1.0, 0.0, 1.0} }
-widget '*wavecolor0' style wavecolor0
-widget '*wavecolor1' style wavecolor1
-widget '*wavecolor2' style wavecolor2
-widget '*wavecolor3' style wavecolor3
-widget '*wavecolor4' style wavecolor4
-widget '*wavecolor5' style wavecolor5
+style 'wavecolor0' { fg[NORMAL] = {0.4, 0.5, 1.0} }
+style 'wavecolor1' { fg[NORMAL] = {1.0, 0.0, 0.0} }
+style 'wavecolor2' { fg[NORMAL] = {0.0, 1.0, 0.0} }
+style 'wavecolor3' { fg[NORMAL] = {1.0, 1.0, 0.0} }
+style 'wavecolor4' { fg[NORMAL] = {0.0, 1.0, 1.0} }
+style 'wavecolor5' { fg[NORMAL] = {1.0, 0.0, 1.0} }
+widget '*wavecolor0' style 'wavecolor0'
+widget '*wavecolor1' style 'wavecolor1'
+widget '*wavecolor2' style 'wavecolor2'
+widget '*wavecolor3' style 'wavecolor3'
+widget '*wavecolor4' style 'wavecolor4'
+widget '*wavecolor5' style 'wavecolor5'
 style 'wavebutton' { bg[NORMAL] = { 0.25, 0.25, 0.25 } }
 widget '*wavebutton' style 'wavebutton'
 ";
@@ -203,6 +153,10 @@ int main(int argc, char **argv)
 	gtk_rc_parse_string(gwave_base_gtkrc);
 	gtk_rc_parse("gwave.gtkrc");
 
+	/* spicestream library messages need more cleanup before this is
+	 * anything but annoying.
+	 * ss_error_hook = create_message_window; 
+	 */
 	for(; optind < argc; optind++) {
 		if(load_wave_file(argv[optind], filetype) < 0) {
 			fprintf(stderr, "unable to read data file: %s\n", argv[optind]);
@@ -273,24 +227,61 @@ create_about_window()
 	label = gtk_label_new(buf);
 	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
 	gtk_widget_show(label);
-	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 5);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
 
 	label = gtk_label_new("By Steve Tell");
 	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
 	gtk_widget_show(label);
-	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 5);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
 
 	label = gtk_label_new("tell@cs.unc.edu");
 	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
 	gtk_widget_show(label);
-	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 5);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
 
 	btn = gtk_button_new_with_label ("Close");
-	gtk_box_pack_end(GTK_BOX(box), btn, FALSE, TRUE, 5);
+	gtk_box_pack_end(GTK_BOX(box), btn, FALSE, TRUE, 0);
 	gtk_signal_connect_object (GTK_OBJECT (btn), "clicked",
                                  GTK_SIGNAL_FUNC(gtk_widget_destroy),
                                  GTK_OBJECT (win));
 	gtk_widget_show (btn);
 
 	gtk_widget_show(win);
+}
+
+/*
+ * pop up a window with an information or error message.
+ * window stays up until the Close button is clicked.
+ */
+void
+create_message_window(char *s)
+{
+	GtkWidget *win, *box, *label, *btn;
+	char buf[256];
+
+	sprintf(buf, "%s message", PACKAGE);
+
+	win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_widget_set_name(win, buf);
+	gtk_window_set_title(GTK_WINDOW(win), buf);
+	gtk_widget_set_usize(win, 200, 100);
+
+	box = gtk_vbox_new(FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(win), box);
+	gtk_widget_show(box);
+
+	label = gtk_label_new(s);
+	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
+	gtk_widget_show(label);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
+
+	btn = gtk_button_new_with_label ("Close");
+	gtk_box_pack_end(GTK_BOX(box), btn, FALSE, TRUE, 0);
+	gtk_signal_connect_object (GTK_OBJECT (btn), "clicked",
+                                 GTK_SIGNAL_FUNC(gtk_widget_destroy),
+                                 GTK_OBJECT (win));
+	gtk_widget_show (btn);
+
+	gtk_widget_show(win);
+
 }
