@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  1998/09/17 18:38:29  tell
+ * Added load_wave_file function and other stuff for multiple files.
+ * Change variable box packing so it looks better (no fill/expand).
+ *
  * Revision 1.2  1998/09/01 21:29:04  tell
  * add copyright notice, misc cleanup
  *
@@ -90,8 +94,8 @@ load_wave_file(char *fname, char *ftype)
 
 	if(var_list_submenu) {
 		create_wdata_submenuitem(wdata, var_list_submenu);
-		cmd_show_wave_list(NULL, wdata);
 	}
+	cmd_show_wave_list(NULL, wdata);
 
 	return 0;
 }
