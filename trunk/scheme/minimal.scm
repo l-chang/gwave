@@ -3,7 +3,9 @@
 ; portions from scwm/minimal.scm:
 ;;;; Copyright (C) 1997-1999 Maciej Stachowiak and Greg J. Badros
 
-(display "in minimal.scm") (newline)
+(if gwave-debug
+      (begin
+	(display "in minimal.scm") (newline)))
 
 (debug-enable 'debug)
 (read-enable 'positions)

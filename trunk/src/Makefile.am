@@ -1,6 +1,8 @@
 # -*- mode: Makefile -*-
 ## Process this file with automake to produce Makefile.in
 
+SUBDIRS=app
+
 INCLUDES=-I$(top_srcdir)/spicefile
 
 bin_PROGRAMS = gwave

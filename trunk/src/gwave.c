@@ -165,8 +165,6 @@ void gwave_main(int argc, char **argv)
 	SCWM_VAR_READ_ONLY(, "gwave-version-string",  gh_str02scm(VERSION));
 	SCWM_VAR_READ_ONLY(, "gwave-debug", x_flag ? SCM_BOOL_T : SCM_BOOL_F);
 
-/*	if(v_flag) fprintf(stderr, "patching environment\n"); */
-	/* TODO: environment variable to override this */
 	SCWM_VAR_READ_ONLY(, "gwave-datadir",  gh_str02scm(DATADIR));
 #ifdef GUILE_GTK_EXTRA_LOADPATH
 	gh_eval_str("(set! %load-path (cons \"" GUILE_GTK_EXTRA_LOADPATH "\" %load-path))");
