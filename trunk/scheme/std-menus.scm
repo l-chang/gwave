@@ -127,9 +127,11 @@
        (gtk-menu-item-set-submenu (add-menuitem mbar "View" #f) view-menu)
        (add-menuitem view-menu "Add Panel" 
 		     (lambda () (wtable-insert-typed-panel! #f default-wavepanel-type)))
-       (add-menuitem view-menu "Zoom Full" x-zoom-full!)
        (add-menuitem view-menu "Zoom Cursors" x-zoom-cursors!)
-       (add-menuitem view-menu "Zoom Area..." x-zoom-area!)
+       (add-menuitem view-menu "Zoom X Full" x-zoom-full!)
+       (add-menuitem view-menu "Zoom X..." x-zoom-area!)
+       (add-menuitem view-menu "Zoom Y..." y-zoom-range!)
+       (add-menuitem view-menu "Zoom XY-Area..." xy-zoom-area!)
        (set! var-list-submenu (menu-create view-menu "Variable List"))
        (add-menuitem view-menu "Redraw All" wtable-redraw!)
        )
@@ -262,8 +264,11 @@
 	 (next-ptype (remainder (+ 1 (wavepanel-type wp)) wavepanel-num-types)))
      (gtk-widget-show menu)
      (add-menuitem menu "Zoom Cursors" x-zoom-cursors!)
-     (add-menuitem menu "Zoom Area..." x-zoom-area!)
-     (add-menuitem menu "Zoom Full" x-zoom-full!)
+     (add-menuitem menu "Zoom X..." x-zoom-area!)
+     (add-menuitem menu "Zoom X Full" x-zoom-full!)
+     (add-menuitem menu "Zoom Y..." y-zoom-range!)
+     (add-menuitem menu "Zoom Y Full+Auto" (lambda () (y-zoom-fullauto! wp)))
+     (add-menuitem menu "Zoom XY-Area..." xy-zoom-area!)
      (add-menuitem menu "Insert Panel Above" 
 		   (lambda () (wtable-insert-typed-panel! wp default-wavepanel-type)))
      (add-menuitem menu "Delete this Panel"

@@ -25,11 +25,39 @@
 (define-public (x-zoom-area!)
   (select-range-x 
    (lambda (wp x1 x2)
-;     (display "in zoom-area callback ")
+;     (display "in x-zoom-area callback ")
 ;     (display wp) (display " ")
 ;     (display x1) (display " ")
 ;     (display x2) (newline)
      (x-zoom! (wavepanel-x2val wp x1) (wavepanel-x2val wp x2)))))
+
+(define-public (y-zoom-range!)
+  (select-range-y 
+   (lambda (wp y1 y2)
+;     (display "in y-zoom-range callback ")
+;     (display wp) (display " ")
+;     (display y1) (display " -> ") (display (wavepanel-y2val wp y1)) (display " ")
+;     (display y2) (display " -> ") (display (wavepanel-y2val wp y2)) (newline)
+     (wavepanel-y-zoom! wp (wavepanel-y2val wp y1) (wavepanel-y2val wp y2))
+)))
+
+; 
+; Restore a WavePanel to display the full range of Y values,
+; and to automaticly rescale as VisibleWaves are added and deleted.
+(define-public (y-zoom-fullauto! wp) (wavepanel-y-zoom! wp #f #f))
+
+(define-public (xy-zoom-area!)
+  (select-range-xy 
+   (lambda (wp x1 x2 y1 y2)
+;     (display "in xy-zoom-area callback ")
+;     (display wp) (display " ")
+;     (display x1) (display " ")
+;     (display x2) (display " ")
+;     (display y1) (display " ")
+;     (display y2) (newline)
+     (x-zoom! (wavepanel-x2val wp x1) (wavepanel-x2val wp x2))
+     (wavepanel-y-zoom! wp (wavepanel-y2val wp y1) (wavepanel-y2val wp y2))
+)))
 
 (define (pow base power)
     (exp (* power (log base))))
@@ -122,7 +150,7 @@
 		 (string-append "Gwave version " gwave-version-string))))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
-    (let ((llab (gtk-label-new "Copyright 2000 Steve Tell")))
+    (let ((llab (gtk-label-new "Copyright 2001 Steve Tell")))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
 
@@ -286,6 +314,9 @@
       (print "(let ((wp (nth-wavepanel "i")))\n")
       (print " (set-wavepanel-ylogscale! wp "(wavepanel-ylogscale? wp) ")\n")
       (print " (set-wavepanel-type! wp " (wavepanel-type wp) ")\n")
+      (if (wavepanel-y-manual? wp)
+	  (let ((ext (wavepanel-extents wp)))
+	    (print " (wavepanel-y-zoom! wp " (cadr ext) " " (cadddr ext) ")\n")))
       (print ")\n")
       ))
 )

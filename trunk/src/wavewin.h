@@ -152,15 +152,19 @@ EXTERN long scm_tc16_scwm_VisibleWave;
 
 
 /***********************************************************************
- * state related to selecting a portion of the X axis.
- * Maybe someday: selecting Y ranges and XY regions
+ * state related to selecting ranges/regions in X, Y, and XY
+ * pixel space of a wavepanel.
  */
+typedef enum _SelRangeType SelRangeType;
+enum _SelRangeType { SR_X=1, SR_Y=2, SR_XY=3 };
+
 struct _SelRange {
 	int drawn;
+	SelRangeType type;
 	WavePanel *wp;
 	GdkGC *gc;
 	GdkColor gdk_color;
-	int y;
+	int y1, y2;
 	int x1, x2;
 	SCM done_proc;
 };
