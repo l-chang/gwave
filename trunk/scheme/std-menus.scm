@@ -104,16 +104,6 @@
 				 (lambda (fn) (load-wavefile! fn)))))
        (add-menuitem file-menu "Plot..." 
 		     (lambda () (popup-plot-dialog (wtable-wavepanels))))
-       (add-menuitem file-menu "Export Postscript..." 
-		     (lambda () (with-selected-filename 
-				 "Postscript file name"
-				 (lambda (fn) (export-waveimage! fn "ps"))
-				 #:default "gwave_out.ps")))
-       (add-menuitem file-menu "Export PNM..." 
-		     (lambda () (with-selected-filename 
-				 "PNM file name"
-				 (lambda (fn) (export-waveimage! fn "pnm"))
-				 #:default "gwave_out.pnm")))
        (add-menuitem file-menu #f #f)
        (add-menuitem file-menu "Save Configuration as Script"
 		     (lambda () (with-selected-filename "Scriptfile to write"
@@ -237,7 +227,7 @@
        (add-menuitem menu "Export Data..." 
 		     (lambda () 
 		       (popup-export-dialog (wavefile-all-variables df))))
-       (add-menuitem menu "Delete this File"
+       (add-menuitem menu "Unload this File"
 		     (lambda () 
 		       (wavefile-delete! df)
 		       (rebuild-varlist-submenu!)

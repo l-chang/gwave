@@ -4,72 +4,69 @@ Some installation notes for gwave.
 Prerequesites:
 	Gtk-1.2		(http://www.gtk.org/)
 	Guile		(http://www.gnu.org/software/guile/guile.html)
-	Guile-Gtk	(http://www.ping.de/sites/zagadka/guile-gtk/)
-	GNU Plotutils-2.2 or later (optional, only used for ploting/exporting)
+	Guile-Gtk	(http://www.nongnu.org/guile-gtk/)
+	GNU Plotutils-2.4.1 or later with patches
+			(optional, only used for ploting/exporting)
+	GNUPlot		(optional, only used for ploting/exporting)
 
-On Red Hat 6.2 Linux, I use these RPMs:
-	gtk+-1.2.6-7		(included in RH6.2)
-	gtk+-devel-1.2.6-7	(included in RH6.2)
-	glib-1.2.6-7		(included in RH6.2)
-	glib-devel-1.2.6-7	(included in RH6.2)
-	guile-gtk-0.19-1
+-------------
+tested configurations:
 
-	http://www.ping.de/sites/zagadka/guile-gtk/download/guile-gtk-0.19.tar.gz	
-	guile-1.4-2sgt
-		http://www.telltronics.org/~tell/dist/guile-1.4-2sgt.i386.rpm
-		http://www.telltronics.org/~tell/dist/guile-1.4-2sgt.src.rpm
+Red Hat Linux 9 is my primary development platform. I use these rpms:
+	gtk+-1.2.10-25		(Standard With RH9)
+	gtk+-devel-1.2.10-25	(Standard With RH9)
+	glib-1.2.10-10		(Standard With RH9)
+	glib-devel-1.2.10-10	(Standard With RH9)
+	guile-1.6.4-7.1		(ftp://ftp.redhat.com/pub/redhat/linux/rawhide/i386)
+	guile-gtk-1.2_0.31-1sgt	 (http://www.telltronics.org/pub/guile/guile-gtk-0.19-1.i386-redhat9.rpm)
 
-	An ancient version of guile shipped with RedHat 6.2.  
-	It is unusable with gwave.
+Red Hat 8.0 has been tested with:
+	gtk+, gtk+-devel, glib, glib-devel	(Standard with RH8)
+	guile-1.4-8, guile-devel-1.4-8		(Standard with RH8)
+	guile-gtk-0.19-1			(http://www.telltronics.org/pub/guile/guile-gtk-0.19-1.i386-redhat80.rpm)
 
-On RedHat 7.1, I use:
-	gtk+-1.2.9-4		(included in RH7.1)
-	gtk+-devel-1.2.9-4	(included in RH7.1)
-	glib-1.2.9-1		(included in RH7.1)
-	glib-devel-1.2.9-1	(included in RH7.1)
-	guile-gtk-0.19-1
-	guile-1.4-3sgt
+Red Hat 7 should work but has not yet been tested with this release.
 
-	On RedHat 7.1, you can also use the guile-1.3.4 that comes standard.
-	In that case, use guile-gtk 0.18
+Sun Solaris 2.8 should work but has not yet been tested with this release.
 
-The guile-1.4 RPMs listed above are of my own construction (you've
-been warned).
+-------------
 
-
-CAUTION: Use only a guile-gtk known to work with whatever version of
-guile you have.  Here are combinations known to work:
+CAUTION: Use only the version of guile-gtk known to work with whatever
+version of guile you have.  Here are combinations known to work:
        guile           guile-gtk
+	1.6.x		1.2_0.31
         1.4             0.19
         1.3.4           0.18
-        1.3.4           0.17
-Mixing guile-gtk 0.19 with guile-1.3.4 definitely fails,
-as does guile-gtk 0.18 with guile-1.4.
-I don't yet know of any guile-gtk for the guile-1.5.x prereleases or 
-the upcomming new guile-1.6 release.
+Mixing incompatibile versions of guile-gtk and guile definitely fails.
 
-
-Gwave may work with earlier versions of guile too, but I haven't
-tested this recently.  The Guile and guile-gtk shipped with RedHat
-Linux even as late as release 6.2 are of this ancient category, and I
-haven't tried building gwave with them recently.
+Gwave does not support versions of guile older than 1.3.4.
+Gwave does not yet support Gtk+ version 2.0 because guile-gtk support
+for the newer Gtk+ is still in early development.
 
 I recommend verifying that guile, gtk, and guile-gtk all work
 individualy before trying to build gwave using them.  Gtk and
 guile-gtk both come with "test-gtk" programs in their respective
 examples directories which are ideal for this purpose.  
-** Please try this before reporting guile-gtk related problems with gwave.
+** Please try this before reporting guile-gtk related problems with gwave. **
 
 
-In order to generate postscript or PNM file output, gwave requires GNU
-graph, from the GNU plotutils package.  The old berkely/sysv "graph"
-program sometimes found on commercial unixes doesn't work.  Configure
-attempts to locate GNU graph and ignore other programs named "graph"
-that may be found in $PATH.   If the automatic detection doesn't work,
-try somthing like this:
+Gwave requires external programs in order to export postscript and
+bitmap files for hardcopy or documentation use.  Wither Gnu Graph
+(from Gnu plotutils) or GnuPlot can be used.
+
+GNU graph is part of the GNU plotutils package.  The old berkely/sysv
+"graph" program sometimes found on commercial unixes doesn't work.
+Configure attempts to locate GNU graph and ignore other programs named
+"graph" that may be found in $PATH.  If the automatic detection
+doesn't work, try somthing like this:
 	GRAPH="/path/to/gnu/graph" ./configure ...
 
-Then, run configure as described below.
+GNU plotutils 2.4.1 contains bugs that cause it to generate bad
+postscript output and make it prone to crashing on plots with more
+than 1024 points.
+Applying "plotutils-2.4.1.patch" included in the gwave distribution 
+and recompiling graph fixes these problems.
+
 
 
 
@@ -92,7 +89,6 @@ GWAVE_GUILE_DIR to the full pathname of the src directory in this
 distribution, for example if this file is called 
 /home/tell/build/gwave-20000301/INSTALL, set 
 GWAVE_GUILE_DIR=/home/tell/build/gwave-20000301/src
-
 
 
 

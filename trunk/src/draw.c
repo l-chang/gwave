@@ -224,6 +224,15 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 				      &vw->label->style->fg[GTK_STATE_NORMAL]);
 	}
 	g_assert(vw->gc != NULL);
+	if(gtk_toggle_button_get_active(vw->button))
+                 gdk_gc_set_line_attributes(vw->gc,
+                                            2, GDK_LINE_SOLID, GDK_CAP_BUTT,
+                                            GDK_JOIN_ROUND);
+         else
+                 gdk_gc_set_line_attributes(vw->gc,
+                                            1, GDK_LINE_SOLID, GDK_CAP_BUTT,
+                                            GDK_JOIN_ROUND);
+
 
 	xstep = (wp->end_xval - wp->start_xval)/w;  /* linear only */
 

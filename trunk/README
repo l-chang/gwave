@@ -5,7 +5,7 @@ sorts of of analog data.
 by:
 
 Steve Tell 
-tell@cs.unc.edu or steve@telltronics.org
+steve@telltronics.org
 
 Installation:
 	See the INSTALL file
@@ -34,9 +34,9 @@ VisibleWave:
 - Press and hold the right mousebutton to pop up a menu of operations
 related to that particular VisibleWave.  
 
-To delete waves, select one or more of them and then press the
-"delete" button at the top of the main window.  Alternately, use the
-delete item on the VisibleWave-button popup menu.
+To remove waves from the display , select one or more of them and then
+press the "delete" button at the top of the main window.  Alternately, use
+the delete item on the VisibleWave-button popup menu.
 
 Click on the waveform panels with the left and center mouse buttons to
 set two cursors for measuring.  Hold down these mouse buttons to drag
@@ -56,6 +56,38 @@ XY-zoom operation, the Y axis for that particular wavepanel changes to
 "manual" mode and remains fixed.  To restore the panel to full-size
 with automatic Y zooming, select the "Zoom Y Full + Auto" menu option.
 
+
+Exporting data.
+
+A selected subset of the data from a waveform file may be exported in
+a tabular ascii format for postprocessing by external programs.
+Select "Export Data..." from the File menu of the waveform variable
+list window.
+
+In the current version of gwave, data from multiple files cannot be
+combined and exported to a single file.
+
+Plotting.
+
+A view of the displayed waveforms can be plotted to postscript,
+bitmap, and other formats for printing and documenataion.  
+All plot rendering is handled by external programs; currently gnu graph
+and gnuplot are supported.
+Choose the "Plot..." item from the main window or from any wavepanel's
+popup menu. 
+
+Only a subset of the features of the external plot-rendering tools are
+directly available from the plot dialog box.  To make more advanced
+use of these tools, select "Keep Tempfiles" in the plot dialog box.
+This will preserve all of the temporary files and scripts used to
+drive the external plot-rendering tool.  These files will have names
+generated from the name of the plot output by appending suffixes.  Consult
+the documentation for each plot-rendering tool for information on additional
+options that can be used in the script files.
+
+Additional plot-rendering tools can be supported by writing an
+appropriate scheme module; see export-gnugraph.scm and export-gnuplot.scm
+for examples.
 
 Configuration save/restore
 
@@ -169,6 +201,9 @@ Silvaco SmartSpice
 Gwave works with the variant of berkeley spice rawfile format produced by
 SmartSpice.  Both ascii and binary files should work.
 
+Apache Design Automation NSPICE
+Nspice produces yet another variant of the berkeley spice3 rawfile format.
+Both ascii and binary files should work.
 
 Your own custom waveforms:
 

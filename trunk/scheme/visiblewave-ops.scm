@@ -7,6 +7,7 @@
 (dbprint "visiblewave-ops.scm running\n")
 
 (define-module (app gwave visiblewave-ops)
+  :use-module (ice-9 format)
   :use-module (gtk gtk)
   :use-module (gtk gdk)
   :use-module (app gwave std-menus)
@@ -30,6 +31,11 @@
 
    (set-visiblewave-measure! vw 1 default-measure1-function)
 
+   (gtk-signal-connect (visiblewave-button vw) "clicked" 
+			(lambda ()
+			  (format #t "clicked ~s ~s\n" vw (gtk-toggle-button-active (visiblewave-button vw)))
+			  ; TODO: redraw only the one panel affected
+			  (wtable-redraw!) ))
    (gtk-signal-connect (visiblewave-button vw) "button-press-event" 
 			(lambda (event) 
 ;			  (display "press-signal") 

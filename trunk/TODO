@@ -5,14 +5,11 @@ ability to get wave data from guile
 
 survey existing guile primitives and add new ones to fill out a useful set
 for scripting in general, not just what the GUI offers at the moment.
+	replace wtable-redraw! with (wavepanel-redraw! p), allow #t for all
+	replace delete-selected-waves! with delete-viswave and 
+	get-selected
 
-overhaul plotting
-	move mostly into scheme
-	keep "wave data export" function in C, make availble in guile
-	dialog box for options
-
-move to top, move to bottom to alter drawing order for visiblewaves in panel
-	DONE
+write more plot backend scheme modules
 
 custom measurements
 
@@ -26,7 +23,7 @@ Y zoom methods:
 	automatic-global: (original)
 	automatic-window: alway show min, max in current window zoom extents
 	oneshot-global: compute min,max when clicked, not continually.
-	oneshot-window: 
+	oneshot-window
 
 documentation
 	docstring extraction from guile
@@ -45,7 +42,6 @@ look at number of ivar points vs. number of pixels)
 additional drawing styles
 	linestyles - dashed, etc.
 	symbols showing actual datapoints
-	a means to highlight selected visiblewaves - draw with thicker lines?
 
 prevent switching to log-scale if the axis includes 0 or negative values.
 
@@ -55,4 +51,17 @@ Allow drag-and-drop from one wavepanel to another to move wave
 Improve notion of a current wavepanel
 	draw highlighted outline
 	procedure (current-wavepanel) to retrieve it
+
+-----------------------------------------------------------------------------
+tasks list items finished:
+
+way to highlight selected visiblewaves DONE based on patch from Serban Popescu
+
+overhaul plotting	DONE
+	move mostly into scheme	
+	keep "wave data export" function in C, make availble in guile
+	dialog box for options
+
+move to top, move to bottom to alter drawing order for visiblewaves in panel
+	DONE
 
