@@ -150,7 +150,10 @@ remove_wave_from_panel(WavePanel *wp, VisibleWave *vw)
 {
 	int row;
 	wp->vwlist = g_list_remove(wp->vwlist, vw);
-	
+
+	mbtn_delete(vw->mbtn[0]);
+	mbtn_delete(vw->mbtn[1]);
+
 	row = gtk_table_get_child_row(wp->lmtable, vw->button);
 	if(row == -1) {
 		fprintf(stderr, "remove_wave_from_panel(): VisibleWave not in this panel\n");

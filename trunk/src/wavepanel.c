@@ -39,6 +39,7 @@
 #include <gwave.h>
 #include <wavelist.h>
 #include <wavewin.h>
+#include <measurebtn.h>
 
 #define WAVEPANEL_MIN_WIDTH 400
 #define WAVEPANEL_MIN_HEIGHT 20
@@ -67,7 +68,7 @@ vw_get_label_string(char *buf, int buflen, VisibleWave *vw)
 
 	l = buflen - strlen(gdf->ftag) - 10;
 	n = MIN(l, 15);
-	sprintf(buf, "%s: %.*s    ", gdf->ftag, n, vw->varname);
+	sprintf(buf, "%s: %.*s", gdf->ftag, n, vw->varname);
 }
 
 /*
@@ -102,37 +103,27 @@ vw_wp_create_button(VisibleWave *vw, WavePanel *wp)
 	gtk_widget_set_name(vw->button, "wavebutton");
 	gtk_widget_show(vw->button);
 
-	/* create measurement labels */
-	vw->meas_label[0] = gtk_label_new("");
-	gtk_widget_set_name(vw->meas_label[0], "cursor0color");
-	gtk_widget_show(vw->meas_label[0]);
-	vw->meas_button[0] = gtk_toggle_button_new();
-	gtk_widget_set_usize(vw->meas_button[0], 60, -1);
-	gtk_widget_set_name(vw->meas_button[0], "wavebutton");
-	gtk_container_add(GTK_CONTAINER(vw->meas_button[0]), 
-			  vw->meas_label[0]);
-	gtk_widget_show(vw->meas_button[0]);
-	gtk_table_attach(GTK_TABLE(wp->lmtable), vw->meas_button[0],
+	/* create measurement buttons */
+	vw->mbtn[0] = measure_button_new(vw->var, MBF_VARC0);
+	vw->mbtn[1] = measure_button_new(vw->var, MBF_VARC1);
+
+	gtk_widget_set_usize(vw->mbtn[0]->button, 60, -1);
+	gtk_widget_set_usize(vw->mbtn[1]->button, 60, -1);
+
+	gtk_table_attach(GTK_TABLE(wp->lmtable), vw->mbtn[0]->button,
 			 1, 2, newrow, newrow+1,
-			 GTK_EXPAND|GTK_FILL,
+			 GTK_FILL,
 			 0,
 			 0, 0 );
 
-	vw->meas_label[1] = gtk_label_new("");
-	gtk_widget_set_name(vw->meas_label[1], "cursor1color");
-	gtk_widget_show(vw->meas_label[1]);
-	vw->meas_button[1] = gtk_toggle_button_new();
-	gtk_widget_set_usize(vw->meas_button[1], 60, -1);
-	gtk_widget_set_name(vw->meas_button[1], "wavebutton");
-	gtk_container_add(GTK_CONTAINER(vw->meas_button[1]), 
-			  vw->meas_label[1]);
-	gtk_widget_show(vw->meas_button[1]);
-	gtk_table_attach(GTK_TABLE(wp->lmtable), vw->meas_button[1],
+	gtk_table_attach(GTK_TABLE(wp->lmtable), vw->mbtn[1]->button,
 			 2, 3, newrow, newrow+1,
-			 GTK_EXPAND|GTK_FILL,
+			 GTK_FILL,
 			 0,
 			 0, 0 );
 
+	mbtn_update(vw->mbtn[0], NULL);
+	mbtn_update(vw->mbtn[1], NULL);
 }
 
 
@@ -170,7 +161,7 @@ void setup_wavepanel_lmtable(WavePanel *wp, int showlabels)
 	GtkWidget *vbox;
 
 	wp->lmtable = gtk_table_new(2, 3, FALSE);
-	gtk_widget_set_usize(wp->lmtable, 190, -1);
+	gtk_widget_set_usize(wp->lmtable, 220, -1);
 	gtk_widget_show(wp->lmtable);
 
 	wp->lab_max_hbox = gtk_hbox_new(FALSE, 0);

@@ -102,7 +102,6 @@ extern GtkWidget *win_hsbar;
 extern GtkWidget *win_xlabel_left, *win_xlabel_right;
 extern GtkWidget *win_status_label;
 extern GtkWidget *var_list_submenu;
-extern GtkTooltips *gwave_tooltips;
 extern WaveTable *wtable;
 extern const int NWColors;
 extern int colors_initialized;
@@ -171,5 +170,7 @@ extern void reload_all_wave_files(GtkWidget *w);
 extern char *possible_drag_types[];
 extern char *accepted_drop_types[];
 extern GList *wdata_list;  /* List of GWDataFile *'s */
+extern GtkTooltips *get_gwave_tooltips();
+
 
 #endif

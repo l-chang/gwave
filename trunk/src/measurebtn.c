@@ -44,7 +44,10 @@ MeasureBtn *
 measure_button_new(WaveVar *wv, int mfunc)
 {
 	int need_var;
+	char *tip = NULL;
 	MeasureBtn *mbtn;
+	GtkTooltips *gw_tooltips;
+
 	mbtn = g_new0(MeasureBtn, 1);
 	mbtn->measurefunc = mfunc;
 	mbtn->var = wv;
@@ -53,31 +56,37 @@ measure_button_new(WaveVar *wv, int mfunc)
 	switch (mbtn->measurefunc) {
 	case MBF_CURSOR0:
 		gtk_widget_set_name(mbtn->label, "cursor0color");
+		tip = "measure: cursor 0";
 		need_var = 0;
 		break;
 		
 	case MBF_CURSOR1:
 		gtk_widget_set_name(mbtn->label, "cursor1color");
+		tip = "measure: cursor 1";
 		need_var = 0;
 		break;
 		
 	case MBF_CURSORDIFF:
 		gtk_widget_set_name(mbtn->label, "cursorDcolor");
+		tip = "measure: cursor1 - cursor0";
 		need_var = 0;
 		break;
 		
 	case MBF_VARC0:
 		gtk_widget_set_name(mbtn->label, "cursor0color");
+		tip = "measure: variable(cursor0)";
 		need_var = 1;
 		break;
 		
 	case MBF_VARC1:
 		gtk_widget_set_name(mbtn->label, "cursor1color");
+		tip = "measure: variable(cursor0)";
 		need_var = 1;
 		break;
 
 	case MBF_VARDIFF:
 		gtk_widget_set_name(mbtn->label, "cursorDcolor");
+		tip = "measure: variable(cursor1) - variable(cursor0)";
 		need_var = 1;
 		break;
 
@@ -97,6 +106,13 @@ measure_button_new(WaveVar *wv, int mfunc)
 	gtk_container_add(GTK_CONTAINER(mbtn->button), mbtn->label);
 
 	all_measure_buttons = g_list_prepend(all_measure_buttons, mbtn);
+
+
+	if(tip) {
+		gw_tooltips = get_gwave_tooltips();
+		gtk_tooltips_set_tip(GTK_TOOLTIPS(gw_tooltips), 
+				     mbtn->button, tip, "");
+	}
 
 	return mbtn;
 }

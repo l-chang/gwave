@@ -114,8 +114,7 @@ struct _VisibleWave {
 	GdkGC *gc;
 	GtkWidget *button;
 	GtkWidget *label;
-	GtkWidget *meas_label[2];
-	GtkWidget *meas_button[2];
+	MeasureBtn *mbtn[2];
 };
 
 /* VisibleWave as a SMOB */ 
