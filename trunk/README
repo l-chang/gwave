@@ -68,7 +68,7 @@ not the default binary rawfile format.  Select the ascii form by setting
 the environment variable SPICE_ASCIIRAWFILE to "1" before running spice3.
 This comment may apply to ng-spice also.
 
-ACS (Al's Circuit Simulator)
+ACS (Al's Circuit Simulator, http://www.geda.seul.org/tools/acs/index.html)
 Gwave should identify and read ACS output files, generated with the '>'
 option to a .tran statement.  
 
@@ -91,13 +91,21 @@ Your own custom waveforms:
 The easiest of the input formats to generate with simple scripts and
 other tools is the "ascii" format.  See the ACS-simulator output file
 tpwl.acs in the examples directory for an example of this format.  The
-first line lists the variable names.  The first variable must
-be the independent variable.  The independent variable must be
-nondecreasing.
+first line lists the variable names, seperated by whitespace.  The
+variable in the first column is assumed to be the independent
+variable, for example "time."  Subsequent lines in the file contain
+the data, one timestep per line.  The independent variable must be
+nondecreasing.  Lines in the file can be arbitrarily long.
 
 Note that the '#' in examples/tpwl.acs is for the benefit of other
-tools (such as gnuplot).  To gwave, the first line is not a comment
-but contains whitespace-seperated fields naming the variables.
+tools (such as gnuplot), that don't expect column titles or variable
+names in the file.  To gwave, the first line is not a comment but
+contains whitespace-seperated fields naming the variables.  The result
+is that gwave thinks the independent variable name is "#Time," but
+don't let that bother you.
+
+
+
 
 
 ----------------------------------------------------------------------
