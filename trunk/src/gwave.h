@@ -4,6 +4,9 @@
  * Steve Tell
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  1998/09/17 18:30:19  tell
+ * Lots of changes.  multiple panels, multiple files, etc.
+ *
  * Revision 1.1  1998/08/31 21:01:20  tell
  * Initial revision
  *
@@ -13,11 +16,19 @@
 #define GWAVE_H
 
 typedef struct _VBCursor VBCursor;
+typedef struct _SelRange SelRange;
 typedef struct _VisibleWave VisibleWave;
 typedef struct _WavePanel WavePanel;
 typedef struct _WaveTable WaveTable;
 typedef struct _GWDataFile GWDataFile;
 typedef struct _GWDnDData GWDnDData;
+typedef enum _GWMouseState GWMouseState;
+
+/*
+ * state of mouse for drag operations
+ */
+enum _GWMouseState { M_NONE, M_CURSOR_DRAG,
+		     M_SELRANGE_ARMED, M_SELRANGE_ACTIVE};
 
 /* VBCursor - structure describing a vertical bar cursor */
 struct _VBCursor {
@@ -26,6 +37,20 @@ struct _VBCursor {
 	char *color_name;
 	GdkColor gdk_color;
 	GdkGC *gdk_gc;
+};
+
+typedef void (*SRFunc)(WavePanel *wp, int x1, int x2, gpointer data);
+
+/* selecting a portion of the X axis */
+struct _SelRange {
+	int drawn;
+	WavePanel *wp;
+	GdkGC *gc;
+	GdkColor gdk_color;
+	int y;
+	int x1, x2;
+	SRFunc done_callback;
+	gpointer done_data;
 };
 
 /* VisibleWave -- a waveform and anciliary stuff needed to show it
@@ -61,6 +86,7 @@ struct _WavePanel {
 	GtkWidget *lab_min, *lab_max;
 	GtkWidget *drawing; /* DrawingArea for waveforms */
 	GdkPixmap *pixmap;
+	int width, height;
 	int nextcolor;	/* color to use for next added waveform */
 };
 
@@ -74,10 +100,16 @@ struct _WaveTable {
 	WavePanel *panels;
 	GtkWidget *table;
 	VBCursor *cursor[2];
+	SelRange *srange;
 	double min_xval;	/* minimum and maximum data x values, */
 	double max_xval;	/* over all panels */
 	double start_xval;	/* starting drawn x-value (independent var) */
 	double end_xval;	/* ending drawn x-value */
+	int suppress_redraw;	/* don't re-draw if 1 */
+
+	GWMouseState mstate;
+	VBCursor *drag_cursor;
+	int button_down;
 };
 
 /*
@@ -96,7 +128,6 @@ struct _GWDataFile {
 struct _GWDnDData {
 	DVar *dv;
 };
-
 
 /* globals defined in gwave.c */
 extern char *prog_name;
@@ -118,6 +149,8 @@ extern GdkColormap *win_colormap; /* colormap for main waveform window */
 extern gint cmd_zoom_full(GtkWidget *widget);
 extern gint cmd_zoom_in(GtkWidget *widget);
 extern gint cmd_zoom_out(GtkWidget *widget);
+extern gint cmd_zoom_cursors(GtkWidget *widget);
+extern gint cmd_zoom_window(GtkWidget *widget);
 extern gint cmd_delete_selected_waves(GtkWidget *widget);
 extern void remove_wave_from_panel(WavePanel *wp, VisibleWave *vw);
 extern void add_var_to_panel(WavePanel *wp, DVar *dv);
@@ -138,7 +171,13 @@ extern void setup_colors(WaveTable *wtable);
 extern void vw_wp_setup_gc(VisibleWave *vw, WavePanel *wp);
 
 /* defined in event.c */
-extern gint click_handler(GtkWidget *widget, GdkEventButton *event, 
+extern void draw_srange(SelRange *sr);
+extern void select_x_range(SRFunc func, gpointer data);
+extern gint button_press_handler(GtkWidget *widget, GdkEventButton *event, 
+			  gpointer data);
+extern gint button_release_handler(GtkWidget *widget, GdkEventButton *event, 
+			  gpointer data);
+extern gint motion_handler(GtkWidget *widget, GdkEventMotion *event, 
 			  gpointer data);
 extern gint scroll_handler(GtkWidget *widget);
 extern gint expose_handler(GtkWidget *widget, GdkEventExpose *ev, 
