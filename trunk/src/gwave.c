@@ -138,6 +138,10 @@ widget '*wavecolor2' style 'wavecolor2'
 widget '*wavecolor3' style 'wavecolor3'
 widget '*wavecolor4' style 'wavecolor4'
 widget '*wavecolor5' style 'wavecolor5'
+style 'cursor0color' { fg[NORMAL] = {1.0, 1.0, 1.0} }
+style 'cursor1color' { fg[NORMAL] = {1.0, 1.0, 0.0} }
+widget '*cursor1color' style 'cursor1color'
+widget '*cursor0color' style 'cursor0color'
 style 'wavebutton' { bg[NORMAL] = { 0.25, 0.25, 0.25 } }
 widget '*wavebutton' style 'wavebutton'
 ";

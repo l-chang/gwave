@@ -21,6 +21,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.10  2000/11/08 07:41:29  sgt
+ * wavewin.c - add guile bindings for set-wtable-vcursor! and wtable-xlogscale?
+ * gwave.c - change to handcrafted option processing since getopt prints
+ * error messages for the scheme-handled options it doesn't know about.
+ *
  * Revision 1.9  2000/08/08 06:41:23  sgt
  * Convert to guile-1.4 style SCM_DEFINE macros, where the docstrings
  * are strings, not comments.  Remove some unused functions.
@@ -83,17 +88,34 @@ void destroy_handler(GtkWidget *widget, gpointer data)
 	gtk_main_quit();
 }
 
-/* vw_wp_visit_update_labels -- called from g_list_foreach to update the
- * waveform-value labels for a VisibleWave
+/* vw_wp_visit_update_measure -- called from g_list_foreach to update the
+ * measurement labels for a VisibleWave
+ * For now, this is hardwired so that measurement 0 is the value at cursor 0,
+ * measurement 1 is the value at cursor 1.  
+ * TODO: 
+ *	- make this configurable.
+ *	- we're updating both labels whenever either cursor changes;
+ *	  try to avoid the extra work if possible.
  */
 void 
-vw_wp_visit_update_labels(gpointer p, gpointer d)
+vw_wp_visit_update_measure(gpointer p, gpointer d)
 {
 	VisibleWave *vw = (VisibleWave *)p;
+	double xval, dval;
 	char lbuf[64];
+	int i;
 
-	vw_get_label_string(lbuf, 64, vw);
-	gtk_label_set(GTK_LABEL(vw->label), lbuf);
+	for(i = 0; i < 2; i++) {
+		xval = wtable->cursor[i]->xval;
+		if(wtable->cursor[i]->shown &&
+		   vw->var->wv_iv->wds->min <= xval 
+		   && xval <= vw->var->wv_iv->wds->max) {
+			dval = wv_interp_value(vw->var, xval);
+			gtk_label_set(GTK_LABEL(vw->meas_label[i]), val2txt(dval, 0));
+		} else {
+			gtk_label_set(GTK_LABEL(vw->meas_label[i]), "");
+		}
+	}
 }
 
 void
@@ -212,12 +234,12 @@ update_cursor(VBCursor *csp, double xval)
 
 	/* update name/value label */
 /*	gtk_container_disable_resize(GTK_CONTAINER(win_main)); */
-	if(csp == wtable->cursor[0]) {
+/*	if(csp == wtable->cursor[0]) { */
 		for(i = 0; i < wtable->npanels; i++) {
 			wp = wtable->panels[i];
-			g_list_foreach(wp->vwlist, vw_wp_visit_update_labels, wp);
+			g_list_foreach(wp->vwlist, vw_wp_visit_update_measure, wp);
 		}
-	}
+/*	} */
 
 	/* update status label */
 	lbuf[0] = 0;

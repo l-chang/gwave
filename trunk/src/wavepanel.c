@@ -60,7 +60,6 @@ void
 vw_get_label_string(char *buf, int buflen, VisibleWave *vw)
 {
 	GWDataFile *gdf;
-	double xval, dval;
 	int n, l;
 
 	gdf = vw->gdf;
@@ -68,40 +67,72 @@ vw_get_label_string(char *buf, int buflen, VisibleWave *vw)
 
 	l = buflen - strlen(gdf->ftag) - 10;
 	n = MIN(l, 15);
-	xval = wtable->cursor[0]->xval;
-	if(vw->var->wv_iv->wds->min <= xval 
-	   && xval <= vw->var->wv_iv->wds->max) {
-
-		dval = wv_interp_value(vw->var, xval);
-		sprintf(buf, "%s: %.*s %s",
-			gdf->ftag, l, vw->varname, val2txt(dval, 0));
-	} else {
-		/* should keep track of label state (name vs. name+val)
-		 * and only re-do this if necessary */
-		sprintf(buf, "%s: %.*s    ", gdf->ftag, l, vw->varname);
-	}
+	sprintf(buf, "%s: %.*s    ", gdf->ftag, n, vw->varname);
 }
 
 /*
- * vw_wp_create_button -- called from g_list_foreach to 
- * create button and label widgets for one VisibleWave in a WavePanel,
+ * vw_wp_create_button -- create button, label, and measurement
+ * widgets for a new VisibleWave just added to a WavePanel
  */
 void
 vw_wp_create_button(VisibleWave *vw, WavePanel *wp)
 {
 	char lbuf[64];
+	int newrow;
 
 	vw_get_label_string(lbuf, 64, vw);
 	vw->label = gtk_label_new(lbuf);
 	vw->button = gtk_toggle_button_new();
-	gtk_box_pack_start(GTK_BOX(wp->lvbox), vw->button,
-			   FALSE, FALSE, 0);
 	gtk_container_add(GTK_CONTAINER(vw->button), vw->label);
+
+	/* create new row just before the last row of the label/measurement 
+	   table, and add this stuff there */
+	newrow = GTK_TABLE(wp->lmtable)->nrows-1;
+	gtk_table_insert_row(wp->lmtable, newrow);
+
+	gtk_table_attach(GTK_TABLE(wp->lmtable), vw->button, 
+			 0, 1, newrow, newrow+1,
+			 GTK_EXPAND|GTK_FILL,
+			 0,
+			 0, 0 );
+
 	sprintf(lbuf, "wavecolor%d", vw->colorn);
 	gtk_widget_set_name(vw->label, lbuf);
 	gtk_widget_show(vw->label);
 	gtk_widget_set_name(vw->button, "wavebutton");
 	gtk_widget_show(vw->button);
+
+	/* create measurement labels */
+	vw->meas_label[0] = gtk_label_new("");
+	gtk_widget_set_name(vw->meas_label[0], "cursor0color");
+	gtk_widget_show(vw->meas_label[0]);
+	vw->meas_button[0] = gtk_toggle_button_new();
+	gtk_widget_set_usize(vw->meas_button[0], 60, -1);
+	gtk_widget_set_name(vw->meas_button[0], "wavebutton");
+	gtk_container_add(GTK_CONTAINER(vw->meas_button[0]), 
+			  vw->meas_label[0]);
+	gtk_widget_show(vw->meas_button[0]);
+	gtk_table_attach(GTK_TABLE(wp->lmtable), vw->meas_button[0],
+			 1, 2, newrow, newrow+1,
+			 GTK_EXPAND|GTK_FILL,
+			 0,
+			 0, 0 );
+
+	vw->meas_label[1] = gtk_label_new("");
+	gtk_widget_set_name(vw->meas_label[1], "cursor1color");
+	gtk_widget_show(vw->meas_label[1]);
+	vw->meas_button[1] = gtk_toggle_button_new();
+	gtk_widget_set_usize(vw->meas_button[1], 60, -1);
+	gtk_widget_set_name(vw->meas_button[1], "wavebutton");
+	gtk_container_add(GTK_CONTAINER(vw->meas_button[1]), 
+			  vw->meas_label[1]);
+	gtk_widget_show(vw->meas_button[1]);
+	gtk_table_attach(GTK_TABLE(wp->lmtable), vw->meas_button[1],
+			 2, 3, newrow, newrow+1,
+			 GTK_EXPAND|GTK_FILL,
+			 0,
+			 0, 0 );
+
 }
 
 
@@ -122,22 +153,35 @@ new_wave_panel()
 }
 
 /*
- * Construct label area on the left side of a WavePanel
+ * Construct label/measurement area on the left side of a WavePanel.
+ * After revision, this will consist of a table containing 3 columns.
+ * The top row (row 0) has a single hbox spanning 3 colums.  
+ * It may be invisible, and conatains the LogY indicator and maximum Y value
+ * label.
+ * The bottom row (row N-1) has a single hbox spanning 3 columns,
+ * with the minimum Y value label.
+ * rows 1 through N-2 contain three columns, for the label and up to two 
+ * measurements.
+ * 
  */
-void setup_wavepanel_lvbox(WavePanel *wp, int showlabels)
+void setup_wavepanel_lmtable(WavePanel *wp, int showlabels)
 {
 	char lbuf[128];
+	GtkWidget *vbox;
 
-	/* y-axis labels and signal names, all in a vbox */
-	wp->lvbox = gtk_vbox_new(FALSE, 0);
-	gtk_widget_set_usize(wp->lvbox, 160, -1);
-	gtk_widget_show(wp->lvbox);
+	wp->lmtable = gtk_table_new(2, 3, FALSE);
+	gtk_widget_set_usize(wp->lmtable, 190, -1);
+	gtk_widget_show(wp->lmtable);
 
 	wp->lab_max_hbox = gtk_hbox_new(FALSE, 0);
+	gtk_table_attach(GTK_TABLE(wp->lmtable), wp->lab_max_hbox,
+			 0, 3, 0, 1,
+			 GTK_EXPAND|GTK_FILL,
+			 0,
+			 0, 0 );
+
 	strcpy(lbuf, val2txt(wp->max_yval, 0));
 	wp->lab_max = gtk_label_new(lbuf);
-	gtk_box_pack_start(GTK_BOX(wp->lvbox), wp->lab_max_hbox,
-			   FALSE, FALSE, 0);
 	gtk_box_pack_end(GTK_BOX(wp->lab_max_hbox), wp->lab_max,
 			 FALSE, FALSE, 0);
 	gtk_widget_show(wp->lab_max);
@@ -146,26 +190,31 @@ void setup_wavepanel_lvbox(WavePanel *wp, int showlabels)
 	gtk_box_pack_start(GTK_BOX(wp->lab_max_hbox), wp->lab_logscale,
 			 FALSE, FALSE, 0);
 
-	wp->lab_min_hbox = gtk_hbox_new(FALSE, 0);
 	strcpy(lbuf, val2txt(wp->min_yval, 0));
 	wp->lab_min = gtk_label_new(lbuf);
-	gtk_box_pack_end(GTK_BOX(wp->lvbox), wp->lab_min_hbox,
-			 FALSE, FALSE, 0);
+	gtk_widget_show(wp->lab_min);
+	wp->lab_min_hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_end(GTK_BOX(wp->lab_min_hbox), wp->lab_min,
 			 FALSE, FALSE, 0);
-	gtk_widget_show(wp->lab_min);
+	vbox = gtk_vbox_new(FALSE, 0);
+	gtk_widget_show(vbox);
+	gtk_box_pack_end(GTK_BOX(vbox), wp->lab_min_hbox, FALSE, FALSE, 0);
 
-	g_list_foreach(wp->vwlist, (GFunc)vw_wp_create_button, wp);
-
+	gtk_table_attach(GTK_TABLE(wp->lmtable), vbox,
+			 0, 3, 1, 2,
+			 GTK_EXPAND|GTK_FILL,
+			 GTK_EXPAND|GTK_FILL,
+			 0, 0 );
 	if(showlabels) {
 		gtk_widget_show(wp->lab_min_hbox);
 		gtk_widget_show(wp->lab_max_hbox);
 	}
+
 }
 
 /*
  * Set up widgets for a newly-created WavePanel -
- *    construct lvbox and drawing area
+ *    construct label and drawing areas
  */ 
 void setup_wave_panel(WavePanel *wp, int minheight, int showlabels)
 {
@@ -176,7 +225,7 @@ void setup_wave_panel(WavePanel *wp, int minheight, int showlabels)
 	wp->start_xval = wtable->start_xval;
 	wp->end_xval = wtable->end_xval;
 
-	setup_wavepanel_lvbox(wp, showlabels);
+	setup_wavepanel_lmtable(wp, showlabels);
 
 	/* drawing area for waveform */
 	wp->drawing = gtk_drawing_area_new();
@@ -223,7 +272,7 @@ void destroy_wave_panel(WavePanel *wp)
 	while((vw = g_list_nth_data(wp->vwlist, 0)) != NULL) {
 		remove_wave_from_panel(wp, vw);
 	}
-	gtk_widget_destroy(wp->lvbox);
+	gtk_widget_destroy(wp->lmtable);
 	gtk_widget_destroy(wp->drawing);
 	gdk_pixmap_unref(wp->pixmap);
 	wp->valid = 0;
