@@ -19,8 +19,7 @@
  *
  */
 
-#define _FILE_OFFSET_BITS 64
-
+#include "ssintern.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -247,7 +246,7 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	if(hh.h1 == 0x04000000 && hh.h3 == 0x04000000) {
 		/* detected endian swap */
 		sf->flags |= SSF_ESWAP;
-		swap_gint32(&hh, sizeof(hh)/sizeof(gint32));
+		swap_gint32((gint32*)&hh, sizeof(hh)/sizeof(gint32));
 	}
 	if(hh.h1 != 4 || hh.h3 != 4) {
 		ss_msg(DBG, "sf_rdhdr_hsbin", "unexepected values in data block header");
@@ -258,7 +257,7 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	sf->expected_vals = datasize / sizeof(float);
 	sf->read_vals = 0;
 	
-	ss_msg(DBG, "sf_rdhdr_hsbin", "datasize=%d expect %d columns, %d values;\n  reading first data block at 0x%lx", datasize, sf->ncols, sf->expected_vals, (long)ftello(fp));
+	ss_msg(DBG, "sf_rdhdr_hsbin", "datasize=%d expect %d columns, %d values;\n  reading first data block at 0x%lx", datasize, sf->ncols, sf->expected_vals, (long)ftello64(fp));
 
 
 	sf->fp = fp;
@@ -417,7 +416,7 @@ sf_readblock_hsbin(FILE *fp, char **bufp, int *bufsize, int offset)
 	if(hh.h1 == 0x04000000 && hh.h3 == 0x04000000) {
 		/* detected endian swap */
 		eswap = 1;
-		swap_gint32(&hh, sizeof(hh)/sizeof(gint32));
+		swap_gint32((gint32*)&hh, sizeof(hh)/sizeof(gint32));
 	}
 	if(hh.h1 != 0x00000004 || hh.h3 != 0x00000004) {
 		ss_msg(DBG, "sf_readblock_hsbin", "unexepected values in block header");
@@ -469,14 +468,14 @@ sf_readblock_hsbin(FILE *fp, char **bufp, int *bufsize, int offset)
 static int
 sf_getval_hsbin(SpiceStream *sf, double *dval)
 {
-	off_t pos;
+	off64_t pos;
 	float val;
 	int i;
 	struct hsblock_header hh;
 	gint32 trailer;
 
 	if(sf->read_vals >= sf->expected_vals) {
-		pos = ftello(sf->fp);
+		pos = ftello64(sf->fp);
 		if(fread(&trailer, sizeof(gint32), 1, sf->fp) != 1) {
 			ss_msg(DBG, "sf_getval_hsbin", "EOF reading block trailer at offset 0x%lx", (long) pos);
 			return 0;
@@ -489,7 +488,7 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 			return -2;
 		}
 
-		pos = ftello(sf->fp);
+		pos = ftello64(sf->fp);
 		if(fread(&hh, sizeof(hh), 1, sf->fp) != 1) {
 			ss_msg(DBG, "sf_getval_hsbin", "EOF reading block header at offset 0x%lx", (long) pos);
 			return 0;
@@ -497,7 +496,7 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 		if(hh.h1 == 0x04000000 && hh.h3 == 0x04000000) {
 			/* detected endian swap */
 			sf->flags |= SSF_ESWAP;
-			swap_gint32(&hh, sizeof(hh)/sizeof(gint32));
+			swap_gint32((gint32*)&hh, sizeof(hh)/sizeof(gint32));
 		} else {
 			sf->flags &= ~SSF_ESWAP;
 		}
@@ -509,7 +508,7 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 		sf->read_vals = 0;
 	}
 	if(fread(&val, sizeof(float), 1, sf->fp) != 1) {
-		pos = ftello(sf->fp);
+		pos = ftello64(sf->fp);
 		ss_msg(ERR, "sf_getval_hsbin", "unexepected EOF in data at offset 0x%lx", (long) pos);
 		return 0;
 	}

@@ -3,7 +3,7 @@
 
 SUBDIRS=app
 
-INCLUDES=-I$(top_srcdir)/spicefile
+INCLUDES=-I$(top_srcdir) -I$(top_srcdir)/spicefile -I$(top_srcdir)/src
 
 bin_PROGRAMS = gwave
 noinst_SCRIPTS = xguile-snarf
@@ -27,8 +27,6 @@ DOT_X_FILES = gwave.x cmd.x wavewin.x wavelist.x scwm_guile.x event.x \
 
 DOT_DOC_FILES = gwave.doc cmd.doc wavewin.doc wavelist.doc scwm_guile.doc \
 	event.doc draw.doc print.doc
-
-noinst_SCRIPTS = xguile-snarf
 
 BUILT_SOURCES=init_scheme_string.c scm_init_funcs.h $(DOT_X_FILES) 
 # $(DOT_DOC_FILES)
