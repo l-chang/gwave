@@ -123,7 +123,7 @@
      (let ((menu (gtk-menu-new)))
        (gtk-widget-show menu)
        (gtk-menu-item-set-submenu (add-menuitem mbar "Options" #f) menu)
-       (add-menuitem menu "foo" #f)
+;       (add-menuitem menu "foo" #f)
        (let ((ptmenu (gtk-menu-new))
 	     (group #f))
 	 (gtk-widget-show ptmenu)
