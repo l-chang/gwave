@@ -38,7 +38,7 @@ char *progname = "sp2sp";
 
 static void ascii_header_output(SpiceStream *sf, int *enab, int nidx);
 static void ascii_data_output(SpiceStream *sf, int *enab, int nidx,
-			      double begin_val, double end_val);
+			      double begin_val, double end_val, int ndigits);
 static int parse_field_numbers(int **index, int *idxsize, int *nsel,
 			       char *list, int nfields);
 static int parse_field_names(int **index, int *idxsize, int *nsel,
@@ -55,6 +55,7 @@ static void usage()
 	fprintf(stderr, "  -b V          begin output after independent-variable value V is reached\n");
 	fprintf(stderr, "                instead of start of input\n");
 	fprintf(stderr, "  -c T          Convert output to type T\n");
+	fprintf(stderr, "  -d N          use N significant digits in output\n");
 	fprintf(stderr, "  -e V          stop after independent-variable value V is reached\n");
 	fprintf(stderr, "                instead of end of input.\n");
   
@@ -102,10 +103,11 @@ main(int argc, char **argv)
 	int nsel;
 	VarType vartype = UNKNOWN;
 	int c;
+	int ndigits = 7;
 	double begin_val = -DBL_MAX;
 	double end_val = DBL_MAX;
 
-	while ((c = getopt (argc, argv, "b:c:e:f:n:s:t:u:vx")) != EOF) {
+	while ((c = getopt (argc, argv, "b:c:d:e:f:n:s:t:u:vx")) != EOF) {
 		switch(c) {
 		case 'v':
 			spicestream_msg_level = DBG;
@@ -116,6 +118,11 @@ main(int argc, char **argv)
 			break;
 		case 'c':
 			outfiletype = optarg;
+			break;
+		case 'd':
+			ndigits = atoi(optarg);
+			if(ndigits < 5)
+				ndigits = 5;
 			break;
 		case 'e':
 			end_val = atof(optarg);
@@ -221,12 +228,12 @@ main(int argc, char **argv)
 		printf("\n");
 		printf("TRANSIENT ANALYSIS\n");
 		ascii_header_output(sf, out_indices, nsel);
-		ascii_data_output(sf, out_indices, nsel, begin_val, end_val);
+		ascii_data_output(sf, out_indices, nsel, begin_val, end_val, ndigits);
 	} else if(strcmp(outfiletype, "ascii") == 0) {
 		ascii_header_output(sf, out_indices, nsel);
-		ascii_data_output(sf, out_indices, nsel, begin_val, end_val);
+		ascii_data_output(sf, out_indices, nsel, begin_val, end_val, ndigits);
 	} else if(strcmp(outfiletype, "nohead") == 0) {
-		ascii_data_output(sf, out_indices, nsel, begin_val, end_val);
+		ascii_data_output(sf, out_indices, nsel, begin_val, end_val, ndigits);
 	} else if(strcmp(outfiletype, "none") == 0) {
 		/* do nothing */
 	} else {
@@ -279,7 +286,7 @@ ascii_header_output(SpiceStream *sf, int *indices, int nidx)
  */
 static void
 ascii_data_output(SpiceStream *sf, int *indices, int nidx, 
-		  double begin_val, double end_val)
+		  double begin_val, double end_val, int ndigits)
 {
 	int i, j, tab;
 	int rc;
@@ -321,21 +328,22 @@ ascii_data_output(SpiceStream *sf, int *indices, int nidx,
 
 			if((sf->nsweepparam > 0) && (sweep_mode == SWEEP_PREPEND)) {
 				for(i = 0; i < sf->nsweepparam; i++) {
-					printf("%g ", spar[i]);
+					printf("%.*g ", ndigits, spar[i]);
 				}
 			}
 			for(i = 0; i < nidx; i++) {
 				if(i > 0)
 					putchar(' ');
 				if(indices[i] == 0)
-					printf("%g", ival);
+					printf("%.*g", ndigits, ival);
 				else {
 					int varno = indices[i]-1;
 					int dcolno = sf->dvar[varno].col - 1;
 					for(j = 0; j < sf->dvar[varno].ncols; j++) {
 						if(j > 0)
 							putchar(' ');
-						printf("%g", dvals[dcolno+j]);
+						printf("%.*g", ndigits,
+						       dvals[dcolno+j]);
 					}
 				}
 			}

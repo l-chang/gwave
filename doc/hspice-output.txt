@@ -133,7 +133,7 @@ Data block size is 0x7a8-0x194, or 0x614.
 Last word is 0x614 - matches word at 0x190.  
 Clearly this is a repeat of the block-size.
 
-Pattern for this block structure used for both the ascii header and
+The pattern for this block structure used for both the ascii header and
 the floating point data appears to be: 
 	4-word header, last word indicating data size in bytes
 	data
