@@ -20,6 +20,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  1998/11/09 20:29:53  tell
+ * always display variable-select list after loading file
+ *
  * Revision 1.3  1998/09/17 18:38:29  tell
  * Added load_wave_file function and other stuff for multiple files.
  * Change variable box packing so it looks better (no fill/expand).
@@ -95,7 +98,8 @@ load_wave_file(char *fname, char *ftype)
 	if(var_list_submenu) {
 		create_wdata_submenuitem(wdata, var_list_submenu);
 	}
-	cmd_show_wave_list(NULL, wdata);
+	if(win_main)
+		cmd_show_wave_list(NULL, wdata);
 
 	return 0;
 }
@@ -213,8 +217,24 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 		sprintf(buf, "gwave: %.64s", wdata->df->filename);
 		gtk_window_set_title(GTK_WINDOW(wdata->wlist_win), buf);
 		gtk_widget_set_usize(wdata->wlist_win, 150, 300);
-		gtk_widget_set_uposition(wdata->wlist_win, 600, 20);
-
+		{ /* suggest that the window manager try to put the wavelist
+		   *   window somewhere to the left of the main window.
+		   * This nonsense really belongs in a smart window manager, 
+		   * but users are demanding somthing.  Don't like this
+		   * positioning algorithm?  get SCWM. 
+		   */
+			static int diddle=0;
+			int x, y;
+			x = 200+175;
+			y = 200;
+			if(win_main && win_main->window) {
+				gdk_window_get_position(win_main->window, &x, &y);
+				y += diddle * 25;
+				x -= diddle * 20;
+				diddle = (diddle + 1) % 4;
+			}
+			gtk_widget_set_uposition(wdata->wlist_win, x-175, y);
+		}
 		gtk_signal_connect (GTK_OBJECT (wdata->wlist_win), "destroy",
                           GTK_SIGNAL_FUNC(gtk_widget_destroyed),
                           &(wdata->wlist_win));
@@ -223,7 +243,15 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 		gtk_container_add(GTK_CONTAINER(wdata->wlist_win), box1);
 		gtk_widget_show(box1);
 
-		sprintf(buf, "%s: %.64s", wdata->ftag, wdata->df->filename);
+		if(strlen(wdata->df->filename) > 16) {
+			char *cp = strrchr(wdata->df->filename, '/');
+			if(cp)
+				sprintf(buf, "%s: .../%.64s", wdata->ftag, cp+1);
+			else
+				sprintf(buf, "%s: .../%.64s", wdata->ftag, wdata->df->filename);
+		} else {
+			sprintf(buf, "%s: %.64s", wdata->ftag, wdata->df->filename);
+		}
 		label = gtk_label_new(buf);
 		gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
 		gtk_widget_show(label);
