@@ -3,7 +3,7 @@
  * routines to handle the scrolling list of potentialy-displayable waveforms,
  * and other stuff related to loading of data files.
  *
- * Copyright (C) 1998  University of North Carolina at Chapel Hill
+ * Copyright (C) 1998, 1999 Stephen G. Tell
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  1999/01/08 22:41:13  tell
+ * when loading file, defer generating wavelist window if main window
+ * isn't present yet.  Attempt nicer placement of wavelist windows.
+ *
  * Revision 1.4  1998/11/09 20:29:53  tell
  * always display variable-select list after loading file
  *
@@ -48,7 +52,6 @@
 
 #include <gtk/gtk.h>
 
-#include "reader.h"
 #include "gwave.h"
 #include "gtkmisc.h"
 
@@ -60,6 +63,8 @@ static char file_tag_chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkl
 static const int n_file_tags = sizeof(file_tag_chars)/sizeof(char);
 static int next_file_tagno = 0;
 
+static GtkWidget *create_wavelist_menu(GWDataFile *wdata);
+void add_variables_to_list(GWDataFile *wdata);
 /*
  * Load a waveform file, adding it to the list of files from which
  * variables can be chosed to add to the display.
@@ -71,9 +76,9 @@ load_wave_file(char *fname, char *ftype)
 	int i;
 
 	wdata = g_new0(GWDataFile, 1);
-	wdata->df = analog_read_file(fname, ftype);
+	wdata->wf = wf_read(fname, ftype);
 	
-	if(wdata->df == NULL) {
+	if(wdata->wf == NULL) {
 		g_free(wdata);
 		return -1;
 	}
@@ -88,8 +93,8 @@ load_wave_file(char *fname, char *ftype)
 	next_file_tagno = (next_file_tagno + 1) % n_file_tags;
 
 	/* userdata pointer in variable gets backpointer to wdata struct */
-	for(i = 0; i < wdata->df->ndv; i++) {
-		DVar *dv = wdata->df->dv[i];
+	for(i = 0; i < wdata->wf->wf_ndv; i++) {
+		WaveVar *dv = &wdata->wf->dv[i];
 		dv->udata = wdata;
 	}
 
@@ -102,6 +107,66 @@ load_wave_file(char *fname, char *ftype)
 		cmd_show_wave_list(NULL, wdata);
 
 	return 0;
+}
+
+/*
+ * Delete a wave file.
+ * callback from menu: wavelist->file->delete
+ */
+void
+delete_wave_file(GtkWidget *w, GWDataFile *wdata)
+{
+/* remove references from displayed waves */
+	remove_wfile_waves(wdata);
+
+/* remove per-file GUI stuff */
+	if(wdata->wlist_win && GTK_WIDGET_VISIBLE(wdata->wlist_win))
+		gtk_widget_destroy(wdata->wlist_win);
+	gtk_container_remove(GTK_CONTAINER(var_list_submenu), wdata->menu_item);
+	wf_free(wdata->wf);
+	wdata_list = g_list_remove(wdata_list, wdata);
+	g_free(wdata);
+}
+
+
+/*
+ * command or callback from menu: wavelist->file->reload
+ */
+void
+reload_wave_file(GtkWidget *w, GWDataFile *wdata)
+{
+	int i;
+	WaveFile *new_wf;
+	WaveFile *old_wf;
+
+	/* FIXME:sgt: get file type from old file, if it was specified
+	 * when loading it originaly
+	 */
+	new_wf = wf_read(wdata->wf->wf_filename, NULL);
+	if(new_wf == NULL) {
+		fprintf(stderr, "reload_wave_file: failed to read %s\n", wdata->wf->wf_filename);
+		/* FIXME:sgt put up error message in window */
+		return;
+	}
+	old_wf = wdata->wf;
+	wdata->wf = new_wf;
+/*	printf("reload_wave_file(%s) old=%lx new=%lx\n", */
+	       wdata->wf->wf_filename, old_wf, new_wf);
+	for(i = 0; i < wdata->wf->wf_ndv; i++) {
+		WaveVar *dv = &wdata->wf->dv[i];
+		dv->udata = wdata;
+	}
+
+	update_wfile_waves(wdata);
+
+/* remove old buttons from list, and add new ones */	
+	if(wdata->wlist_win && GTK_WIDGET_VISIBLE(wdata->wlist_win)) {
+		gtk_container_foreach(GTK_CONTAINER(wdata->wlist_box),
+				      (GtkCallback) gtk_widget_destroy, NULL);
+		add_variables_to_list(wdata);
+	}
+	
+	g_free(old_wf);
 }
 
 /*
@@ -154,13 +219,48 @@ get_fname_load_file(GtkWidget *w, gpointer d)
 static void
 dnd_drag_request (GtkWidget *button, GdkEvent *event, gpointer d)
 {
-	DVar *dvar = (DVar *)d;
+	WaveVar *dv = (WaveVar *)d;
 	GWDnDData dd;
 
-	dd.dv = dvar;
+	dd.dv = dv;
 
 	gtk_widget_dnd_data_set (button, event, 
 				 (gpointer)&dd, sizeof(GWDnDData));
+}
+
+/*
+ * Add a button for each variable in the file 
+ * to the win_wlist box for it.  
+ * Arrange for the buttons to be drag-and-drop sources for placing the
+ * variables into wavepanels.
+ */
+void
+add_variables_to_list(GWDataFile *wdata)
+{
+	int i;
+	GtkWidget *button;
+
+	for(i = 0; i < wdata->wf->wf_ndv; i++) {
+		WaveVar *dv = &wdata->wf->dv[i];
+		button = gtk_button_new_with_label(dv->wv_name);
+		
+		gtk_box_pack_start (GTK_BOX (wdata->wlist_box), button, FALSE, FALSE, 0);
+		gtk_widget_show (button);
+
+		/*
+		 * currently (Gtk+ 1.0.4), the widget has to be 
+		 * realized to set dnd on it. According to coments
+		 * in testgtk.c, likely to change in future Gtk+...
+		 */
+		gtk_widget_realize (button);
+		gtk_signal_connect (GTK_OBJECT (button),
+				    "drag_request_event",
+				    GTK_SIGNAL_FUNC(dnd_drag_request),
+				    dv);
+		gtk_widget_dnd_drag_set (button,
+					 TRUE, possible_drag_types, 1);
+		
+	}
 }
 
 /*
@@ -175,6 +275,7 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
         GtkWidget *scrolled_window;
 	GtkWidget *button;
 	GtkWidget *label;
+	GtkWidget *menubar;
 	int i;
 
 	static GtkWidget *drag_icon = NULL;
@@ -214,7 +315,7 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 
 		wdata->wlist_win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 		gtk_widget_set_name(wdata->wlist_win, "data list window");
-		sprintf(buf, "gwave: %.64s", wdata->df->filename);
+		sprintf(buf, "gwave: %.64s", wdata->wf->wf_filename);
 		gtk_window_set_title(GTK_WINDOW(wdata->wlist_win), buf);
 		gtk_widget_set_usize(wdata->wlist_win, 150, 300);
 		{ /* suggest that the window manager try to put the wavelist
@@ -242,15 +343,17 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 		box1 = gtk_vbox_new(FALSE, 0);
 		gtk_container_add(GTK_CONTAINER(wdata->wlist_win), box1);
 		gtk_widget_show(box1);
+		menubar = create_wavelist_menu(wdata);
+		gtk_box_pack_start (GTK_BOX (box1), menubar, FALSE, FALSE, 0);
 
-		if(strlen(wdata->df->filename) > 16) {
-			char *cp = strrchr(wdata->df->filename, '/');
+		if(strlen(wdata->wf->wf_filename) > 16) {
+			char *cp = strrchr(wdata->wf->wf_filename, '/');
 			if(cp)
 				sprintf(buf, "%s: .../%.64s", wdata->ftag, cp+1);
 			else
-				sprintf(buf, "%s: .../%.64s", wdata->ftag, wdata->df->filename);
+				sprintf(buf, "%s: .../%.64s", wdata->ftag, wdata->wf->wf_filename);
 		} else {
-			sprintf(buf, "%s: %.64s", wdata->ftag, wdata->df->filename);
+			sprintf(buf, "%s: %.64s", wdata->ftag, wdata->wf->wf_filename);
 		}
 		label = gtk_label_new(buf);
 		gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
@@ -268,39 +371,43 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 		gtk_widget_show (scrolled_window);
 
 
-		box2 = gtk_vbox_new (FALSE, 0);
-		gtk_container_border_width (GTK_CONTAINER (box2), 10);
-		gtk_container_add (GTK_CONTAINER(scrolled_window), box2);
-		gtk_container_set_focus_vadjustment(GTK_CONTAINER (box2),
+		wdata->wlist_box = gtk_vbox_new (FALSE, 0);
+		gtk_container_border_width (GTK_CONTAINER (wdata->wlist_box), 10);
+		gtk_container_add (GTK_CONTAINER(scrolled_window), wdata->wlist_box);
+		gtk_container_set_focus_vadjustment(GTK_CONTAINER (wdata->wlist_box),
 						    gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window)));
-		gtk_widget_show (box2);
+		gtk_widget_show (wdata->wlist_box);
 
-		for(i = 0; i < wdata->df->ndv; i++) {
-			DVar *dv = wdata->df->dv[i];
-			button = gtk_button_new_with_label(dv->d.name);
-
-			gtk_box_pack_start (GTK_BOX (box2), button, FALSE, FALSE, 0);
-			gtk_widget_show (button);
-
-			/*
-			 * currently (Gtk+ 1.0.4), the widget has to be 
-			 * realized to set dnd on it, according to coments
-			 * in testgtk.c.  likely change in future Gtk+...
-			 */
-			gtk_widget_realize (button);
-			gtk_signal_connect (GTK_OBJECT (button),
-					    "drag_request_event",
-					    GTK_SIGNAL_FUNC(dnd_drag_request),
-					    wdata->df->dv[i]);
-			gtk_widget_dnd_drag_set (button,
-						 TRUE, possible_drag_types, 1);
-
-		}
+		add_variables_to_list(wdata);
 	}
 
 	if(!GTK_WIDGET_VISIBLE(wdata->wlist_win))
 		gtk_widget_show(wdata->wlist_win);
 	else
 		gtk_widget_destroy(wdata->wlist_win);
+}
+
+/*
+ * Create menu bar wavefile window.
+ */
+static GtkWidget *
+create_wavelist_menu(GWDataFile *wdata)
+{
+	GtkWidget *menubar;
+	GtkWidget *menu;
+       
+	menubar = gtk_menu_bar_new();
+	gtk_widget_show(menubar);
+
+	menu = create_menu("File", menubar);
+	create_menuitem("Reload this file", menu,
+			GTK_SIGNAL_FUNC(reload_wave_file), wdata);
+	create_menuitem("Delete this file", menu, 
+			GTK_SIGNAL_FUNC(delete_wave_file), wdata);
+	create_menuitem(NULL, menu, NULL, NULL); /* separator */
+	create_menuitem("Close", menu, 
+			GTK_SIGNAL_FUNC(cmd_show_wave_list), wdata);
+	
+	return menubar;
 }
 
