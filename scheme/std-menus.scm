@@ -52,13 +52,15 @@
 ; TODO: write a function that takes a list of lists of labels & procs,
 ; and creates the whole set of radio-menu-items.
 ;
-(define-public (add-radio-menuitem parent group label proc)
+(define-public (add-radio-menuitem parent group label active proc)
   (let ((item (if label
 		  (gtk-radio-menu-item-new-with-label group label)
 		  (gtk-radio menu-item-new group))))
     (gtk-widget-show item)
     (if proc
 	(gtk-signal-connect item "activate" proc))
+    (if active
+	(gtk-check-menu-item-set-state item active))
     (cond ((gtk-menu? parent) (gtk-menu-append parent item))
 	  ((gtk-menu-bar? parent) (gtk-menu-bar-append parent item)))
     item))
@@ -120,26 +122,33 @@
        (gtk-widget-show menu)
        (gtk-menu-item-set-submenu (add-menuitem mbar "Options" #f) menu)
 ;       (add-menuitem menu "foo" #f)
+
        (let ((ptmenu (gtk-menu-new))
-	     (group #f))
+	     (group #f)
+	     (save-wp-type default-wavepanel-type)) ; GTK bug - first radio-menu-item gets immediate callback
 	 (gtk-widget-show ptmenu)
 	 (set! group (add-radio-menuitem 
 		      ptmenu group (list-ref wavepanel-type-names 0)
-		      (lambda () (set! default-wavepanel-type 0))))
+		      (eqv? save-wp-type 0)
+		      (lambda () 
+			(set! default-wavepanel-type 0))))
 	 (set! group (add-radio-menuitem 
 		      ptmenu group (list-ref wavepanel-type-names 1)
-		      (lambda () (set! default-wavepanel-type 1))))
+		      (eqv? save-wp-type 1)
+		      (lambda () 
+			(set! default-wavepanel-type 1))))
 	 (gtk-menu-item-set-submenu 
-	  (add-menuitem menu "Default Panel Type" #f) ptmenu))
+	  (add-menuitem menu "Default Panel Type" #f) ptmenu)
+	 (set! default-wavepanel-type save-wp-type))
 
        (let ((lxmenu (gtk-menu-new))
 	     (group #f))
 	 (gtk-widget-show lxmenu)
 	 (set! group (add-radio-menuitem 
-		      lxmenu group "Linear"
+		      lxmenu group "Linear" #t
 		      (lambda () (wtable-set-xlogscale! #f))))
 	 (set! group (add-radio-menuitem 
-		      lxmenu group "Log"
+		      lxmenu group "Log" #f
 		      (lambda () (wtable-set-xlogscale! #t))))
 	 (gtk-menu-item-set-submenu 
 	  (add-menuitem menu "X Axis Scale" #f) lxmenu))
@@ -148,14 +157,15 @@
 	     (group #f))
 	 (gtk-widget-show submenu)
 	 (set! group (add-radio-menuitem 
-		      submenu group "On"
+		      submenu group "On" (gtk-tooltips-enabled? gwave-tooltips)
 		      (lambda () (gtk-tooltips-enable gwave-tooltips))))
 	 (set! group (add-radio-menuitem 
-		      submenu group "Off"
+		      submenu group "Off" (not (gtk-tooltips-enabled? gwave-tooltips))
 		      (lambda () (gtk-tooltips-disable gwave-tooltips))))
 	 (gtk-menu-item-set-submenu 
 	  (add-menuitem menu "ToolTips" #f) submenu))
        )
+
 
 )))
 

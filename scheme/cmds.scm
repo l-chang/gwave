@@ -7,6 +7,10 @@
 )
 (read-set! keywords 'prefix)
 
+; print list
+(define-public (print . l)
+  (for-each (lambda (e) (display e (current-output-port))) l))
+
 (define-public (append-hook! hook proc)
   "Add PROC to HOOK at the end of the list."
   (add-hook! hook proc #t))
@@ -55,7 +59,7 @@
 ; several of the lower-level options together.   Earlier versions
 ; had this in C.
 ;
-(define-public default-wavepanel-type 0)
+
 ; these should be a real data structure of some kind
 (define-public wavepanel-type-names    (list "Std"	"Jge"))
 (define-public wavepanel-num-types (length wavepanel-type-names))
