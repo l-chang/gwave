@@ -339,9 +339,9 @@ wavepanel_update_data(WavePanel *wp)
 	char lbuf[128];
 
 	wp->min_xval = G_MAXDOUBLE;
-	wp->max_xval = G_MINDOUBLE;
+	wp->max_xval = -G_MAXDOUBLE;
 	wp->min_yval = G_MAXDOUBLE;
-	wp->max_yval = G_MINDOUBLE;
+	wp->max_yval = -G_MAXDOUBLE;
 	g_list_foreach(wp->vwlist, vw_wp_visit_update_data, (gpointer)wp);
 
 	/* set to something reasonable if they didn't change,
@@ -349,11 +349,11 @@ wavepanel_update_data(WavePanel *wp)
 	 */
 	if(wp->min_xval == G_MAXDOUBLE)
 		wp->min_xval = 0; /* wtable->min_xval; */
-	if(wp->max_xval == G_MINDOUBLE)
+	if(wp->max_xval == -G_MAXDOUBLE)
 		wp->max_xval = 0; /* wtable->max_xval; */
 	if(wp->min_yval == G_MAXDOUBLE)
 		wp->min_yval = 0.0;
-	if(wp->max_yval == G_MINDOUBLE)
+	if(wp->max_yval == -G_MAXDOUBLE)
 		wp->max_yval = 1.0;
 
 	/* zero height? set to +- 0.1%  so a line is visible in the center */
@@ -394,7 +394,7 @@ wavetable_update_data()
 	old_max_x = wtable->max_xval;
 
 	wtable->min_xval = G_MAXDOUBLE;
-	wtable->max_xval = G_MINDOUBLE;
+	wtable->max_xval = -G_MAXDOUBLE;
 	for(i = 0; i < wtable->npanels; i++) {
 		wp = wtable->panels[i];
 		if(wp == NULL)
@@ -410,7 +410,7 @@ wavetable_update_data()
 	/* still nothing? set back to zero */
 	if(wtable->min_xval == G_MAXDOUBLE)
 		wtable->min_xval = 0;
-	if(wtable->max_xval == G_MINDOUBLE)
+	if(wtable->max_xval == -G_MAXDOUBLE)
 		wtable->max_xval = 0;
 
 	/* if start & end were the same or out of range, 
