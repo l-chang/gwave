@@ -377,6 +377,11 @@
 (define-public (nth-wavepanel n)
   (list-ref (wtable-wavepanels) n))
 
+(define-public (unselect-all-wavepanels!)
+  (for-each (lambda (wp)
+	      (set-wavepanel-selected! wp #f))
+	    (wtable-wavepanels)))
+
 ;; Given a filename, return the GWDataFile object associated with
 ;; the data loaded from that file, or #f it there is no such file loaded.
 (define-public (find-wavefile name)

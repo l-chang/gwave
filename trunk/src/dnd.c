@@ -190,7 +190,7 @@ dnd_setup_target(GtkWidget *w, gpointer *d)
 
 #ifdef GTK_V12
 	gtk_drag_dest_set (w,
-			   GTK_DEST_DEFAULT_ALL,
+			   GTK_DEST_DEFAULT_DROP | GTK_DEST_DEFAULT_MOTION,
 			   target_table, n_targets - 1,/*no rootwin*/
 			   GDK_ACTION_COPY | GDK_ACTION_MOVE);
 	
@@ -230,8 +230,8 @@ dnd_source_data_get(GtkWidget          *widget,
 	switch(info) {
 	case TARGET_ROOTWIN:
 		/* maybe this could eventually mean somthing? */
- 		g_print("wavevar %s dropped on the rootwin\n",
-			dv->wv_name);
+/* 		g_print("wavevar %s dropped on the rootwin\n",
+		   dv->wv_name);*/
 		break;
 	case TARGET_STRING:
 		sprintf(buf, "%s;%s", 

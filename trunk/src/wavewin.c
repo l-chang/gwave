@@ -61,9 +61,6 @@ GtkWidget *win_main;
 GtkWidget *win_main_menubar;
 GtkWidget *win_main_toolbar;
 
-WavePanel *last_drop_wavepanel;
-
-
 /* create horizontal button box for top of main window */
 GtkWidget *create_toolbar()
 {
@@ -454,8 +451,6 @@ wavewin_delete_panel(WavePanel *dwp)
 		return;
 	}
 
-	if(dwp == last_drop_wavepanel)
-		last_drop_wavepanel = NULL;
 	wavewin_destroy_table();
 
 	nwp = g_new0(WavePanel*, wtable->npanels - 1);
@@ -478,6 +473,19 @@ wavewin_delete_panel(WavePanel *dwp)
 
 	wavewin_build_table();
 	wavewin_finish_table_rebuild();
+}
+
+WavePanel *
+first_selected_wavepanel()
+{
+	WavePanel *wp;
+	int i;
+	for(i = wtable->npanels-1; i >= 0; i--) {
+		WavePanel *wp = wtable->panels[i];
+		if(wp->selected)
+			return wp;
+	}
+	return NULL;
 }
 
 XSCM_DEFINE(wtable_insert_panel_x, "wtable-insert-panel!", 2, 1, 0, 

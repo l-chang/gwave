@@ -20,6 +20,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.23  2003/12/03 03:58:16  sgt
+ * clean up string literals containing newlines, all in documentation
+ * strings.
+ * Modify xsnarf.h to get document-extraction working again
+ *
  * Revision 1.22  2003/07/13 23:44:42  sgt
  *
  * some further work on export
@@ -399,6 +404,7 @@ add_variables_to_list(GWDataFile *wdata)
 
 	for(i = 0; i < wdata->wf->wf_ndv; i++) {
 		WaveVar *dv = &wdata->wf->dv[i];
+/*		button = gtk_toggle_button_new_with_label(dv->wv_name); */
 		button = gtk_button_new_with_label(dv->wv_name);
 		
 		gtk_box_pack_start (GTK_BOX (wdata->wlist_box), button, FALSE, FALSE, 0);
@@ -446,9 +452,8 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 		gtk_widget_set_usize(wdata->wlist_win, 150, 300);
 		{ /* suggest that the window manager try to put the wavelist
 		   *   window somewhere to the left of the main window.
-		   * This nonsense really belongs in a smart window manager, 
-		   * but users are demanding somthing.  Don't like this
-		   * positioning algorithm?  get SCWM. 
+		   * This nonsense really belongs in a smarter window manager, 
+		   * but users are demanding somthing.
 		   */
 			static int diddle=0;
 			int x, y;
@@ -486,6 +491,8 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 		gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
 		gtk_widget_show(label);
 		gtk_box_pack_start (GTK_BOX (box1), label, FALSE, FALSE, 0);
+
+
 
 		scrolled_window = gtk_scrolled_window_new (NULL, NULL);
 		gtk_container_border_width (GTK_CONTAINER (scrolled_window), 10);
@@ -606,6 +613,23 @@ XSCM_DEFINE(wavefile_tag, "wavefile-tag", 1, 0, 0,
 }
 #undef FUNC_NAME
 
+XSCM_DEFINE(wavefile_set_tag_x, "wavefile-set-tag!", 2, 0, 0,
+	    (SCM obj, SCM str),
+	   "Set the short identifying tag for the GWDataFile OBJ to STR.")
+#define FUNC_NAME s_wavefile_set_tag_x
+{
+	GWDataFile *wdata;
+	char *s;
+	VALIDATE_ARG_GWDataFile_COPY(1, obj, wdata);
+	VALIDATE_ARG_STR_NEWCOPY(1, str, s);
+	g_free(wdata->ftag);
+	wdata->ftag = s;
+	return SCM_UNSPECIFIED;
+/* BUG: any visiblewave button labels and wavelist menu entries
+ * won't be affected by the change in ftag */
+}
+#undef FUNC_NAME
+
 XSCM_DEFINE(wavefile_listwin_menubar, "wavefile-listwin-menubar", 1, 0, 0,
            (SCM obj),
 "Returns the GTK Menubar for the variable-list window of the"
@@ -698,7 +722,6 @@ XSCM_DEFINE(wavefile_variable, "wavefile-variable", 2, 0, 0,
 }
 #undef FUNC_NAME
 
-
 XSCM_DEFINE(variable_signame, "variable-signame", 1, 0, 0,
 	   (SCM var),
 	   "Return the signal name for the variable VAR.")
@@ -713,6 +736,7 @@ XSCM_DEFINE(variable_signame, "variable-signame", 1, 0, 0,
 		return SCM_BOOL_F;
 }
 #undef FUNC_NAME
+
 
 XSCM_DEFINE(variable_wavefile, "variable-wavefile", 1, 0, 0,
 	   (SCM var),

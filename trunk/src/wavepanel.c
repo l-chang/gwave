@@ -52,7 +52,6 @@ XSCM_HOOK(new_wavepanel_hook,"new-wavepanel-hook", 1, (SCM wp),
 "popup menus and other event bindings for the wavepanel.");
 
 SCM wavepanel_mouse_binding[6];
-WavePanel *last_drop_wavepanel;
 
 /* generate VisibleWave button label string,
  * for both initial setup and updating.
@@ -281,6 +280,38 @@ void destroy_wave_panel(WavePanel *wp)
 	if(wp->outstanding_smob == 0)
 		g_free(wp);
 }
+
+XSCM_DEFINE(wavepanel_selected_p, "wavepanel-selected?", 1, 0, 0, 
+	    (SCM wavepanel),
+	   "Return true if the WAVEPANEL is selected")
+#define FUNC_NAME s_wavepanel_selected_p
+{
+	WavePanel *wp;
+	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+	if(wp->selected)
+		return SCM_BOOL_T;
+	else
+		return SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+XSCM_DEFINE(set_wavepanel_selected_x, "set-wavepanel-selected!", 2, 0, 0, 
+	    (SCM wavepanel, SCM tf),
+	   "Set the selected state of WAVEPANEL to TF, either true or false")
+#define FUNC_NAME s_set_wavepanel_selected_x
+{
+	WavePanel *wp;
+	int itf;
+	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+	VALIDATE_ARG_BOOL_COPY(2, tf, itf);
+
+	if(wp->selected != itf) {
+		wp->selected = itf;
+		draw_wavepanel(wp->drawing, NULL, wp);
+	}
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
 
 XSCM_DEFINE(wavepanel_y_zoom_x, "wavepanel-y-zoom!", 3, 0, 0, 
 	   (SCM wavepanel, SCM miny, SCM maxy),

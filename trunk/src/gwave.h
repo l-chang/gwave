@@ -111,6 +111,9 @@ extern GdkGC *bg_gdk_gc;
 extern char *pg_color_name;
 extern GdkColor pg_gdk_color;
 extern GdkGC *pg_gdk_gc;
+extern char *hl_color_name;
+extern GdkColor hl_gdk_color;
+extern GdkGC *hl_gdk_gc;
 extern GdkColormap *win_colormap; /* colormap for main waveform window */
 extern void create_about_window();
 extern int v_flag;

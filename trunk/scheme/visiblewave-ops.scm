@@ -12,6 +12,7 @@
   :use-module (gtk gdk)
   :use-module (app gwave std-menus)
   :use-module (app gwave export)
+  :use-module (app gwave cmds)
   :use-module (app gwave globals)
 )
 (read-set! keywords 'prefix)
@@ -30,6 +31,10 @@
              "\n      button=" (visiblewave-button vw) "\n")
 
    (set-visiblewave-measure! vw 1 default-measure1-function)
+
+   ; make this panel the only selected one when a wave is added to it
+   (unselect-all-wavepanels!)
+   (set-wavepanel-selected! (visiblewave-panel vw) #t)
 
    (gtk-signal-connect (visiblewave-button vw) "clicked" 
 			(lambda ()
@@ -52,6 +57,16 @@
 			 (string-append (visiblewave-varname vw)
 			 "\nVisibleWave Button:\nClick button 1 to select wave.\nPress button 3 for options menu.") "")
 
+))
+
+(wavepanel-bind-mouse 1
+ (lambda (wp event)
+; (format #t "wavepanel ~s event=~s state=~s\n" wp event 
+;	 (gdk-event-state event))
+ 
+ (if (not (member 'shift-mask (gdk-event-state event)))
+     (unselect-all-wavepanels!))
+ (set-wavepanel-selected! wp #t)
 ))
 
 ; create dynamic menu to be popped up with mousebutton 3 on the 

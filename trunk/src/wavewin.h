@@ -44,6 +44,7 @@ struct _WavePanel {
 	SCM smob;
 	int outstanding_smob;	/* if guile has a pointer, defer freeing. */
 	int valid;	/* 1 if valid, 0 if awaiting deletion */
+	int selected;
 
 	GList *vwlist;	/* list of VisibleWaves shown in this panel.
 			   Like any GList, NULL if list empty */
@@ -188,8 +189,8 @@ extern void wavewin_delete_panel(WavePanel *wp);
 extern void cmd_popup_delete_panel(GtkWidget *w);
 extern void cmd_popup_insert_panel(GtkWidget *w);
 extern void cmd_append_panel(GtkWidget *w);
-extern WavePanel *last_drop_wavepanel;
 extern void wavepanel_draw_labels(WavePanel *wp);
+extern WavePanel *first_selected_wavepanel();
 
 extern SCM wavepanel_mouse_binding[];
 
