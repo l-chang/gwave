@@ -16,6 +16,7 @@
 
 ; demonstrating how we can add our own menu to the end
 ; of the menubar by using append-hook.
+; this adds some debugging options.
 (append-hook! 
  new-wavewin-hook
  (lambda ()
@@ -27,7 +28,7 @@
 
        (add-menuitem menu "list panels" 
 		     (lambda () 
-		       (display "wavefile-list:") (newline)
+		       (display "panel-list:") (newline)
 		       (display (wtable-wavepanels))
 		       (newline)))
 

@@ -54,13 +54,20 @@
 ;	    cmdline-files)
 ;(newline)
 
-(add-hook! 
+;
+; wave window hook to load files listed on the command line and
+; create initial panels.
+; We use append-hook so that the menubar is already created; this way
+; the view->variable list menu item works properly for these.
+
+(append-hook! 
  new-wavewin-hook
  (lambda ()
    (dbprint "in std-args new-wavewin-hook\n")
    ; load files listed on the command line
    (for-each (lambda (f)
-	       (load-wavefile! f)) cmdline-files)
+	       (load-wavefile! f)) 
+	     cmdline-files)
 
    ; add the initial set of panels
    (do ((i 0 (+ i 1))) ((>= i npanels))

@@ -45,7 +45,7 @@
 (define (make-vwb3-menu vw)
   (let ((menu (gtk-menu-new)))
     (gtk-widget-show menu)
-    (add-menuitem menu "VW Options"
+    (add-menuitem menu "Wave Options"
 		  (lambda () (popup-vw-options vw)))
     (add-menuitem menu "Delete" 
 		  (lambda () (visiblewave-delete! vw)))
