@@ -209,6 +209,9 @@ err:
 	if(line)
 		g_free(line);
 	if(sf) {
+		sf->fp = NULL;  
+		/* prevent ss_delete from cleaning up FILE*; ss_open callers 
+		   may rewind and try another format on failure. */
 		ss_delete(sf);
 	}
 	return NULL;
