@@ -1,7 +1,7 @@
 /*
  * ss_hspice.c: HSPICE routines for SpiceStream
  *
- * Copyright (C) 1998,1999  Stephen G. Tell
+ * Copyright (C) 1998-2002  Stephen G. Tell
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -509,7 +509,7 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 	if(fread(&val, sizeof(float), 1, sf->fp) != 1) {
 		pos = ftell(sf->fp);
 		ss_msg(ERR, "sf_getval_hsbin", "unexepected EOF in data at offset 0x%lx", pos);
-		return -1;
+		return 0;
 	}
 	sf->read_vals++;
 
