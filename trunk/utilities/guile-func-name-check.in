@@ -1,4 +1,4 @@
-#!/usr/bin/awk -f
+#!@AWK@ -f
 # Written by Greg J. Badros, <gjb@cs.washington.edu>
 # 11-Jan-2000
 
