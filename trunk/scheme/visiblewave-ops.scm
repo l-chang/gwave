@@ -41,8 +41,9 @@
 			      (gtk-menu-popup (make-vwb3-menu vw) #f #f
 					      (gdk-event-button event)
 					      (gdk-event-time event)))))
-   (gtk-tooltips-set-tip gwave-tooltips (visiblewave-button vw) 
-			 "VisibleWave Button:\nClick button 1 to select wave.\nPress button 3 for options menu." "")
+   (gtk-tooltips-set-tip gwave-tooltips (visiblewave-button vw)
+			 (string-append (visiblewave-varname vw)
+			 "\nVisibleWave Button:\nClick button 1 to select wave.\nPress button 3 for options menu.") "")
 
 ))
 
@@ -144,6 +145,8 @@
 	   (file-label (gtk-label-new 
 			(string-append "file: " 
 			       (wavefile-file-name (visiblewave-file vw)))))
+	   (varname-label (gtk-label-new 
+			(string-append "variable: " (visiblewave-varname vw))))
 	   (min-label (gtk-label-new 
 			(string-append "minimum: " (number->string (wavevar-min vw)))))
 	   (max-label (gtk-label-new 
@@ -154,6 +157,8 @@
       (gtk-container-add frame vbox)
       (gtk-box-pack-start vbox file-label #f #f 0)
       (gtk-widget-show file-label)
+      (gtk-box-pack-start vbox varname-label #f #f 0)
+      (gtk-widget-show varname-label)
       (gtk-box-pack-start vbox min-label #f #f 0)
       (gtk-widget-show min-label)
       (gtk-box-pack-start vbox max-label #f #f 0)
