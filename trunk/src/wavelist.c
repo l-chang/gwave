@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.16  2000/11/28 03:22:35  sgt
+ * draw.c: expand to five sig-figs in displayed values
+ * wavelist: properly free up old wave data after a reload.
+ *
  * Revision 1.15  2000/10/24 06:33:08  sgt
  * cmd.c - make wavepanel-add-variable return the new VisibleWave
  * wavelist.c - fix wavefile-variable.
@@ -283,6 +287,7 @@ reload_wave_file(GtkWidget *w, GWDataFile *wdata)
 	}
 
 	wf_free(old_wf);
+	mbtn_update_all();
 }
 
 void

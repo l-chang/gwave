@@ -60,6 +60,16 @@ measure_button_new(WaveVar *wv, int mfunc)
 	return mbtn;
 }
 
+/*
+ * Retarget a measure-button to a different WaveVar
+ * Generally used when swapping out old data for updated new after reloading.
+ */
+void
+mbtn_update_var(MeasureBtn *mbtn, WaveVar *wv)
+{
+	mbtn->var = wv;
+}
+
 void
 mbtn_set_func(MeasureBtn *mbtn, int mfunc)
 {

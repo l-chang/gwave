@@ -264,6 +264,8 @@ update_wfile_waves(GWDataFile *wdata)
 			/* printf("updated variable %s to %lx\n", vdi->vw->varname, wdata->wf); */
 			vdi->vw->gdf = wdata;
 			vdi->vw->var = wv;
+			mbtn_update_var(vdi->vw->mbtn[0], wv);
+			mbtn_update_var(vdi->vw->mbtn[1], wv);
 		} else {
 			/* printf("variable %s no longer in file %s; removing from panel\n", vdi->vw->varname, wdata->wf->wf_filename); */
 			remove_wave_from_panel(vdi->wp, vdi->vw);
