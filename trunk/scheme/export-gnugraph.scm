@@ -9,19 +9,21 @@
   :use-module (ice-9 format)
   :use-module (app gwave cmds)
   :use-module (app gwave export)
+  :use-module (app gwave utils)
   :use-module (app gwave gtk-helpers)
 )
 (read-set! keywords 'prefix)
 (debug-enable 'backtrace)
 (debug-enable 'debug)
-; Build a sub-dialog for gnu GRAPH plot options and attach it
-; to a notebook.
-; Returns a procedure, which when called, will return
+
+; Build a sub-dialog for gnu GRAPH plot options
+; Returns a list of two items:
+; - A GtkWidget for the notebook pannel of the dialog.
+; - A procedure, which when called, will return
 ; a plot options list.  The plot options list will be
 ; passed unchanged to the export procedure.
-(define-public (add-gnugraph-panel notebook)
+(define (build-gnugraph-panel)
   (let* ((frame (gtk-frame-new "GNU Graph"))
-	 (label (gtk-label-new "GNU Graph"))
 ;	 (hbox (gtk-hbox-new #f 5))
 	 (vbox (gtk-vbox-new #f 5))
 	 (opt-format "ps")
@@ -61,17 +63,17 @@
     (gtk-box-pack-start vbox color-rbtns #f #f 0)
     (gtk-widget-show color-rbtns)
 
-    (gtk-notebook-append-page notebook frame label)
-    (lambda ()
-      (format #t "opt-landscape=~s\n" opt-landscape)
-      (append (list "-T" opt-format)
-	      (if opt-landscape
-		(list "--rotation" "90")
-		'())
-	      (if opt-color
-		(list "-C")
-		'())
-	      ))
+    (list frame
+	  (lambda ()
+;	    (format #t "opt-landscape=~s\n" opt-landscape)
+	    (append (list "-T" opt-format)
+		    (if opt-landscape
+			(list "--rotation" "90")
+			'())
+		    (if opt-color
+			(list "-C")
+			'())
+		    )))
 ))
 
 ; export a wavepanel's data in the format needed by gnu graph's 
@@ -92,38 +94,57 @@
 ; generate hardcopy or documentary representation of the displayed
 ; waveforms on one or more wavepanels, using gnu graph as
 ; the formatting backend.
-
-(define-public (export-wavepanels-gnugraph fname panellist options)
-  (let* ((args (append (list "graph") options
+;
+(define (export-wavepanels-gnugraph fname panellist options keeptmp)
+  (let* ((args (append (list-copy options)
 		       (list "--input-format" "a"
 			     "--width-of-plot" "0.9")))
+	 (shfile (format #f "~a.sh" (filter-metachars fname)))
+	 (tmpbase (filter-metachars fname))
+	 (tmpfilelist (list shfile))
 	 (ngraphs (length panellist))
 	 (idx 0))
 
-    (append! args (list "--height-of-plot" 
-		    (format #f "~f" (- (/ 0.9 ngraphs) 0.05))))
-    (append! args '("--toggle-round-to-next-tick" "X"
+    (set! args (append args (list "--height-of-plot" 
+		    (format #f "~f" (- (/ 0.9 ngraphs) 0.05)))))
+    (set! args (append args '("--toggle-round-to-next-tick" "X"
 		    "--font-size" "0.03"
-		    "--grid-style" "3"))
+		    "--grid-style" "3")))
     (if (wtable-xlogscale?)
 	(append! args '("-l" "X")))
     (for-each (lambda (wp)
+;		(format #t "\nwavepanel: ~s args: ~s\n" wp args)
+		
 		 (if (> idx 0)
 		       (set! args (append args (list "--reposition" "0"
-						     (format #f "~f" (* idx (/ 0.9 ngraphs)))
-						     "1"))))
+			   (format #f "~f" (* idx (/ 0.9 ngraphs)))
+			   "1"))))
 		 (if (wavepanel-ylogscale? wp)
-		     (append! args '("-l" "Y")))
-		 (let ((fname (format #f "/tmp/gwplot.~s" idx)))
+		     (set! args (append args '("-l" "Y"))))
+		 (let ((fname (format #f "~a.~s" tmpbase idx)))
+;		 (let ((fname (string-append tmpbase (number->string idx))))
 		   (export-wavepanel-to-ggfile fname wp)
-		   (append! args (list fname)))
+		   (set! args (append args (list fname)))
+		   (set! tmpfilelist (cons fname tmpfilelist))
 		 (if (wavepanel-ylogscale? wp)
-		     (append! args '("-l" "Y")))
-		 		 	
+		     (set! args (append args '("-l" "Y"))))
+	 		 	
 		 (set! idx (+ 1 idx))
-		 )
+		 ))
 	      panellist)
-    ; finally we have the arglist
-    (print "running graph"  args)
-    (subprocess-to-file fname "graph" args)
+    ; finally we have the arglist and tmpfilelist
+;    (format #t "export-graph shfile=~s args=~s\ntmpfilelist=~s\n" 
+;	    shfile args tmpfilelist)
+    (with-output-to-file shfile 
+      (lambda ()
+	(display "#!/bin/sh\n")
+	(format #t "graph ~a\n" (join " " args))
+	(if (not keeptmp)
+	    (format #t "rm -f ~a\n" (join " " tmpfilelist)))))
+; (format #t "running sh -C ~a\n" shfile)
+    (subprocess-to-file fname "/bin/sh" (list "sh" "-C" shfile))
 ))
+
+(register-plotfilter "GNU Graph" 
+		     build-gnugraph-panel export-wavepanels-gnugraph)
+

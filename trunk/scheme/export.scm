@@ -7,11 +7,28 @@
   :use-module (ice-9 optargs)
   :use-module (app gwave cmds)
   :use-module (app gwave gtk-helpers)
-  :use-module (app gwave export-gnugraph)
 )
 (read-set! keywords 'prefix)
 (debug-enable 'backtrace)
 (debug-enable 'debug)
+
+; list of registered plot filters.  each entry is a 3-element list:
+; (name dialog-builder-procedure export-procedure)
+(define plot-list '())
+
+(define-public (register-plotfilter name dproc eproc)
+  (set! plot-list (cons 
+		  (list name dproc eproc #f)
+		  plot-list)))
+
+ ; debug: dump export filter list
+(define (dump-plotf-list)
+    (format #t "plot-list:\n")
+    (for-each (lambda (exptype)
+		(format #t " name=~s " (car exptype))
+		(format #t "dproc=~s\n" (cadr exptype))
+		(format #t " eproc=~s\n" (caddr exptype)))
+	      plot-list))
 
 (define (export-variables-to-file f vwlist . ext)
  (let ((p (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777)))
@@ -135,6 +152,8 @@
 	 (browse-btn (gtk-button-new-with-label "Browse"))
 
 	 (hbox2 (gtk-hbox-new #f 10))
+	 (tmpfcheck (gtk-check-button-new-with-label "Keep Tempfiles"))
+
 	 (notebook (gtk-notebook-new))
 	 (options-procedure #f)
 	 (plot-procedure #f)
@@ -144,6 +163,7 @@
 	 (separator (gtk-hseparator-new))
 	 (cancel-btn (gtk-button-new-with-label "Cancel"))
 	 (export-btn (gtk-button-new-with-label "Plot"))
+	 (oproc-assoc '())
 	 )
     
     (gtk-window-set-title window "Plot Data")
@@ -172,14 +192,35 @@
 			   #:default (gtk-entry-get-text filename-entry))))
     (gtk-widget-show browse-btn)
 
-    ; TODO: notebook with entry for each supported plot filter
+    ; notebook with entry for each supported plot filter
     ; containing that filter's various options
     (gtk-notebook-set-tab-pos notebook 'top)
     (gtk-box-pack-start vbox notebook #t #t 0)
-    (set! options-procedure (add-gnugraph-panel notebook))
+
+;    (dump-plotf-list)
+    (for-each (lambda (exptype)
+		(let* ((panelproc ( (cadr exptype) ))
+		       (panel (car panelproc))
+		       (optproc (cadr panelproc))
+		       (plotproc (caddr exptype))
+		       (label (gtk-label-new (car exptype))))
+		  (gtk-notebook-append-page notebook panel label)
+		  
+		  ; TODO extract these based on the current
+		  ; notebook tab when go button clicked
+		  (set! oproc-assoc (assoc-set! oproc-assoc plotproc optproc))
+
+		  (set! options-procedure optproc)
+		  (set! plot-procedure plotproc)))
+	      plot-list)
+ ;    (format #t "oproc-assoc: ~s\n" oproc-assoc)
     (gtk-widget-show notebook)
 
-    (set! plot-procedure export-wavepanels-gnugraph)
+    ; general options
+    (gtk-box-pack-start hbox2 tmpfcheck #f #t 0)
+    (gtk-widget-show tmpfcheck)
+    (gtk-widget-show hbox2)
+    (gtk-box-pack-start vbox hbox2 #t #t 0)
 
     ; row of action buttons
     (gtk-container-border-width action-hbox 10)
@@ -198,13 +239,17 @@
     (gtk-tooltips-set-tip gwave-tooltips export-btn "Plot data" "")
     (gtk-signal-connect export-btn "clicked" 
 			(lambda ()
-			  (if plot-procedure
-			      (plot-procedure 
-			       (gtk-entry-get-text filename-entry) 
-			       plist 
-			       (if (procedure? options-procedure)
-				   (options-procedure)
-				   (list))))
+			  (let* ((n (gtk-notebook-get-current-page notebook))
+				 (pp (caddr (list-ref plot-list n)))
+				 (op (assoc-ref oproc-assoc pp))
+				 (optlist (if (procedure?  op) (op) (list))))
+;			    (format #t "plot filter ~d ~s ~s\n" n op pp)
+;			    (format #t "opts: ~s\n" optlist)
+			    (if (procedure? pp)
+				(pp
+				 (gtk-entry-get-text filename-entry) 
+				 plist optlist
+				(gtk-toggle-button-active tmpfcheck))))
 			  (gtk-widget-destroy window)))
     (gtk-widget-show export-btn)
     
@@ -213,12 +258,11 @@
     (gtk-widget-show window)
 ))
 
-
 ; run a command in a subprocess, redirecting its output to a named file.
 (define-public (subprocess-to-file f cmd arglist)
   (let ((port (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777))
 	(null (open "/dev/null" O_RDONLY 0)))
-    (format #t "subprocess-to-file ~s\n" arglist)
+    ;(format #t "subprocess-to-file ~a ~s\n" cmd arglist)
     (flush-all-ports)
     ; TODO: stat cmd to make sure its executable.
     (let ((p (primitive-fork)))
@@ -232,12 +276,17 @@
 	     (close-all-ports-except (current-input-port) 
 				     (current-output-port) 
 				     (current-error-port))
-	     (apply execlp cmd arglist)
+	     (false-if-exception
+	      (begin
+		(apply execlp cmd arglist)
+		(primitive-exit 127)))
 	     )
 	    (else 
 	     ; parent
 	     (close port)
-	     (format #t "pid is ~d\n" p)
+	     
+	     (format #t "child process ~d started for ~a ~s\n" p cmd arglist)
+	     (reap-child)
 	     )))))
 
 (define (reap-child)
@@ -256,7 +305,11 @@
 	  (if (status:stop-sig st)
 	      (format #t " stopped on signal~d" (status:exit-sig st)))
 	  (display "\n"))
-	(display "no child\n"))))
+         ;(display "no child\n")
+	)))
 
-(dbprint "setting SIGCHLD handler")
-(sigaction SIGCHLD (lambda (s) (reap-child)))
+(dbprint "setting SIGCHLD handler\n")
+;(display (sigaction SIGCHLD (lambda (s) (reap-child)))) (newline)
+;(display (sigaction SIGCHLD)) (newline)
+(dbprint "export.scm done")
+
