@@ -20,6 +20,13 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.13  2000/08/11 06:40:47  sgt
+ * Get common GtkTooltips sharable between guile and C, use it in wavelist
+ * window.
+ * add gtk-tooltips-enabled? to gtkmisc.c
+ * add VALIDATE_GTK_COPY to validate.h, addtional snarfing macros to guile-ext.h
+ * Try out new .gwaverc features
+ *
  * Revision 1.12  2000/08/10 04:43:27  sgt
  * Extend our documentation-snarfing mechanism to handle hooks,
  * variables, and concepts; changed various .c files to use new system.
@@ -114,7 +121,7 @@ uses of this hook is creating the menus such for the variable-list window.");
  * Load a waveform file, adding it to the list of files from which
  * variables can be chosen to add to the display.
  */
-int
+GWDataFile *
 load_wave_file(char *fname, char *ftype)
 {
 	GWDataFile *wdata;
@@ -126,7 +133,7 @@ load_wave_file(char *fname, char *ftype)
 	
 	if(wdata->wf == NULL) {
 		g_free(wdata);
-		return -1;
+		return NULL;
 	}
 
 	/* give the file a short (fow now, 1-character) "tag" to identify it
@@ -137,19 +144,17 @@ load_wave_file(char *fname, char *ftype)
 	wdata->ftag[0] = file_tag_chars[next_file_tagno];
 	wdata->ftag[1] = '\0';
 	next_file_tagno = (next_file_tagno + 1) % n_file_tags;
+	wdata->wvhs = g_new0(WaveVarH, wdata->wf->wf_ndv);
+	wdata->ndv = wdata->wf->wf_ndv;
 
 	/* userdata pointer in variable gets backpointer to wdata struct */
 	for(i = 0; i < wdata->wf->wf_ndv; i++) {
 		WaveVar *dv = &wdata->wf->dv[i];
 		dv->udata = wdata;
+		wdata->wvhs[i].df = wdata;
 	}
 
 	wdata_list = g_list_append(wdata_list, wdata);
-
-/*	if(var_list_submenu) {
-		create_wdata_submenuitem(wdata, var_list_submenu);
-	}
-*/
 	wdata->outstanding_smob = 1;
 	SGT_NEWCELL_SMOB(wdata->smob, GWDataFile, wdata);
 	call1_hooks(new_wavefile_hook, wdata->smob);
@@ -157,28 +162,30 @@ load_wave_file(char *fname, char *ftype)
 	if(win_main)
 		cmd_show_wave_list(NULL, wdata);
 
-	return 0;
+	return wdata;
 }
 
 SCM_DEFINE(load_wavefile_x, "load-wavefile!", 1, 1, 0, (SCM file, SCM filetype),
 "Load waveform data from FILE into memory, and make it available for
 display.  If FILETYPE is specified, it indicates the format of the file
 and which wavefile reader to use, otherwise the format is inferred
-from the filename and file contents")
+from the filename and file contents.  Returns a GWDataFile object
+which can be used to refer to the loaded data.")
 #define FUNC_NAME s_load_wavefile_x
 {
 	char *fname, *ftype;
-	int rc;
+	GWDataFile *df;
+
 	VALIDATE_ARG_STR_NEWCOPY(1, file, fname);
 	VALIDATE_ARG_STR_NEWCOPY_USE_NULL(2, filetype, ftype);
-	rc = load_wave_file(fname, ftype);
+	df = load_wave_file(fname, ftype);
 	g_free(fname);
 	if(ftype)
 		g_free(ftype);
-	if(rc < 0)
-		return SCM_BOOL_F;
+	if(df)
+		return df->smob;
 	else
-		return SCM_BOOL_T;
+		return SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
@@ -189,13 +196,19 @@ from the filename and file contents")
 void
 delete_wave_file(GtkWidget *w, GWDataFile *wdata)
 {
+	int i;
 /* remove references from displayed waves */
 	remove_wfile_waves(wdata);
 
 /* remove per-file GUI stuff */
 	if(wdata->wlist_win && GTK_WIDGET_VISIBLE(wdata->wlist_win))
 		gtk_widget_destroy(wdata->wlist_win);
-
+	
+/* invalidate handles to WaveVars */
+	for(i = 0; i < wdata->wf->wf_ndv; i++) {
+		wdata->wvhs[i].wv = NULL;
+	}
+/* now nuke the data */
 	wf_free(wdata->wf);
 	wdata->wf = NULL;
 	wdata_list = g_list_remove(wdata_list, wdata);
@@ -593,21 +606,123 @@ SCM_DEFINE(wavefile_list, "wavefile-list", 0, 0, 0, (),
 #undef FUNC_NAME
 
 
+SCM_DEFINE(wavefile_all_variables, "wavefile-all-variables", 1, 0, 0, (SCM df),
+	   "Returns a list of WaveVars, composed of all variables in the GWDataFile DF.")
+#define FUNC_NAME s_wavefile_all_variables
+{
+	GWDataFile *wdata;
+	SCM result = SCM_EOL;
+	SCM wvsmob;
+	int i;
+	VALIDATE_ARG_GWDataFile_COPY(1, df, wdata);
+
+	if(!wdata->wf)
+		return result;
+	for(i = 0; i < wdata->wf->wf_ndv; i++) {
+		WaveVar *dv = &wdata->wf->dv[i];
+		wdata->wvhs[i].wv = dv;
+		SGT_NEWCELL_SMOB(wvsmob, WaveVar, &wdata->wvhs[i]);
+		result = scm_cons(wvsmob, result);
+	}
+	return scm_reverse(result);
+}
+#undef FUNC_NAME
+
+
+SCM_DEFINE(wavefile_variable, "wavefile-variable", 2, 0, 0,
+	   (SCM df, SCM vname),
+	   "Returns a WaveVar representing the variable named VNAME in the GWDataFile DF.  Return #f if there is no variable named VNAME")
+#define FUNC_NAME s_wavefile_variable
+{
+	GWDataFile *wdata;
+	SCM result = SCM_BOOL_F;
+	SCM wvsmob;
+	char *s;
+	int i;
+	VALIDATE_ARG_GWDataFile_COPY(1, df, wdata);
+	VALIDATE_ARG_STR_NEWCOPY(1, vname, s);
+
+	if(!wdata->wf) {
+		for(i = 0; i < wdata->wf->wf_ndv; i++) {
+			WaveVar *dv = &wdata->wf->dv[i];
+			if(0==strcmp(s, dv->sv->name)) {
+				wdata->wvhs[i].wv = dv;
+				SGT_NEWCELL_SMOB(result, WaveVar, &wdata->wvhs[i]);
+			}
+		}
+	}
+	g_free(s);
+	return result;
+}
+#undef FUNC_NAME
+
+
+SCM_DEFINE(variable_signame, "variable-signame", 1, 0, 0,
+	   (SCM var),
+	   "Return the signal name for the variable VAR.")
+#define FUNC_NAME s_variable_signame
+{
+	WaveVar *wv;
+	VALIDATE_ARG_WaveVar_COPY(1,var,wv);
+	
+	if(wv)
+		return gh_str02scm(wv->sv->name);
+	else
+		return SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(variable_wavefile, "variable-wavefile", 1, 0, 0,
+	   (SCM var),
+	   "Return the WaveFile that the variable VAR is contained in.")
+#define FUNC_NAME s_variable_wavefile
+{
+	WaveVarH *wvh;
+	VALIDATE_ARG_WaveVarH_COPY(1,var,wvh);
+	
+	if(wvh->wv) {
+		wvh->df->outstanding_smob = 1;
+		return wvh->df->smob;
+	} else
+		return SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+
+/*
+ * On the C side we never free WaveVars without freeing the whole
+ * WaveFile structure.  When guile GC's one, we invalidate the pointer
+ * in the handle, and then check to see if we can dump the whole
+ * structure. 
+ * Methinks we need a more formal reference-counting scheme instead of
+ * all this ad-hockery.
+ */
+int wavefile_try_free(GWDataFile *wdata)
+{
+	int i, n;
+	if(wdata->outstanding_smob)
+		return 0;
+	if(wdata->wf)
+		return 0;
+
+	for(i = 0; i < wdata->ndv; i++) {
+		if(wdata->wvhs[i].wv)
+			return 0;
+	}
+	fprintf(stderr, "free GWDataFile 0x%x during gc\n", wdata);
+	n = wdata->ndv;
+	g_free(wdata->wvhs);
+	g_free(wdata);
+	return sizeof(GWDataFile) + n*sizeof(WaveVarH);
+}
+
 /* standard SMOB functions for GWDataFile: free, mark, print, GWDataFile? */
 scm_sizet
 free_GWDataFile(SCM obj)
 {
 	GWDataFile *wdata =GWDataFile(obj);
 	wdata->outstanding_smob = 0;
-
-	if(wdata->wf == NULL) { /* if C has already invalidated, free it up */
-		if(v_flag)
-			fprintf(stderr, "free GWDataFile 0x%x during gc\n", wdata);
-		g_free(wdata);
-		return sizeof(GWDataFile);
-	}
-	else
-		return 0;
+	return wavefile_try_free(wdata);
 }
 
 SCM
@@ -637,13 +752,57 @@ SCM_DEFINE(GWDataFile_p, "GWDataFile?", 1, 0, 0,
 }
 #undef FUNC_NAME
 
+/* standard SMOB functions for WaveVar: free, mark, print, WaveVar? */
+
+scm_sizet
+free_WaveVar(SCM obj)
+{
+	WaveVarH *wvh = WaveVarH(obj);
+	wvh->wv = NULL;
+	return wavefile_try_free(wvh->df);
+}
+
+SCM
+mark_WaveVar(SCM obj)
+{
+	return SCM_BOOL_F;
+}
+
+int 
+print_WaveVar(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
+{
+	WaveVarH *wvh = WaveVarH(obj);
+	
+	scm_puts("#<WaveVar ", port);
+	if(wvh->wv) {
+		scm_puts(wvh->df->wf->wf_filename, port);
+		scm_puts(",", port);
+		scm_puts(wvh->wv->sv->name, port);
+	} else
+		scm_puts("invalid", port);
+
+	scm_putc('>', port);
+	return 1;
+}
+
+SCM_DEFINE(WaveVar_p, "WaveVar?", 1, 0, 0,
+           (SCM obj),
+	   "Returns #t if OBJ is a wave-file variable object, otherwise #f.")
+#define FUNC_NAME s_WaveVar_p
+{
+	return SCM_BOOL_FromBool(WaveVarH_P(obj));
+}
+#undef FUNC_NAME
+
 /* guile initialization */
 
 MAKE_SMOBFUNS(GWDataFile);
+MAKE_SMOBFUNS(WaveVar);
 
 void init_wavelist()
 {
         REGISTER_SCWMSMOBFUNS(GWDataFile);
+        REGISTER_SCWMSMOBFUNS(WaveVar);
 
 #ifndef SCM_MAGIC_SNARFER
 #include "wavelist.x"

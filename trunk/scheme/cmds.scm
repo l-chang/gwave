@@ -151,3 +151,25 @@
 
     (gtk-widget-show window)
 ))
+
+;
+; Put up a file-selection dialog with title S.
+; When file seleted, run procedure P, passing it the name of the file.
+;
+(define-public (with-selected-filename s p)
+  (let* ((window (gtk-file-selection-new s))
+         (button #f))
+    (gtk-signal-connect
+     (gtk-file-selection-ok-button window)
+     "clicked" (lambda () 
+		 (p (gtk-file-selection-get-filename window))
+		 (gtk-widget-destroy window)
+		 ))
+			  
+    (gtk-signal-connect 
+     (gtk-file-selection-cancel-button window)
+     "clicked" (lambda () (gtk-widget-destroy window)))
+
+    (gtk-file-selection-hide-fileop-buttons window)
+    (gtk-widget-show window)
+))

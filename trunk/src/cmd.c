@@ -278,6 +278,23 @@ update_wfile_waves(GWDataFile *wdata)
 	}
 }
 
+
+SCM_DEFINE(wavepanel_add_variable_x, "wavepanel-add-variable!", 2, 0, 0,
+	   (SCM wavepanel, SCM var),
+	   "Add variable VAR to the display in WAVEPANEL.")
+#define FUNC_NAME s_wavepanel_add_variable_x
+{
+	WavePanel *wp;
+	WaveVar *wv;
+	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+	VALIDATE_ARG_WaveVar_COPY(1,var,wv);
+
+	if(wv)
+		add_var_to_panel(wp, wv);
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 /*
  * Add a new waveform to a WavePanel, creating a new VisibleWave.
  * If no wavepanel is specified, try to use the "current" wavepanel,
@@ -327,6 +344,8 @@ add_var_to_panel(WavePanel *wp, WaveVar *dv)
 		draw_wavepanel(wp->drawing, NULL, wp);
 	}
 }
+
+
 
 /*
  * called with g_list_foreach to update a WavePanel from all of its

@@ -46,4 +46,21 @@
 		       (newline)))
 )))
 
+
+(append-hook!
+ new-wavelist-hook
+ (lambda (df)
+;   (display "in extra-menus new-wavelist-hook for") (display df) (newline)
+   (let* ((mbar (wavefile-listwin-menubar df))
+	  (menu (menu-create mbar "Debug")))
+       (add-menuitem menu "List Variables" 
+		     (lambda () 
+		       (display (wavefile-variables df))
+		       (newline)
+		     ))
+       (add-menuitem menu #f #f)
+       )))
+
+
+
 (dbprint "extra-menus.scm done\n")
