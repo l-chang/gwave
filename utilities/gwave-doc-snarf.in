@@ -1,0 +1,146 @@
+#!@GUILE@ \
+-e main -s
+!#
+; 
+; gwave-doc-snarf - extract embedded documentation from the output of
+; the C preprocessor run on C code that uses the xsnarf.h macros
+;
+(use-modules (ice-9 getopt-long)
+	     (ice-9 common-list)
+	     (ice-9 format)
+	     (ice-9 regex)
+	     (srfi srfi-13))
+
+(debug-enable 'debug 'backtrace)
+(read-enable 'positions)
+
+;(display "gwave-doc-snarf running\n")
+
+(define opts (getopt-long (program-arguments)
+             `((verbose      (single-char #\v))
+	       (debug        (single-char #\x))
+	       )))
+
+(define opt-verbose
+  (let ((a (assq 'verbose opts)))
+    (if a
+        (cdr a)
+        #f)))
+
+(define opt-debug
+  (let ((a (assq 'debug opts)))
+    (if a
+        (cdr a)
+        #f)))
+
+(define cmdline-files (pick string? (assq '() opts)))
+
+;-----------------------------------------------------------------------------
+
+(define (main a)
+  (for-each 
+   (lambda (f)
+     (if opt-debug (format #t "~a:\n" f))
+     (let ((fp (open-file f "r")))
+       (with-input-from-port fp
+	 (lambda ()
+	   (process-file f))))
+     )
+   cmdline-files)
+)
+
+(define (process-docentry e)
+  (let*((doctype (cadr (assoc 'type e)))
+	(name (cadr (assoc 'fname e)))
+	(doclist (cdr (assoc 'doc e)))
+	(argstr (cadr (assoc 'arglist e)))
+	(src-file (cadr (assoc 'location e)))
+	(src-line (caddr (assoc 'location e)))
+	(arglist (split-arglist argstr))
+	)
+    (if opt-debug (begin
+		    (format #t "name: ~s\n" name)
+		    (format #t "type: ~s\n" doctype)
+		    (format #t "location: ~s\n" (cdr (assoc 'location e)))
+		    (format #t "arglist: ~s\n" argstr)
+		    (format #t "argsig: ~s\n" (cdr (assoc 'argsig e)))
+		    (format #t "doc: ~s\n" doclist)))
+    (display "\f\n")
+    (cond
+     ((eq? doctype 'primitive)
+      (format #t "(~a~a)\n" name (string-join arglist " " 'prefix)))
+     ((eq? doctype 'vcell)
+      (format #t "VARIABLE ~a\n" name))
+     ((eq? doctype 'concept)
+      (format #t "CONCEPT ~a\n" name))
+     ((eq? doctype 'hook)
+      (format #t "HOOK (~a~a)\n" name (string-join arglist " " 'prefix))))
+
+    (for-each (lambda (s)
+		(format #t "~a\n" s))
+	      doclist)
+    (format #t "[~a:~d]\n" src-file src-line)))
+
+;
+; Split a string STR into a list of strings, on boundaries determined by
+; where the regexp RE matches.
+;
+(define (split re str)
+  (let ((r (make-regexp re)))
+    (let loop ((s str)
+	       (result '()))
+      (let ((m (regexp-exec r s)))
+	(if (not m)
+	    (if (< 0 (string-length s))
+		(reverse! (cons s result))
+		(reverse! result))
+	    (if (< 0 (string-length (match:prefix m)))
+		(loop (match:suffix m) (cons (match:prefix m) result))
+		(loop (match:suffix m) result)))
+	))))
+
+; Use the read-hash-extend facility to add a syntax for constant
+; regular expressions that are to be compiled once when read in,
+; instead of during the normal flow of execution.   This can let loops
+; that repeatedly use a constant regexp be optimized without moving the
+; expression's definition far away from its use.
+;
+; With this hash-extension, these two expressions behave identicaly:
+;
+; (regexp-exec (make-regexp "de+") "abcdeeef"))
+; (regexp-exec #+"de+" "abcdeeef")
+;
+(read-hash-extend #\+ (lambda (c port)
+		  (let ((s (read port)))
+		    (if (string? s)
+			(make-regexp s)
+			(error "bad #+ value; string expected")))))
+
+;
+; split the C argument-list string, which looks like "(SCM foo, SCM bar)"
+; into a list of strings, each containing the name of one argument.
+;
+(define (split-arglist s)
+  (let* (
+	 (s1 (regexp-substitute/global #f #+"^[ \t]*\\(" s 'post))
+	 (s2 (regexp-substitute/global #f #+"\\)[ \t]*$" s1 'pre))
+	 (s3 (regexp-substitute/global #f #+"[ \t]*SCM[ \t]*" s2 'pre 'post))
+	 )
+      (split "," s3)))
+
+
+(define (process-file fname)
+  (let ((rcaret (make-regexp "^\\^\\^")))
+    (do ((line (read-line) 
+	       (read-line)))
+	((eof-object? line) #f)
+      (if (regexp-exec rcaret line)
+	  (begin
+	    (call-with-input-string 
+	     (string-drop line 2)
+	     (lambda (p)
+	       (let ((slist (read p)))
+		 (process-docentry slist)
+		 ))))))))
+
+;-----------------------------------------------------------------------------
