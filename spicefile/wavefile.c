@@ -253,6 +253,7 @@ wf_init_dataset(WDataSet *ds)
 	ds->bptr = g_new0(double *, ds->bpsize);
 	ds->bptr[0] = g_new(double, DS_DBLKSIZE);
 	ds->bpused = 1;
+	ds->nreallocs = 0;
 }
 
 /*
@@ -278,6 +279,7 @@ wf_expand_dset(WDataSet *ds)
 	if(ds->bpused >= ds->bpsize) {
 		ds->bpsize *= 2;
 		ds->bptr = g_realloc(ds->bptr, ds->bpsize * sizeof(double*));
+		ds->nreallocs++;
 	}
 	ds->bptr[ds->bpused++] = g_new(double, DS_DBLKSIZE);
 }

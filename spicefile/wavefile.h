@@ -55,6 +55,7 @@ struct _WDataSet {
 	double **bptr;
 	int bpsize; /* size of array of pointers */
 	int bpused; /* number of blocks actually allocated */
+	int nreallocs;
 };
 
 /* Wave Variable - used for independent or dependent variable.
