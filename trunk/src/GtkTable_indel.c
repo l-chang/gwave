@@ -34,7 +34,7 @@ gtk_table_move_row(GtkTable *table, int from, int to)
 
 		if(table_child->top_attach == from) {
 			if(nch == table->ncols) {
-				printf("too many children on row %d\n", from);
+				g_error("gtk_table_move_row: too many children on row %d\n", from);
 				abort();
 			}
 			row_children[nch++] = *table_child;
@@ -129,7 +129,7 @@ gtk_table_delete_row(GtkWidget *widget, int row)
 	while(del_list) {
 		GtkWidget *child;
 		child = del_list->data;
-		printf("remove child 0x%lx\n", child);
+		/* printf("remove child 0x%lx\n", child); */
 		gtk_container_remove(GTK_CONTAINER(table), child);
 		del_list = g_list_remove(del_list, child);
 	}

@@ -157,7 +157,6 @@ remove_wave_from_panel(WavePanel *wp, VisibleWave *vw)
 	} else {
 		gtk_table_delete_row(wp->lmtable, row);
 	}
-/*	gtk_widget_destroy(vw->button); */
 
 	gdk_gc_destroy(vw->gc);
 	g_free(vw->varname);

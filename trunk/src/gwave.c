@@ -68,7 +68,6 @@ GdkColormap *win_colormap; /* colormap for main waveform window */
 GtkAdjustment *win_hsadj;
 GtkWidget *win_hsbar;
 GtkWidget *win_xlabel_left, *win_xlabel_right;
-GtkWidget *win_status_label;
 GtkTooltips *gwave_tooltips;
 
 
@@ -140,8 +139,10 @@ widget '*wavecolor4' style 'wavecolor4'
 widget '*wavecolor5' style 'wavecolor5'
 style 'cursor0color' { fg[NORMAL] = {1.0, 1.0, 1.0} }
 style 'cursor1color' { fg[NORMAL] = {1.0, 1.0, 0.0} }
+style 'cursorDcolor' { fg[NORMAL] = {00, 1.0, 0.0} }
 widget '*cursor1color' style 'cursor1color'
 widget '*cursor0color' style 'cursor0color'
+widget '*cursorDcolor' style 'cursorDcolor'
 style 'wavebutton' { bg[NORMAL] = { 0.25, 0.25, 0.25 } }
 widget '*wavebutton' style 'wavebutton'
 ";

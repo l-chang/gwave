@@ -36,6 +36,8 @@ typedef struct _WaveTable WaveTable;
 typedef struct _GWDataFile GWDataFile;
 typedef struct _GWDnDData GWDnDData;
 typedef enum _GWMouseState GWMouseState;
+typedef struct _MeasureBtn MeasureBtn;
+
 
 /*
  * state of mouse for drag operations
@@ -62,6 +64,9 @@ struct _WaveTable {
 	WavePanel **panels;
 	GtkWidget *vbox;	/* GtkVBox containing most elements
 				   in main window. */
+	GtkWidget *xmeasure_hbox;  /* hbox with cursor measurements */
+	MeasureBtn *cursor_mbtn[3];
+
 	GtkWidget *xlhbox;	/* GtkHBox containing x-axis labels */
 	GtkWidget *lab_xlogscale;
 	GtkWidget *table;

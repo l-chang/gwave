@@ -21,6 +21,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.11  2001/03/13 06:49:51  sgt
+ * Change label area on the left side of a panel to use a table,
+ * and display two measurements.  measurements are currently the two
+ * cursor values.
+ *
  * Revision 1.10  2000/11/08 07:41:29  sgt
  * wavewin.c - add guile bindings for set-wtable-vcursor! and wtable-xlogscale?
  * gwave.c - change to handcrafted option processing since getopt prints
@@ -234,33 +239,15 @@ update_cursor(VBCursor *csp, double xval)
 
 	/* update name/value label */
 /*	gtk_container_disable_resize(GTK_CONTAINER(win_main)); */
-/*	if(csp == wtable->cursor[0]) { */
-		for(i = 0; i < wtable->npanels; i++) {
-			wp = wtable->panels[i];
-			g_list_foreach(wp->vwlist, vw_wp_visit_update_measure, wp);
-		}
-/*	} */
 
-	/* update status label */
-	lbuf[0] = 0;
-	if(wtable->cursor[0]->shown) {
-		sprintf(abuf, "cursor1: %s", 
-			val2txt(wtable->cursor[0]->xval, 0));
-		strcat(lbuf, abuf);
-	}
-	if(wtable->cursor[1]->shown) {
-		sprintf(abuf, " cursor2: %s", 
-			val2txt(wtable->cursor[1]->xval, 0));
-		strcat(lbuf, abuf);
-	}
-	if(wtable->cursor[0]->shown && wtable->cursor[1]->shown) {
-		sprintf(abuf, " delta: %s", 
-		 val2txt(wtable->cursor[1]->xval - wtable->cursor[0]->xval,0));
-		strcat(lbuf, abuf);
+	for(i = 0; i < wtable->npanels; i++) {
+		wp = wtable->panels[i];
+		g_list_foreach(wp->vwlist, vw_wp_visit_update_measure, wp);
 	}
 
-	gtk_label_set(GTK_LABEL(win_status_label), lbuf);
-/*	gtk_container_enable_resize(GTK_CONTAINER(win_main)); */
+	/* update all measurebuttons, those that show the values of the
+	 cursor, and those that show the value of some WaveVar at a cursor */
+	mbtn_update_all();
 }
 
 static void
