@@ -43,8 +43,8 @@
   (let ((group #f))
 ;    (dbprint "build-radiobutton-box optlist=" optlist "\n")
     (define (add-radiobuttons-to-box cont proc optlist)
-      (format #t "add-radiobutton-to-box ~s ~s\n" 
-	      (car (car optlist)) (cdr (car optlist)))
+;      (format #t "add-radiobutton-to-box ~s ~s\n" 
+;	      (car (car optlist)) (cdr (car optlist)))
       (let ((item (gtk-radio-button-new-with-label group (car (car optlist)))))
 	(if proc
 	    (gtk-signal-connect item "clicked"
