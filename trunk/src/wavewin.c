@@ -3,7 +3,7 @@
  *
  * Functions in this file set up the main waveform window GUI.
  *
- * Copyright (C) 1998, 1999 Stephen G. Tell.
+ * Copyright (C) 1998, 1999, 2000 Stephen G. Tell.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -689,6 +689,22 @@ SCWM_PROC(wtable_set_xlogscale_x, "wtable-set-xlogscale!", 1, 0, 0,
 #undef FUNC_NAME
 
 
+SCWM_PROC(wtable_wavepanels, "wtable-wavepanels", 0, 0, 0,
+	  (SCM xlogscale))
+/** Return list of WavePanels that are currently displayed */
+#define FUNC_NAME s_wtable_wavepanels
+{
+	int i;
+	SCM answer;
+	answer = SCM_EOL;
+	for(i = wtable->npanels-1; i >= 0; i--) {
+		WavePanel *wp = wtable->panels[i];
+		answer = scm_cons(wp->smob, answer); 
+	}
+	return answer;
+}
+#undef FUNC_NAME
+
 SCWM_PROC(wavepanel_x2val, "wavepanel-x2val", 2, 0, 0,
 	  (SCM wavepanel, SCM xpixel))
 /** Given an XPIXEL coordinate in WAVEPANEL, 
@@ -791,6 +807,27 @@ SCWM_PROC(wavepanel_ylogscale_p, "wavepanel-ylogscale?", 1, 0, 0,
 		return SCM_BOOL_T;
 	else
 		return SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+
+SCM  /* Helper for wavepanel_visiblewaves */
+wavepanel_to_scm(WavePanel *wp)
+{
+	return wp->smob;
+}
+
+SCWM_PROC(wavepanel_visiblewaves, "wavepanel-visiblewaves", 1, 0, 0,
+	  (SCM wavepanel))
+/** Return a list of the VisibleWaves contained in WAVEPANEL.
+ */
+#define FUNC_NAME s_wavepanel_visiblewaves
+{
+	WavePanel *wp;
+
+	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+
+	return glist2scm(wp->vwlist, wavepanel_to_scm);
 }
 #undef FUNC_NAME
 

@@ -1,5 +1,8 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20000518:
+- Logarithmic scales working on both X and Y axis.
+
 New in 20000509:
 - First public guile/guile-gtk release.
 - Popup menu on visible-wave button can activate per-waveform dialog box
@@ -8,7 +11,7 @@ New in 20000509:
 New in 20000108:
 - Merged in guile and guile-gtk; the GUI is mostly written in guile now.
 - Some additional improvements to reading of HSPICE input.  Reading partial
-files from simulations still in progress works for ascii .tr0 files now.
+files from simulations still in progress works for ascii .tr0 files.
 
 New in 1990716:
 Improved handling of HSPICE ascii format in libspicefile - tested on files

@@ -29,6 +29,7 @@
 ; zoom relative to current position.
 ; if zoom factor > 1,  zooms in
 ; if zoom factor < 1,  zooms out
+; TODO: make this do the right thing when the X scale is logarithmic.
 (define-public (x-zoom-relative! zf)
   (let* ((sx (wtable-start-xval))
 	 (ex   (wtable-end-xval))

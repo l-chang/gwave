@@ -20,6 +20,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2000/01/07 06:33:44  tell
+ * Merged in the guile and guile-gtk stuff
+ *
  * Revision 1.6  1999/05/28 23:06:12  tell
  * change to use spicefile library to read data.
  * Add "file" menu to wavelist window
@@ -588,13 +591,12 @@ SCWM_PROC(wavefile_list, "wavefile-list", 0, 0, 0, ())
 /** Returns a list containing all waveform data files */
 #define FUNC_NAME s_wavefile_list
 {
-/*	return sgtk_list2scm(wdata_list, wavefile_to_scm); */
 	return glist2scm(wdata_list, wavefile_to_scm);
 }
 #undef FUNC_NAME
 
-/* standard SMOB functions for GWDataFile: free, mark, print, GWDataFile */
 
+/* standard SMOB functions for GWDataFile: free, mark, print, GWDataFile? */
 scm_sizet
 free_GWDataFile(SCM obj)
 {

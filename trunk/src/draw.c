@@ -126,6 +126,7 @@ int val2y(double val, double top, double bot, int height, int log)
 	return height - ((height-4) * frac) - 2;
 }
 
+/* convert pixmap X coordinate to user independent-variable value */
 double x2val(WavePanel *wp, int x, int log)
 {
 	int w = wp->drawing->allocation.width;
@@ -135,20 +136,21 @@ double x2val(WavePanel *wp, int x, int log)
 		double a;
 		a = frac * (log10(wp->end_xval) - log10(wp->start_xval)) 
 			+ log10(wp->start_xval);
-		return pow(a, 10);
+		return pow(10, a);
 	} else {
 		return frac * (wp->end_xval - wp->start_xval) 
 			+ wp->start_xval;
 	}
 }
 
+/* convert independent-variable value to pixmap X coordinate */
 int val2x(WavePanel *wp, double val, int log)
 {
 	int w = wp->drawing->allocation.width;
 	double frac;
 
 	if(log) {
-		if(val < 0 || wp->start_xval)
+		if(val < 0 || val < wp->start_xval)
 			return -1;
 
 		frac = (log10(val) - log10(wp->start_xval)) /
@@ -166,8 +168,9 @@ int val2x(WavePanel *wp, double val, int log)
  * gets data value and draws a line for every pixel.
  * will exhibit aliasing if data has samples at higher frequency than
  * the screen has pixels.
- * We know how to do this right, but working on other things have taken
- * precedence.
+ * We know how to do this right, but working on other things has taken
+ * precedence.  Remarkably, this isn't particularly slow or ugly looking.
+ *
  * ALSO TODO: smarter partial redraws on scrolling, expose, etc.
  */
 /* vw_wp_visit_draw(gpointer p, gpointer d) */
@@ -202,7 +205,7 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 	}
 	g_assert(vw->gc != NULL);
 
-	xstep = (wp->end_xval - wp->start_xval)/w;
+	xstep = (wp->end_xval - wp->start_xval)/w;  /* linear only */
 
 	x1 = 0;
 	yval = wv_interp_value(vw->var, wp->start_xval);
@@ -211,7 +214,7 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 	for(i = 0, xval = wp->start_xval; i < w; i++ ) {
 		x0 = x1; y0 = y1;
 		x1 = x0 + 1;
-		if(vw->var->wv_iv->wds->min <= xval 
+		if(vw->var->wv_iv->wds->min <= xval
 		   && xval <= vw->var->wv_iv->wds->max) {
 
 			yval = wv_interp_value(vw->var, xval);
