@@ -20,6 +20,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.19  2002/04/19 17:21:33  sgt
+ * Add configure check for scm_c_read_string, and finish ifdeffing in gwave.c
+ * so that we build and run properly on 1.3.4 again.
+ * Fix a snarf-macro renaming that we missed in wavelist.c
+ *
  * Revision 1.18  2002/03/28 06:35:21  sgt
  * Snarfing overhaul to make it guile-version-independent
  * now compiles and runs under guile-1.5.6
@@ -709,6 +714,57 @@ XSCM_DEFINE(variable_wavefile, "variable-wavefile", 1, 0, 0,
 }
 #undef FUNC_NAME
 
+XSCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
+	    (SCM varlist, SCM port, SCM from, SCM to),
+"Write the data for all variables in VARLIST to PORT in tabular ascii form"
+"If FROM and TO are specified, writes only data points for which the"
+"independent variable is between FROM and TO includsive."
+"All variables in VARLIST must share the same independent variable")
+#define FUNC_NAME s_export_variables
+{
+	SCM l, v;
+	WaveVar *wv;
+	WaveVar *iv = NULL;
+	double from_val, to_val;
+	int starti, endi, i;
+	double x,y;
+	int idx;
+	char buf[128];
+	/* validate varlist and count elements */
+	for (l = varlist; SCM_NNULLP(l); l = SCM_CDR (l)) {
+                v = SCM_CAR(l);
+		VALIDATE_ARG_WaveVar_COPY(1,v,wv);
+		if(iv == NULL)
+			iv = wv->wv_iv;
+		else if(iv != wv->wv_iv) {
+			scm_misc_error(FUNC_NAME, "All WaveVars in VARLIST must relate to the same independent variable", SCM_UNDEFINED);
+		}
+	}
+	VALIDATE_ARG_DBL_COPY_USE_DEF(3,from,from_val, iv->wds[0].min);
+	VALIDATE_ARG_DBL_COPY_USE_DEF(4,to,to_val, iv->wds[0].max);
+	
+	if(from_val > to_val)
+		return SCM_UNSPECIFIED;
+	starti = wf_find_point(iv, from_val);
+	endi = wf_find_point(iv, to_val);
+	
+	for(i = starti; i <= endi; i++) {
+		x = wds_get_point(&iv->wds[0], i);
+		sprintf(buf, "%g", x); 
+		scm_puts(buf, port);
+		for (l = varlist; SCM_NNULLP(l); l = SCM_CDR (l)) {
+			v = SCM_CAR(l);
+			VALIDATE_ARG_WaveVar_COPY(1,v,wv);
+			y = wds_get_point(&wv->wds[0], i);
+			sprintf(buf, " %g", y); 
+			scm_puts(buf, port);
+		}
+		scm_puts("\n", port);
+	}
+
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
 
 /*
  * On the C side we never free WaveVars without freeing the whole
