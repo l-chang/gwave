@@ -12,13 +12,10 @@ Chapel Hill, NC 27599-3175
 tell@cs.unc.edu
 
 Installation:
-	Edit the top of the makefile if necessary
-	Compile with GNU make.
-	test gwave on some files in the examples directory
-	Copy the "gwave" binary to your favorite bin
+	See the INSTALL file
 
 Usage:
-wave [-t filetype] [-p number-of-panels] your-waveform-file
+	gwave [-t filetype] [-p number-of-panels] your-waveform-file ...
 
 Number-of-panels defaults to 2.  It understands CAzM transient output
 (.N/.B/.W) files, and the binary and ascii outputs from HSPICE (.tr0,
@@ -56,6 +53,7 @@ This tool is far from complete. Partial contents of the To Do list:
 - Speed up redraws and minimize flashing, especialy flashing 
   of waveform name/value labels when moving cursors.
 - Generate a postscript representation for printing or documentation.
+	(partly done)
 - Override of wave and panel paramters, like min/max Y value, color, etc.
 - Saving and restoring waveform/panel configuration 
 - Drawing a labeled graticule in the waveform area

@@ -1,3 +1,35 @@
+
+Some sketchy installation notes for gwave. 
+
+Prerequesites:
+	Gtk-1.2
+	Guile 1.3.4
+	Guile-Gtk 0.17
+	GNU Plotutils-2.2 or later (only needed for ploting/exporting)
+
+On Red Hat Linux 6.1, I use these RPMs:
+	gtk+-1.2.5-2
+	gtk+-devel-1.2.5-2
+	glib-1.2.5-1
+	glib-devel-1.2.5-1
+	guile-gtk-28Sep99-1gjb
+	guile-1.3.4-1gjb
+Those last two come from the SCWM site,  http://scwm.mit.edu/scwm/
+
+I recommend verifying that guile, gtk, and guile-gtk all work
+individualy before trying to build gwave using them.
+
+Then, run configure as described below.
+
+
+Known configure/install problems:
+configure does not always identify the correct "graph" program.  We need 
+GNU graph, from the GNU plotutils, not the old berkely/sysv "graph" program
+sometimes found on vendor unixes.  Workaround: run configure as
+	GRAPH="/path/to/gnu/graph" ./configure ...
+
+
+
 Basic Installation
 ==================
 

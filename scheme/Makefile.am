@@ -2,7 +2,10 @@
 
 guiledir=$(datadir)/guile/app/gwave
 
-guile_DATA=system.gwaverc cmds.scm minimal.scm std-args.scm std-menus.scm std-toolbar.scm options.scm
+guile_DATA=system.gwaverc cmds.scm  dynlink.scm globals.scm minimal.scm \
+	options.scm std-args.scm std-menus.scm std-toolbar.scm
+
+EXTRA_DIST=$(guile_DATA)
 
 # ggtkhack_DATA gets set by configure to .scm files needed to patch around 
 # guile-gtk problems on specific installations.

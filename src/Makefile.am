@@ -5,9 +5,11 @@ INCLUDES=-I$(top_srcdir)/spicefile
 
 bin_PROGRAMS = gwave
 
-gwave_SOURCES = cmd.c gtkmisc.h wavewin.c draw.c gwave.c event.c gwave.h \
+gwave_SOURCES = cmd.c wavewin.c draw.c gwave.c event.c \
 	gtkmisc.c pixmaps.c wavelist.c dnd.c \
-	scwm_guile.c guile-compat.c init_scheme_string.c print.c
+	scwm_guile.c guile-compat.c init_scheme_string.c print.c \
+	gwave.h gtkmisc.h wavewin.h wavelist.h scwm-snarf.h \
+	guile-compat.h arg_unused.h scwm_guile.h validate.h
 gwave_LDADD = $(top_srcdir)/spicefile/libspicefile.a  @GTK_LIBS@ @GUILEGTK_LIBS@ 
 gwave_LDFLAGS =  @GUILE_LDFLAGS@
 
@@ -39,5 +41,5 @@ CLEANFILES = core *~ $(BUILT_SOURCES)
 DISTCLEANFILES = core *~
 MAINTAINERCLEANFILES = core *~
 
-EXTRA_DIST=gwave.gtkrc
+EXTRA_DIST=gwave.gtkrc scwm-snarf generate_scm_init_funcs
 
