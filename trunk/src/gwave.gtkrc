@@ -1,0 +1,44 @@
+#
+# gtkrc for experimental wave viewer 
+#
+
+#
+# style <name> [= <name>]
+# {
+#   <option>
+# }
+#
+# widget <widget_set> style <style_name>
+# widget_class <widget_class_set> style <style_name>
+#
+
+style "cursor1"
+{
+	fg[NORMAL] = {1.0, 1.0, 1.0}
+}
+
+# This sets the waveform button background.
+style "wavebutton" { bg[NORMAL] = { 0.25, 0.25, 0.25 } }
+widget "*wavebutton" style "wavebutton"
+
+#
+# Waveforms and waveform-button labels will use this set of 6 colors.  
+# If there are not 6 of them here, the waveform-label buttons will get
+# the default black, and the waveform itself will get drawn in black also,
+# which won't be visible at all if the background is also black.
+#
+
+style "wavecolor0" { fg[NORMAL] = {0.4, 0.5, 1.0 } }		# blue
+style "wavecolor1" { fg[NORMAL] = {1.0, 0.0, 0.0} }	# red
+style "wavecolor2" { fg[NORMAL] = {0.0, 1.0, 0.0} }	# green
+style "wavecolor3" { fg[NORMAL] = {1.0, 1.0, 0.0} }	# yellow
+style "wavecolor4" { fg[NORMAL] = {0.0, 1.0, 1.0} }	# cyan
+style "wavecolor5" { fg[NORMAL] = {1.0, 0.0, 1.0} }	# purple
+
+
+widget "*wavecolor0" style "wavecolor0"
+widget "*wavecolor1" style "wavecolor1"
+widget "*wavecolor2" style "wavecolor2"
+widget "*wavecolor3" style "wavecolor3"
+widget "*wavecolor4" style "wavecolor4"
+widget "*wavecolor5" style "wavecolor5"
