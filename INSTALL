@@ -4,7 +4,7 @@ Some installation notes for gwave.
 Prerequesites:
 	Gtk-1.2		(http://www.gtk.org/)
 	Guile		(http://www.gnu.org/software/guile/guile.html)
-	Guile-Gtk	(http://www.nongnu.org/guile-gtk/)
+	Guile-Gtk	(http://www.gnu.org/software/guile-gtk/)
 	GNU Plotutils-2.4.1 or later with patches
 			(optional, only used for ploting/exporting)
 	GNUPlot		(optional, only used for ploting/exporting)
@@ -18,7 +18,7 @@ Red Hat Linux 9 is my primary development platform. I use these rpms:
 	glib-1.2.10-10		(Standard With RH9)
 	glib-devel-1.2.10-10	(Standard With RH9)
 	guile-1.6.4-7.1		(ftp://ftp.redhat.com/pub/redhat/linux/rawhide/i386)
-	guile-gtk-1.2_0.31-1sgt	 (http://www.telltronics.org/pub/guile/guile-gtk-0.19-1.i386-redhat9.rpm)
+	guile-gtk-1.2_0.31-1sgt	 (http://www.telltronics.org/pub/guile/guile-gtk-1.2_0.31-1sgt.i386.rpm)
 
 Red Hat 8.0 has been tested with:
 	gtk+, gtk+-devel, glib, glib-devel	(Standard with RH8)
