@@ -18,6 +18,12 @@
  *
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  1998/12/26 04:31:58  tell
+ * Initial revision
+ *
+ * Revision 1.11  1998/11/09 20:21:49  tell
+ * bumped version to 0.0.5
+ *
  * Revision 1.10  1998/09/30 21:42:13  tell
  * Add stuff for zoom-window, and update version to 0.0.4
  *
@@ -70,13 +76,13 @@
 #include <sys/time.h>
 
 #include <gtk/gtk.h>
-
+#include <config.h>
 #include "reader.h"
 #include "gwave.h"
 
 /* globals */
-char *prog_name = "gwave";
-char *prog_version = "0.0.5";
+char *prog_name = PACKAGE;
+char *prog_version = VERSION;
 int colors_initialized = 0;
 int x_flag, v_flag;
 WaveTable *wtable;
@@ -86,12 +92,15 @@ char *bg_color_name  = "black" ;
 GdkColor bg_gdk_color;
 GdkGC *bg_gdk_gc;
 
-GtkAdjustment *win_hsadj;
 GtkWidget *win_main;
+GdkColormap *win_colormap; /* colormap for main waveform window */
+
+/* TODO: make these members of the global wtable structure instead of
+ * globals in their own right */
+GtkAdjustment *win_hsadj;
 GtkWidget *win_hsbar;
 GtkWidget *win_xlabel_left, *win_xlabel_right;
 GtkWidget *win_status_label;
-GdkColormap *win_colormap; /* colormap for main waveform window */
 
 /*
  * usage -- prints the standard switch info, then exits.
@@ -134,6 +143,14 @@ widget '*wavecolor5' style wavecolor5
 style 'wavebutton' { bg[NORMAL] = { 0.25, 0.25, 0.25 } }
 widget '*wavebutton' style 'wavebutton'
 ";
+
+/* 
+ * adaptor stub to call cmd_show_wave_list from a g_list_foreach
+ */
+void fe_show_wave_list(GWDataFile *wdata)
+{
+	cmd_show_wave_list(NULL, wdata);
+}
 
 int main(int argc, char **argv)
 {
@@ -189,20 +206,23 @@ int main(int argc, char **argv)
 
 	wtable = g_new0(WaveTable, 1);
 	wtable->npanels = npanels;
-	wtable->panels = g_new0(WavePanel, npanels);
+	wtable->panels = g_new0(WavePanel*, npanels);
+	for(i = 0; i < npanels; i++) {
+		wtable->panels[i] = g_new0(WavePanel, 1);
+	}
 	wtable->cursor[0] = g_new0(VBCursor, 1);
 	wtable->cursor[1] = g_new0(VBCursor, 1);
 	wtable->srange = g_new0(SelRange, 1);
 
 	/* manualy set up the waves into specific WavePanels
 	* Now that the gui allows (re)configuration of the wave/panel setup,
-	* this doesn't have much use except for quicker testing things.
+	* this doesn't have much use except for testing.
 	*/
 	if(fillpanels) {
 		GWDataFile *wdata = g_list_nth_data(wdata_list, 0);
 		if(wdata) {
 			for(i = 0; i < wdata->df->ndv; i++) {
-				add_var_to_panel(&wtable->panels[i % npanels],
+				add_var_to_panel(wtable->panels[i % npanels],
 						 wdata->df->dv[i]);
 			}
 		}
@@ -213,6 +233,15 @@ int main(int argc, char **argv)
 	setup_colors(wtable);
 	setup_waveform_window();
 
+	/* this is not enough to get the main window mapped and displayed 
+	   so that the wave_list windows can be positioned relative to it.
+	   At least by waiting until now to build the wavelist windows, 
+	   they will probably end up on top of the main window, instead
+	   of under it.*/
+	/* gtk_main_iteration();  */
+	g_list_foreach(wdata_list, 
+		       (GFunc)fe_show_wave_list, NULL);
 	gtk_main();
 	return EXIT_SUCCESS;
 }
+
