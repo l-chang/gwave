@@ -4,6 +4,7 @@
 
 (define-module (app gwave cmds)
   :use-module (gtk gtk)
+  :use-module (ice-9 optargs)
 )
 (read-set! keywords 'prefix)
 
@@ -123,40 +124,12 @@
     (make-button vbox "Close" (lambda () (gtk-widget-destroy window)))
     (gtk-widget-show window)))
 
-(define-public (prompt-name-load-file)
-  (let* ((window (gtk-file-selection-new "file selection"))
-         (button #f))
-    (gtk-signal-connect
-     (gtk-file-selection-ok-button window)
-     "clicked" (lambda () 
-;		 (display (gtk-file-selection-get-filename window)) (newline)
-		 (load-wavefile! (gtk-file-selection-get-filename window))
-		 (gtk-widget-destroy window)
-		 ))
-			  
-    (gtk-signal-connect 
-     (gtk-file-selection-cancel-button window)
-     "clicked" (lambda () (gtk-widget-destroy window)))
-
-    (gtk-file-selection-hide-fileop-buttons window)
-
-; TODO: put a selector for file type in the action-area
-;    (set! button (gtk-button-new-with-label "Show Fileops"))
-;    (gtk-signal-connect 
-;     button "clicked"
-;     (lambda () (gtk-file-selection-show-fileop-buttons window)))
-;    (gtk-box-pack-start (gtk-file-selection-action-area window)
-;                        button #f #f 0)
-;    (gtk-widget-show button)
-
-    (gtk-widget-show window)
-))
-
 ;
 ; Put up a file-selection dialog with title S.
 ; When file seleted, run procedure P, passing it the name of the file.
+; Optionaly, a default suggested filename can be specified
 ;
-(define-public (with-selected-filename s p)
+(define*-public (with-selected-filename s p #&key default)
   (let* ((window (gtk-file-selection-new s))
          (button #f))
     (gtk-signal-connect
@@ -170,6 +143,8 @@
      (gtk-file-selection-cancel-button window)
      "clicked" (lambda () (gtk-widget-destroy window)))
 
+    (if (bound? default)
+	(gtk-file-selection-set-filename window default))
     (gtk-file-selection-hide-fileop-buttons window)
     (gtk-widget-show window)
 ))
@@ -187,8 +162,12 @@
     (let ((hn (length (wtable-wavepanels))))
       (if (< hn rn)
 	  (begin
-	    (print "need " (- rn hn) " more wavepanels\n")
-	    ))))
+	    (print "need " (- rn hn) " more wavepanels\n")))
+      (do ((i hn
+	      (+ i 1)))
+	  ((not (< i rn)))
+	(wtable-insert-typed-panel! #f default-wavepanel-type))
+      ))
 
 (define-public (nth-wavepanel n)
   (list-ref (wtable-wavepanels) n))
@@ -211,7 +190,46 @@
 ;
 ; Write out a guile script that when executed by a future gwave,
 ; will restore the configuration of waves displayed from a particular datafile
-;
-(define-public (write-waverestore-script df fname)
+(define-public (write-filerestore-script df fname)
+  (let ((p (open-output-file fname)))
+    (with-output-to-port p 
+      (lambda () 
+	(print "; gwave script\n")
+	(print "(require-n-wavepanels " (length (wtable-wavepanels)) ")\n")
+	(write-wfr-script df)))
+    (close-port p)))
+
+; Similar, but writes configuration-restoring script for all datafiles
+(define-public (write-allrestore-script sname)
+  (let ((p (open-output-file sname)))
+    (with-output-to-port p 
+      (lambda () 
+	(print "; gwave script\n")
+	(print "(require-n-wavepanels " (length (wtable-wavepanels)) ")\n")
+	(for-each (lambda (df) (write-wfr-script df))
+		  (wavefile-list))))
+    (close-port p)))
+
+; write portion of script to restore waves for a single wavefile
+(define (write-wfr-script df)
+  (print "(let ((df (find-or-load-wavefile \"")
+  (print (wavefile-file-name df) "\")))\n")
+  (let ((panels (wtable-wavepanels)))
+    (write-wfrp-lines df panels 0))
+  (print ")\n")
   )
 
+; recursive part of writing script for single wavefile.
+(define (write-wfrp-lines df panels n)
+  (if (not (null? panels))
+      (begin
+	(for-each 
+	 (lambda (vw)
+	   (if (eq? df (visiblewave-file vw))
+	       (print " (wavepanel-add-var-setup df (nth-wavepanel " n
+		      ") \"" 
+		      (visiblewave-varname vw) "\" " 
+		      (visiblewave-color vw) " )\n")
+	       ))
+	 (wavepanel-visiblewaves (car panels)))
+	(write-wfrp-lines df (cdr panels) (+ n 1)))))
