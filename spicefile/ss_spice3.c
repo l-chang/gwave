@@ -214,33 +214,56 @@ sf_readrow_s3raw(SpiceStream *sf, double *ivar, double *dvars)
 	int i;
 	int frownum;
 	char *tok;
+	double v;
 
-	if(fread_line(sf->fp, &sf->linebuf, &sf->lbufsize) == EOF) {
-		return 0;  /* normal EOF */
-	}
-	sf->lineno++;
-	/* first line of a set contains row number, independent variable */
-	tok = strtok(sf->linebuf, " \t\n,");
-	if(!tok) {
-		ss_msg(ERR, msgid, "%s:%d: expected row number", 
-		       sf->filename, sf->lineno);
-		return -1;
-	}
-	if(!isdigit(*tok)) {
-		ss_msg(WARN, msgid, "%s:%d: expected row number, got \"%s\". Note: only one dataset per file is supported, extra garbage ignored", 
-		       sf->filename, sf->lineno, tok);
-		return 0;
-	}
-	frownum = atoi(tok);
-	/* todo: check for expected and maximum row number */
+	if((sf->flags & SSF_PUSHBACK) == 0) {
+		do {
+			if(fread_line(sf->fp, &sf->linebuf, &sf->lbufsize) == EOF) {
+				return 0;  /* normal EOF */
+			}
+			sf->lineno++;
+			/* first line of a set contains row number and independent variable.
+			 * there may be a blank line between line sets
+			 */
+			tok = strtok(sf->linebuf, " \t\n,");
+		} while(!tok);
+		if(!tok) {
+			ss_msg(ERR, msgid, "%s:%d: expected row number", 
+			       sf->filename, sf->lineno);
+			return -1;
+		}
+		if(!isdigit(*tok)) {
+			ss_msg(WARN, msgid, "%s:%d: expected row number, got \"%s\". Note: only one dataset per file is supported, extra garbage ignored", 
+			       sf->filename, sf->lineno, tok);
+			return 0;
+		}
+		frownum = atoi(tok);
+		/* todo: check for expected and maximum row number */
 
-	tok = strtok(NULL, " \t\n,");
-	if(!tok) {
-		ss_msg(WARN, msgid, "%s:%d: expected ivar value", 
-		       sf->filename, sf->lineno);
-		return -1;
+		tok = strtok(NULL, " \t\n,");
+		if(!tok) {
+			ss_msg(WARN, msgid, "%s:%d: expected ivar value", 
+			       sf->filename, sf->lineno);
+			return -1;
+		}
+		v = atof(tok);
+		if(v < sf->ivval) {
+			/* independent-variable value decreased, this must
+			 * be the start of another sweep.  hold the value and
+			 * return flag to caller.
+			 */
+			sf->ivval = v;
+			sf->flags |= SSF_PUSHBACK;
+			return -2;
+		} else {
+			sf->ivval = v;
+			*ivar = v;
+		}
+	} else {
+		/* iv value for start of new sweep was read last time */
+		sf->flags &= ~SSF_PUSHBACK;
+		*ivar = sf->ivval;
 	}
-	*ivar = atof(tok);
 	
 	for(i = 0; i < sf->ndv; i++) {
 		SpiceVar *dv;
@@ -311,19 +334,38 @@ static int
 sf_readrow_s3bin(SpiceStream *sf, double *ivar, double *dvars)
 {
 	int i, rc;
+	double v;
 	double dummy;
-
-	rc = sf_getval_s3bin(sf, ivar);
-	if(rc == 0)		/* file EOF */
-		return 0;
-	if(rc < 0)
-		return -1;
-	if(sf->ivar->ncols == 2) {
-		rc = sf_getval_s3bin(sf, &dummy);
+	
+	if((sf->flags & SSF_PUSHBACK) == 0) {
+		rc = sf_getval_s3bin(sf, &v);
 		if(rc == 0)		/* file EOF */
 			return 0;
 		if(rc < 0)
 			return -1;
+		if(sf->ivar->ncols == 2) {
+			rc = sf_getval_s3bin(sf, &dummy);
+			if(rc == 0)		/* file EOF */
+				return 0;
+			if(rc < 0)
+				return -1;
+		}
+		if(v < sf->ivval) {
+			/* independent-variable value decreased, this must
+			 * be the start of another sweep.  hold the value and
+			 * return flag to caller.
+			 */
+			sf->ivval = v;
+			sf->flags |= SSF_PUSHBACK;
+			return -2;
+		} else {
+			sf->ivval = v;
+			*ivar = v;
+		}
+	} else {
+		/* iv value for start of new sweep was read last time */
+		sf->flags &= ~SSF_PUSHBACK;
+		*ivar = sf->ivval;
 	}
 
 	for(i = 0; i < sf->ncols-1; i++) {

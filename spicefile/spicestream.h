@@ -53,8 +53,11 @@ struct _SpiceStream {
 
 	SSReadRow readrow;  /* func to read one row of data points */
 	SSReadSweep readsweep;  /* func to read one row of data points */
-	int ntables;	/* number of data tables in the file */
-	int nsweepparam; /* number of sweep parameter values at the start of each table */
+	int ntables;	/* number of data tables in the file; not
+			* reliable for all file formats */
+	int nsweepparam; /* number of implicit sweep parameter values at the start
+			  * of each table; may be 0 even for a multi-variate
+			  * sweep in some file formats */
 
 	/* the following stuff is for private use of reader routines */
 	FILE *fp;
@@ -69,10 +72,12 @@ struct _SpiceStream {
 	int read_tables;
 	int read_sweepparam;
 	char *linep;
+	double ivval;
 };
 
 /* values for flags field */
 #define SSF_ESWAP 1
+#define SSF_PUSHBACK 2
 
 #define ss_readrow(sf, ivp, dvp) ((sf->readrow)(sf, ivp, dvp))
 #define ss_readsweep(sf, swp) ((sf->readsweep)(sf, swp))
