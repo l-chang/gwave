@@ -296,7 +296,7 @@ SCM_DEFINE(wavepanel_y_zoom_x, "wavepanel-y-zoom!", 3, 0, 0,
 		wp->end_yval = wp->max_yval;
 	} else {
 		VALIDATE_ARG_DBL_COPY(1, miny, dmin);
-		VALIDATE_ARG_DBL_COPY(1, maxy, dmax);
+		VALIDATE_ARG_DBL_COPY(2, maxy, dmax);
 		wp->man_yzoom = 1;
 		if(dmin < dmax) {
 			wp->start_yval = dmin;
@@ -479,12 +479,12 @@ at that position.")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(wavepanel_extents, "wavepanel-extents", 1, 0, 0,
+SCM_DEFINE(wavepanel_disp_rect, "wavepanel-disp-rect", 1, 0, 0,
 	   (SCM wavepanel),
-"Return a list indicating the extents of the coordinate
-space displayed currently displayed in WAVEPANEL.  
+"Return a list containing coordinates of the space displayed 
+currently displayed by the current zoom setting of WAVEPANEL.  
 The list contains four elements, startX, startY, endX, endY")
-#define FUNC_NAME s_wavepanel_extents
+#define FUNC_NAME s_wavepanel_disp_rect
 {
 	WavePanel *wp;
 	SCM answer = SCM_EOL;
@@ -493,6 +493,24 @@ The list contains four elements, startX, startY, endX, endY")
 	answer = scm_cons( gh_double2scm(wp->end_xval), answer);
 	answer = scm_cons( gh_double2scm(wp->start_yval), answer);
 	answer = scm_cons( gh_double2scm(wp->start_xval), answer);
+	return answer;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(wavepanel_max_rect, "wavepanel-max-rect", 1, 0, 0,
+	   (SCM wavepanel),
+"Return a list containing coordinates of the bounding box of all waveforms
+displayed in WAVEPANEL.
+The list contains four elements, minX, minY, maxX, maxY")
+#define FUNC_NAME s_wavepanel_max_rect
+{
+	WavePanel *wp;
+	SCM answer = SCM_EOL;
+	VALIDATE_ARG_WavePanel_COPY_USE_NULL(1,wavepanel,wp);
+	answer = scm_cons( gh_double2scm(wp->max_yval), answer);
+	answer = scm_cons( gh_double2scm(wp->max_xval), answer);
+	answer = scm_cons( gh_double2scm(wp->min_yval), answer);
+	answer = scm_cons( gh_double2scm(wp->min_xval), answer);
 	return answer;
 }
 #undef FUNC_NAME

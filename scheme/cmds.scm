@@ -173,6 +173,142 @@
     (gtk-widget-show window)))
 
 ;
+; Dialog box to enter new axis limits (zoom setting) for a wavepanel.
+;
+(define-public (show-zoom-dialog! wp)
+  (let* ((window (gtk-widget-new 'GtkWindow
+				 :type         'toplevel
+				 :title        "Gwave axis settings"
+				 :GtkContainer::border_width 5))
+	 (vbox (gtk-vbox-new #f 5))
+	 (hbox (gtk-hbox-new #f 5))
+	 (frame_x (gtk-frame-new "Global X Axis"))
+	 (table_x (gtk-table-new 3 3 #f))
+	 (start_x_entry (gtk-entry-new))
+	 (end_x_entry (gtk-entry-new))
+	 (frame_y (gtk-frame-new "Panel Y Axis"))
+	 (table_y (gtk-table-new 3 4 #f))
+	 (start_y_entry (gtk-entry-new))
+	 (end_y_entry (gtk-entry-new))
+	 (man_y_button (gtk-toggle-button-new-with-label "Auto Full-Scale"))
+	 (max-rect (wavepanel-max-rect wp))
+	 (disp-rect (wavepanel-disp-rect wp))
+	 )
+    (gtk-table-set-row-spacings table_x 3)
+    (gtk-table-set-col-spacings table_x 3)
+    (gtk-table-set-row-spacings table_y 3)
+    (gtk-table-set-col-spacings table_y 3)
+    (gtk-container-add vbox frame_x)
+    (gtk-widget-show frame_x)
+    (gtk-container-add frame_x table_x)
+    (gtk-widget-show table_x)
+    (let ((lab (gtk-label-new "min,max:")))
+      (gtk-table-attach table_x lab 0 1 0 1)
+      (gtk-widget-show lab))
+    (let ((lab (gtk-label-new (number->spice (car max-rect))) ))
+      (gtk-table-attach table_x lab 1 2 0 1)
+      (gtk-widget-show lab))
+    (let ((lab (gtk-label-new (number->spice (caddr max-rect))) ))
+      (gtk-table-attach table_x lab 2 3 0 1)
+      (gtk-widget-show lab))
+
+    (let ((lab (gtk-label-new "Current:")))
+      (gtk-table-attach table_x lab 0 1 1 2)
+      (gtk-widget-show lab))
+    (let ((lab (gtk-label-new (number->spice (car disp-rect))) ))
+      (gtk-table-attach table_x lab 1 2 1 2)
+      (gtk-widget-show lab))
+    (let ((lab (gtk-label-new (number->spice (caddr disp-rect))) ))
+      (gtk-table-attach table_x lab 2 3 1 2)
+      (gtk-widget-show lab))
+
+    (let ((lab (gtk-label-new "New:")))
+      (gtk-table-attach table_x lab 0 1 2 3)
+      (gtk-widget-show lab))
+
+    (gtk-table-attach table_x start_x_entry 1 2 2 3)
+    (gtk-entry-set-text start_x_entry (number->spice (car disp-rect)))
+    (gtk-widget-show start_x_entry)
+    (gtk-table-attach table_x end_x_entry 2 3 2 3)
+    (gtk-entry-set-text end_x_entry (number->spice (caddr disp-rect)))
+    (gtk-widget-show end_x_entry)
+
+	;  second part: Y stuff
+   (gtk-container-add vbox frame_y)
+    (gtk-widget-show frame_y)
+    (gtk-container-add frame_y table_y)
+    (gtk-widget-show table_y)
+    (let ((lab (gtk-label-new "min,max:")))
+      (gtk-table-attach table_y lab 0 1 0 1)
+      (gtk-widget-show lab))
+    (let ((lab (gtk-label-new (number->spice (cadr max-rect))) ))
+      (gtk-table-attach table_y lab 1 2 0 1)
+      (gtk-widget-show lab))
+    (let ((lab (gtk-label-new (number->spice (cadddr max-rect))) ))
+      (gtk-table-attach table_y lab 2 3 0 1)
+      (gtk-widget-show lab))
+
+    (let ((lab (gtk-label-new "Current:")))
+      (gtk-table-attach table_y lab 0 1 1 2)
+      (gtk-widget-show lab))
+    (let ((lab (gtk-label-new (number->spice (cadr disp-rect))) ))
+      (gtk-table-attach table_y lab 1 2 1 2)
+      (gtk-widget-show lab))
+    (let ((lab (gtk-label-new (number->spice (cadddr disp-rect))) ))
+      (gtk-table-attach table_y lab 2 3 1 2)
+      (gtk-widget-show lab))
+
+    (if (wavepanel-y-manual? wp)
+	(gtk-toggle-button-set-state man_y_button #f)
+	(begin
+	  (gtk-toggle-button-set-state man_y_button #t)
+	  (gtk-widget-set-sensitive start_y_entry #f)
+	  (gtk-widget-set-sensitive end_y_entry #f)))
+    (gtk-signal-connect man_y_button "toggled" (lambda ()
+			(if (gtk-toggle-button-active man_y_button)
+			    (begin 
+			      (gtk-widget-set-sensitive start_y_entry #f)
+			      (gtk-widget-set-sensitive end_y_entry #f))
+			    (begin
+			      (gtk-widget-set-sensitive start_y_entry #t)
+			      (gtk-widget-set-sensitive end_y_entry #t)))))
+    (gtk-table-attach table_y man_y_button 0 1 2 3)
+    (gtk-widget-show man_y_button)
+
+    (let ((lab (gtk-label-new "New:")))
+      (gtk-table-attach table_y lab 0 1 3 4)
+      (gtk-widget-show lab))
+    (gtk-table-attach table_y start_y_entry 1 2 3 4)
+    (gtk-entry-set-text start_y_entry (number->spice (cadr disp-rect)))
+    (gtk-widget-show start_y_entry)
+    (gtk-table-attach table_y end_y_entry 2 3 3 4)
+    (gtk-entry-set-text end_y_entry (number->spice (cadddr disp-rect)))
+    (gtk-widget-show end_y_entry)
+
+ ; 3rd part: button row
+    (make-button hbox "OK"
+	(lambda () 
+	  (let ((n_sx (spice->number (gtk-entry-get-text start_x_entry)))
+		(n_ex (spice->number (gtk-entry-get-text end_x_entry)))
+		(n_sy (spice->number (gtk-entry-get-text start_y_entry)))
+		(n_ey (spice->number (gtk-entry-get-text end_y_entry)))
+		)
+	    (x-zoom! n_sx n_ex)
+	    (if (gtk-toggle-button-active man_y_button)
+		(wavepanel-y-zoom! wp #f #f)
+		(wavepanel-y-zoom! wp n_sy n_ey))
+	    (gtk-widget-destroy window))))
+    (make-button hbox "Cancel" (lambda () (gtk-widget-destroy window)))
+    
+    (gtk-widget-show hbox)
+    (gtk-container-add vbox hbox)
+
+    (gtk-widget-show vbox)
+    (gtk-container-add window vbox)
+    (gtk-widget-show window)
+))
+
+;
 ; Put up a file-selection dialog with title S.
 ; When file seleted, run procedure P, passing it the name of the file.
 ; Optionaly, a default suggested filename can be specified
@@ -315,8 +451,8 @@
       (print " (set-wavepanel-ylogscale! wp "(wavepanel-ylogscale? wp) ")\n")
       (print " (set-wavepanel-type! wp " (wavepanel-type wp) ")\n")
       (if (wavepanel-y-manual? wp)
-	  (let ((ext (wavepanel-extents wp)))
-	    (print " (wavepanel-y-zoom! wp " (cadr ext) " " (cadddr ext) ")\n")))
+	  (let ((dr (wavepanel-disp-rect wp)))
+	    (print " (wavepanel-y-zoom! wp " (cadr dr) " " (cadddr dr) ")\n")))
       (print ")\n")
       ))
 )
