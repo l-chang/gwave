@@ -652,7 +652,7 @@ SCWM_PROC(wtable_insert_panel_x, "wtable-insert-panel!", 2, 0, 0,
 #undef FUNC_NAME
 
 SCWM_PROC(wtable_delete_panel_x, "wtable-delete-panel!", 1, 0, 0, (SCM wp))
-/** Add delete panel WP from the waveform display */
+/** Delete panel WP from the waveform display */
 #define FUNC_NAME s_wtable_delete_panel_x
 {
 	WavePanel *cwp;
@@ -712,7 +712,7 @@ SCWM_PROC(set_wavepanel_type_x, "set-wavepanel-type!", 2, 0, 0,
 /* 
  * this binding stuff is really quite a hack; we should build a common
  * mechanism for mouse and keyboard bindings, together with modifiers.
- * but the scheme interface here isn't too far from what that would implement,
+ * But the scheme interface here isn't too far from what that would implement,
  * and this simple thing lets us get the rest of the old menus into guile.
  */
 SCWM_PROC(wavepanel_bind_mouse, "wavepanel-bind-mouse", 2, 0, 0,
@@ -747,7 +747,7 @@ SCWM_PROC(wavepanel_bind_mouse, "wavepanel-bind-mouse", 2, 0, 0,
 scm_sizet
 free_WavePanel(SCM obj)
 {
-	WavePanel *wp =WavePanel(obj);
+	WavePanel *wp = WavePanel(obj);
 	wp->outstanding_smob = 0;
 
 	if(wp->valid == 0) { /* if C has already invalidated, free it up */
@@ -771,7 +771,6 @@ print_WavePanel(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
 {
 	scm_puts("#<WavePanel ", port);
 	scm_intprint((long)WavePanel(obj), 16, port);
-/*	scm_write(scwm_ptr2scm(WavePanel(obj)), port); */
   	if(!WavePanel(obj)->valid)
 		scm_puts("invalid", port);
 	scm_putc('>', port);
@@ -787,13 +786,63 @@ SCWM_PROC(WavePanel_p, "WavePanel?", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-/* guile initialization */
+/*****************************************************************************
+ * Standard stuff for the VisibleWave SMOB */
+
+scm_sizet
+free_VisibleWave(SCM obj)
+{
+	VisibleWave *wp = VisibleWave(obj);
+	wp->outstanding_smob = 0;
+
+	if(wp->valid == 0) { /* if C has already invalidated, free it up */
+		if(v_flag)
+			fprintf(stderr, "free VisibleWave 0x%x in gc\n", wp);
+		g_free(wp);
+		return sizeof(VisibleWave);
+	}
+	else
+		return 0;
+}
+
+SCM
+mark_VisibleWave(SCM obj)
+{
+	return SCM_BOOL_F;
+}
+
+int 
+print_VisibleWave(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
+{
+	scm_puts("#<VisibleWave ", port);
+	scm_intprint((long)VisibleWave(obj), 16, port);
+  	if(!VisibleWave(obj)->valid)
+		scm_puts("invalid", port);
+	scm_putc('>', port);
+	return 1;
+}
+
+SCWM_PROC(VisibleWave_p, "VisibleWave?", 1, 0, 0,
+           (SCM obj))
+     /** Returns #t if OBJ is a gwave data file object, otherwise #f. */
+#define FUNC_NAME s_VisibleWave_p
+{
+	return SCM_BOOL_FromBool(VisibleWave_P(obj));
+}
+#undef FUNC_NAME
+
+
+/*********************************************************************** 
+ * guile initialization 
+ */
 
 MAKE_SMOBFUNS(WavePanel);
+MAKE_SMOBFUNS(VisibleWave);
 
 void init_wavewin()
 {
         REGISTER_SCWMSMOBFUNS(WavePanel);
+        REGISTER_SCWMSMOBFUNS(VisibleWave);
 
 #ifndef SCM_MAGIC_SNARFER
 #include "wavewin.x"

@@ -52,19 +52,6 @@ struct _VBCursor {
 	GdkGC *gdk_gc;
 };
 
-/* VisibleWave -- a waveform and anciliary stuff needed to show it
- *	in a panel.
- */
-struct _VisibleWave {
-	WaveVar *var;
-	GWDataFile *gdf;
-	char *varname;	/* the variable name from the file */
-	int colorn;
-	GdkGC *gc;
-	GtkWidget *label;
-	GtkWidget *button;
-};
-
 /*
  * WaveTable - structure describing
  *  all of the waveform-display panels and related elements

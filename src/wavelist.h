@@ -37,7 +37,9 @@
 #define EXTERN_SET(x,y) extern x
 #endif
 
-/* Stuff to wrap GwDataFile as a SMOB */
+/***********************************************************************
+ * Stuff to wrap GwDataFile as a SMOB 
+ */
 
 EXTERN long scm_tc16_scwm_GWDataFile;
 
