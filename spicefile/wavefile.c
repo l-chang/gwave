@@ -83,6 +83,7 @@ static DFormat format_tab[] = {
 	{"cazm", "\\.[BNW]$" },
 	{"spice3raw", "\\.raw$" },
 	{"spice2raw", "\\.rawspice$" },
+	{"nsout", "\\.out$" },
 	{"ascii", "\\.(asc|acs|ascii)$" }, /* ascii / ACS format */
 };
 static const int NFormats = sizeof(format_tab)/sizeof(DFormat);

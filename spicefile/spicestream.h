@@ -73,6 +73,14 @@ struct _SpiceStream {
 	int read_sweepparam;
 	char *linep;
 	double ivval;
+
+	/* following for nsout format */
+	double voltage_resolution;
+	double current_resolution;
+	double time_resolution;
+	int maxindex;
+	double *datrow;	/* temporary data row indexed by ns indices */
+	int *nsindexes; /* indexed by dvar, contains ns index number */
 };
 
 /* values for flags field */
