@@ -171,7 +171,7 @@ cmd_print(char *file, char *format, int color, int landscape)
 	}
 	graph_argv[graph_argc++] = NULL;
 	printf("running %s", graph_prog);
-	for(i = 0; i < graph_argc; i++) {
+	for(i = 0; i < graph_argc-1; i++) {
 		printf(" %s", graph_argv[i]);
 	}
 	putchar('\n');
