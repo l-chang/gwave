@@ -1,4 +1,4 @@
-/* $Id: validate.h,v 1.1 2000-01-07 06:33:44 tell Exp $
+/* $Id: validate.h,v 1.2 2000-08-11 06:40:47 sgt Exp $
  * validate.h
  * Copyright (C) 1997-1999, Greg J. Badros and Maciej Stachowiak
  *
@@ -229,5 +229,11 @@ NOTE: Assignments to the cvar in the error handling
   else if (!PROCEDURE_OR_SYMBOL_P(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
   } while (0)
 
+
+#define VALIDATE_ARG_GTK_COPY(pos,scm,gtktype,pch) \
+  do { \
+  if (sgtk_is_a_gtkobj(gtktype, scm)) pch = sgtk_get_gtkobj(scm); \
+  else { pch = NULL; scm_wrong_type_arg(FUNC_NAME,pos,scm); } \
+  } while (0)
 
 #endif

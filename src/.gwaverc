@@ -5,22 +5,21 @@
 (debug-enable 'debug)
 (read-enable 'positions)
 
+; example of loading additional modules of guile code.
+; this particular one creates another menu item.
 (use-modules 
- (gtk gtk)
- (gtk gdk)
- (app gwave std-menus)
- (app gwave std-args)
- (app gwave std-toolbar)
- (app gwave cmds)
- (app gwave visiblewave-ops)
  (app gwave extra-menus)
 )
+
+; Uncomment this to turn off tooltips (popup hints on buttons).
+;(gtk-tooltips-disable gwave-tooltips)
+
+; Number of initial wave panels to create.
+(set! initial-panels 2)
 
 ; wavepanel type 0=original, tall, with min/max labels.  Good for analog.
 ;                1=short, no extra labels. Fit more panels for digital.
 ; 0 is the default.
-; BUG: resetting it here affects the panel-creating menu items fine,
-; but doesn't reset the state of the Options/DefaultPanelType radio-menu items.
 (set! default-wavepanel-type 0)
 
 (dbprint "experimental .gwaverc done\n")

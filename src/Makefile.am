@@ -19,7 +19,7 @@ CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILEGTK_CFLAGS@ \
 	-DDATADIR=\"$(datadir)\" @ggtk_hack_cflags@
 
 DOT_X_FILES = gwave.x cmd.x wavewin.x wavelist.x scwm_guile.x event.x \
-	draw.x print.x
+	draw.x print.x gtkmisc.x
 
 DOT_DOC_FILES = gwave.doc cmd.doc wavewin.doc wavelist.doc scwm_guile.doc \
 	event.doc draw.doc print.doc
