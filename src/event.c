@@ -19,6 +19,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  1998/09/01 21:28:20  tell
+ * Initial revision
+ *
  */
 
 #include <ctype.h>
@@ -50,12 +53,14 @@ void
 wavepanel_dnd_drop (GtkWidget *button, GdkEvent *event, gpointer d)
 {
 	WavePanel *wp = (WavePanel *)d;
-	DVar *dvar = *(DVar **)(event->dropdataavailable.data);
+	GWDnDData dd;
+
+	dd = *(GWDnDData *)(event->dropdataavailable.data);
 
 /*	printf("Drop data of type %s was: 0x%lx\n",
 	  event->dropdataavailable.data_type, dvar); */
 
-	add_var_to_panel(wp, dvar);
+	add_var_to_panel(wp, dd.dv);
 }
 
 /* vw_wp_visit_update_labels -- called from g_list_foreach to update the
@@ -65,73 +70,57 @@ void
 vw_wp_visit_update_labels(gpointer p, gpointer d)
 {
 	VisibleWave *vw = (VisibleWave *)p;
-	WavePanel *wp = (WavePanel *)d;
-	double dval;
 	char lbuf[64];
 
-	dval = an_interp_value(vw->var, wtable->cursor[0]->xval);
-	sprintf(lbuf, "%.15s %.3f", vw->var->d.name, dval);
+	vw_get_label_string(lbuf, 64, vw);
 	gtk_label_set(GTK_LABEL(vw->label), lbuf);
 }
 
 /*
- * TODO: implement dragging cursors around instead of this 
- * simple click-to-place stuff.
+ * draw (or undraw) cursor.
  */
-gint click_handler(GtkWidget *widget, GdkEventButton *event, 
-			  gpointer data)
+static void
+draw_cursor(VBCursor *csp)
 {
-
-	double xval;
-	WavePanel *wp = (WavePanel *)data;
-	VBCursor *csp;
-	int h, x,i;
-	char abuf[128];
-	char lbuf[128];
-
-	switch(event->button) {
-	case 1:
-		csp = wtable->cursor[0];
-		break;
-	case 2:
-		csp = wtable->cursor[1];
-		break;
-	default:
-		return 0;
-	}
-
-	xval = x2val(wp, event->x);
-
-	/* undraw old cursor */
-	if(csp->shown) {
-		for(i = 0; i < wtable->npanels; i++) {
-			wp = &wtable->panels[i];
-			h = wp->drawing->allocation.height;
-			if(wp->start_xval <= csp->xval 
-			   && csp->xval <= wp->end_xval) {
-				x = val2x(wp, csp->xval);
-				gdk_draw_line(wp->drawing->window, csp->gdk_gc,
-				      x, 0, x, h);
-			}
-		}
-	}
-
-	csp->xval = xval;
-	csp->shown = 1;
-	/* draw cursor in each panel */
+	int h, x, i;
+	WavePanel *wp;
 	for(i = 0; i < wtable->npanels; i++) {
 		wp = &wtable->panels[i];
 		h = wp->drawing->allocation.height;
 		if(wp->start_xval <= csp->xval 
 		   && csp->xval <= wp->end_xval) {
 			x = val2x(wp, csp->xval);
-			gdk_draw_line(wp->drawing->window,
-				      csp->gdk_gc, x, 0, x, h);
+			gdk_draw_line(wp->drawing->window, csp->gdk_gc,
+			      x, 0, x, h);
 		}
 	}
+}
+
+/*
+ * move cursor at specified location;
+ * turn it on if not on already.
+ */
+static void 
+update_cursor(VBCursor *csp, double xval)
+{
+	WavePanel *wp;
+	int i;
+	char abuf[128];
+	char lbuf[128];
+
+	/* undraw old cursor */
+	if(csp->shown) {
+		draw_cursor(csp);
+	}
+
+	csp->xval = xval;
+	csp->shown = 1;
+	/* draw cursor in each panel */
+	draw_cursor(csp);
 
 	/* update name/value label */
-	if(event->button == 1) {
+	gtk_container_disable_resize(GTK_CONTAINER(win_main));
+	if(csp == wtable->cursor[0]) {
 		for(i = 0; i < wtable->npanels; i++) {
 			wp = &wtable->panels[i];
 			g_list_foreach(wp->vwlist, vw_wp_visit_update_labels, wp);
@@ -154,7 +143,36 @@ gint click_handler(GtkWidget *widget, GdkEventButton *event,
 	}
 
 	gtk_label_set(GTK_LABEL(win_status_label), lbuf);
+	gtk_container_enable_resize(GTK_CONTAINER(win_main));
+}
 
+/*
+ * TODO: implement dragging cursors around instead of this 
+ * simple click-to-place stuff.
+ */
+gint click_handler(GtkWidget *widget, GdkEventButton *event, 
+			  gpointer data)
+{
+	double xval;
+	WavePanel *wp = (WavePanel *)data;
+	VBCursor *csp;
+
+	switch(event->button) {
+	case 1:
+		csp = wtable->cursor[0];
+		break;
+	case 2:
+		csp = wtable->cursor[1];
+		break;
+	default:
+		return 0;
+	}
+
+	xval = x2val(wp, event->x);
+	if(fabs(xval - csp->xval) < DBL_EPSILON && csp->shown)
+		return 0;	/* clicked in same place */
+
+	update_cursor(csp, xval);
 	return 0;
 }
 
@@ -207,10 +225,10 @@ gint expose_handler(GtkWidget *widget, GdkEventExpose *event,
 	if(!colors_initialized) {
 		alloc_colors(widget);
 		colors_initialized = 1;
+	}
 	/*
 	 * Make sure we've got GCs for each visible wave.
 	 */
-	}
 	g_list_foreach(wp->vwlist, (GFunc)vw_wp_setup_gc, wp);
 
 	if ( wp->pixmap ) {
