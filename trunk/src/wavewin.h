@@ -151,6 +151,13 @@ EXTERN long scm_tc16_scwm_VisibleWave;
   } while (0)
 
 
+#define VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(pos,scm,cvar) \
+  do { \
+  if (VisibleWave_P(scm)) cvar = VisibleWave(scm)->var; \
+  else if(WaveVarH_P(scm)) cvar = WaveVarH(scm); \
+  else scm_wrong_type_arg(FUNC_NAME,pos,scm); \
+  } while (0)
+
 /***********************************************************************
  * state related to selecting ranges/regions in X, Y, and XY
  * pixel space of a wavepanel.

@@ -10,6 +10,7 @@
   :use-module (gtk gtk)
   :use-module (gtk gdk)
   :use-module (app gwave std-menus)
+  :use-module (app gwave export)
   :use-module (app gwave globals)
 )
 (read-set! keywords 'prefix)
@@ -52,10 +53,13 @@
 (define (make-vwb3-menu vw)
   (let ((menu (gtk-menu-new)))
     (gtk-widget-show menu)
-    (add-menuitem menu "Wave Options"
-		  (lambda () (popup-vw-options vw)))
     (add-menuitem menu "Move to Top" 
 		  (lambda () (visiblewave-on-top! vw)))
+    (add-menuitem menu "Options..."
+		  (lambda () (popup-vw-options vw)))
+    (add-menuitem menu "Export..."
+		  (lambda () (popup-export-dialog (cons vw '()))))
+    (add-menuitem menu #f #f)
     (add-menuitem menu "Delete" 
 		  (lambda () (visiblewave-delete! vw)))
     menu))

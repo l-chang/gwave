@@ -6,6 +6,7 @@
   :use-module (gtk gtk)
   :use-module (gtk gdk)
   :use-module (app gwave cmds)
+  :use-module (app gwave export)
   :use-module (app gwave globals)
 )
 
@@ -231,6 +232,9 @@
 	  (menu (menu-create mbar "File")))
        (add-menuitem menu "Reload this File" 
 		     (lambda () (wavefile-reload! df)))
+       (add-menuitem menu "Export Data..." 
+		     (lambda () 
+		       (popup-export-dialog (wavefile-all-variables df))))
        (add-menuitem menu "Delete this File"
 		     (lambda () 
 		       (wavefile-delete! df)
