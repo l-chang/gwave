@@ -1,4 +1,4 @@
-## $Id: Makefile.am,v 1.7 2002-01-23 04:07:11 sgt Exp $
+## $Id: Makefile.am,v 1.8 2003-12-03 04:00:53 sgt Exp $
 ## process this file with automake to create Makefile.in
 ## (You should run ./autogen.sh from the top level directory)
 
@@ -18,7 +18,7 @@ EXTRA_DIST=Guile.notes HPUX.notes hspice.txt hspice-output.txt sp2sp.sgml sp2sp.
 
 # Make the reference-document textfiles
 gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt:
-	$(top_srcdir)/utilities/doc-split --basename gwave $(top_srcdir)/src/*.doc
+	@GUILE@ -e main -s $(top_srcdir)/utilities/doc-split --basename gwave $(top_srcdir)/src/*.doc
 
 html: gwave.sgml
 	mkdir -p html && cd html && \
