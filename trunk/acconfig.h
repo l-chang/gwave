@@ -111,3 +111,13 @@
 /* Define this if your readline also has add_history() */
 #undef HAVE_HISTORY
 
+/* Define this libguile/snarf.h SCM_SNARF_DOC takes one argument */
+#undef HAVE_1ARG_SCMSNARFDOC
+
+/* define this scm_eval_x takes a second argument specifying the module */
+#undef HAVE_SCM_EVAL_X_MODULE
+
+/* define this if libguile has scm_the_last_stack_fluid_var */
+#undef HAVE_SCM_THE_LAST_STACK_FLUID_VAR
+
+

@@ -206,8 +206,6 @@ scwm_safe_call7 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM
 
 /* Hooks. */
 
-
-
 /* FIXDOC: We need a way to cross-reference concepts in docs. */
 
 SCM_CONCEPT("Hooks",
@@ -216,11 +214,7 @@ user callbacks on particular events. Fundamentally, a hook is just a
 variable that contains a list of procedures that are called in order
 when the relevant event occurs. However, several convenience macros
 are provided for manipulating hooks; see `add-hook!', `remove-hook!',
-`reset-hook!', and `run-hook'.
-Hooks are a part of later versions of guile, but gwave provides hooks
-even when running under old versions of guile.");
-
-#ifdef HAVE_SCM_MAKE_HOOK
+`reset-hook!', and `run-hook'.");
 
 static SCM run_hook_proc;
 
@@ -281,241 +275,6 @@ scm_empty_hook_p(SCM hook)
   return gh_bool2scm(!gh_pair_p(gh_cddr(hook)));
 }
 
-#else /* !HAVE_SCM_MAKE_HOOK */
-
-
-SCM
-scm_empty_hook_p(SCM hook)
-{
-  return gh_bool2scm(hook == SCM_EOL || UNSET_SCM(hook));
-}
-
-/* Print warning message, and reset the hook */
-void
-WarnBadHook(SCM hook)
-{
-  assert(!gh_list_p(gh_cdr(hook)));
-  { /* scope */ 
-    /* Warn that hook list is not a list. */
-    SCM hook_name = gh_car(hook);
-    char *szHookName = gh_scm2newstr(hook_name, NULL);
-    scwm_msg(WARN,"WarnBadHook","hooklist is not a list for %s; resetting it to ()!", szHookName);
-    gh_free(szHookName);
-    gh_set_cdr_x(hook, SCM_EOL);
-  }
-}
-
-
-SCM call0_hooks (SCM hook)
-{
-  SCM p;
-  SCM hook_list;
-
-  /* Ensure hook list is a list. */
-  hook_list = gh_cdr(hook);
-
-  if (!gh_list_p(hook_list)) {
-    WarnBadHook(hook);
-    return SCM_UNSPECIFIED;
-  }
-
-  for (p = hook_list; p != SCM_EOL; p = gh_cdr(p)) {
-    scwm_safe_call0 (gh_car(p));
-  }
-  
-  return SCM_UNSPECIFIED;
-}
-
-SCM call1_hooks (SCM hook, SCM arg)
-{
-  SCM p;
-  SCM hook_list;
-  /* Ensure hook list is a list. */
-
-  hook_list = gh_cdr(hook);
-
-  if (!gh_list_p(hook_list)) {
-    WarnBadHook(hook);
-    return SCM_UNSPECIFIED;
-  }
-
-  for (p = hook_list; p != SCM_EOL; p = gh_cdr(p)) {
-    scwm_safe_call1 (gh_car(p), arg);
-  }
-  
-  return SCM_UNSPECIFIED;
-}
-
-SCM call2_hooks (SCM hook, SCM arg1, SCM arg2)
-{
-  SCM p;
-  SCM hook_list;
-  /* Ensure hook list is a list. */
-
-  hook_list = gh_cdr(hook);
-
-  if (!gh_list_p(hook_list)) {
-    WarnBadHook(hook);
-    return SCM_UNSPECIFIED;
-  }
-
-  for (p = hook_list; p != SCM_EOL; p = gh_cdr(p)) {
-    scwm_safe_call2 (gh_car(p), arg1, arg2);
-  }
-  
-  return SCM_UNSPECIFIED;
-}
-
-SCM call3_hooks (SCM hook, SCM arg1, SCM arg2, SCM arg3)
-{
-  SCM p;
-  SCM hook_list;
-  /* Ensure hook list is a list. */
-
-  hook_list = gh_cdr(hook);
-
-  if (!gh_list_p(hook_list)) {
-    WarnBadHook(hook);
-    return SCM_UNSPECIFIED;
-  }
-
-  for (p = hook_list; p != SCM_EOL; p = gh_cdr(p)) {
-    scwm_safe_call3 (gh_car(p), arg1, arg2, arg3);
-  }
-  
-  return SCM_UNSPECIFIED;
-}
-
-SCM call4_hooks (SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
-{
-  SCM p;
-  SCM hook_list;
-  /* Ensure hook list is a list. */
-
-  hook_list = gh_cdr(hook);
-
-  if (!gh_list_p(hook_list)) {
-    WarnBadHook(hook);
-    return SCM_UNSPECIFIED;
-  }
-
-  for (p = hook_list; p != SCM_EOL; p = gh_cdr(p)) {
-    scwm_safe_call4 (gh_car(p), arg1, arg2, arg3, arg4);
-  }
-  
-  return SCM_UNSPECIFIED;
-}
-
-
-SCM call5_hooks (SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5)
-{
-  SCM p;
-  SCM hook_list;
-  /* Ensure hook list is a list. */
-
-  hook_list = gh_cdr(hook);
-
-  if (!gh_list_p(hook_list)) {
-    WarnBadHook(hook);
-    return SCM_UNSPECIFIED;
-  }
-
-  for (p = hook_list; p != SCM_EOL; p = gh_cdr(p)) {
-    scwm_safe_call5 (gh_car(p), arg1, arg2, arg3, arg4, arg5);
-  }
-  
-  return SCM_UNSPECIFIED;
-}
-
-SCM call6_hooks (SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
-{
-  SCM p;
-  SCM hook_list;
-  /* Ensure hook list is a list. */
-
-  hook_list = gh_cdr(hook);
-
-  if (!gh_list_p(hook_list)) {
-    WarnBadHook(hook);
-    return SCM_UNSPECIFIED;
-  }
-
-  for (p = hook_list; p != SCM_EOL; p = gh_cdr(p)) {
-    scwm_safe_call6 (gh_car(p), arg1, arg2, arg3, arg4, arg5, arg6);
-  }
-  
-  return SCM_UNSPECIFIED;
-}
-
-SCM call7_hooks (SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6, SCM arg7)
-{
-  SCM p;
-  SCM hook_list;
-  /* Ensure hook list is a list. */
-
-  hook_list = gh_cdr(hook);
-
-  if (!gh_list_p(hook_list)) {
-    WarnBadHook(hook);
-    return SCM_UNSPECIFIED;
-  }
-
-  for (p = hook_list; p != SCM_EOL; p = gh_cdr(p)) {
-    scwm_safe_call7 (gh_car(p), arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-  }
-  
-  return SCM_UNSPECIFIED;
-}
-
-
-SCM scwm_run_hook(SCM hook, SCM args)
-{
-  SCM p;
-  SCM hook_list;
-
-  hook_list = gh_cdr(hook);
-
-  /* Ensure hook list is a list. */
-  if (!gh_list_p(hook_list)) {
-    WarnBadHook(hook);
-    return SCM_UNSPECIFIED;
-  }
-
-  for (p = hook_list; p != SCM_EOL; p = gh_cdr(p)) {
-    scwm_safe_apply (gh_car(p), args);
-  }
-  
-  return SCM_UNSPECIFIED;
-}
-
-
-/* This is needed for running error hooks - if an error hook throws an
-   error, we really don't want to invoke the standard handler (which
-   would invoke the error hooks again), we should just fall through
-   and assume the caller is catching errors and doing something
-   appropriate. */
-
-SCM scwm_run_hook_message_only (SCM hook, SCM args)
-{
-  SCM p;
-  SCM hook_list;
-
-  hook_list = gh_cdr(hook);
-
-  /* Ensure hook list is a list. */
-  if (!gh_list_p(hook_list)) {
-    WarnBadHook(hook);
-    return SCM_UNSPECIFIED;
-  }
-
-  for (p = hook_list; p != SCM_EOL; p = gh_cdr(p)) {
-    scwm_safe_apply_message_only (gh_car(p), args);
-  }
-    
-  return SCM_UNSPECIFIED;
-}
-
-#endif /* HAVE_SCM_MAKE_HOOK */
 
 /* Slightly tricky - we want to catch errors per expression, but only
    establish a new dynamic root per load operation, as it's perfectly
@@ -528,9 +287,12 @@ static SCM
 scwm_body_eval_x (void *body_data)
 {
   SCM expr = *(SCM *) body_data;
+#ifdef HAVE_SCM_EVAL_X_MODULE
+  return scm_eval_x (expr, scm_current_module() );
+#else
   return scm_eval_x (expr);
+#endif
 }
-
 
 __inline__ static SCM 
 scwm_catching_eval_x (SCM expr) {
@@ -589,7 +351,12 @@ scwm_handle_error (void *ARG_IGNORE(data), SCM tag, SCM throw_args)
      now?  */
   if (scm_ilength (throw_args) >= 3)
     {
-      SCM fl = gh_cdr(scm_the_last_stack_fluid);
+      SCM fl;
+#ifdef HAVE_SCM_THE_LAST_STACK_FLUID_VAR
+      fl = SCM_VARIABLE_REF (scm_the_last_stack_fluid_var);
+#else
+      fl = gh_cdr(scm_the_last_stack_fluid);
+#endif
       /* GJB:FIXME:MS: This is a horrible hack,
          but DEREF_LAST_STACK macro was throwing a wrong type 
          argument at weird times, and I'm trying to avoid
@@ -658,9 +425,7 @@ SCM scwm_safe_eval_str (char *string)
 
 void init_scwm_guile()
 {
-#ifdef HAVE_SCM_MAKE_HOOK
   run_hook_proc = gh_lookup("run-hook");
-#endif
 
 #ifndef SCM_MAGIC_SNARFER
 #include "scwm_guile.x"

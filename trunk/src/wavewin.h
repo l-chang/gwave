@@ -166,6 +166,7 @@ struct _SelRange {
 	GdkColor gdk_color;
 	int y1, y2;
 	int x1, x2;
+	int x1_root, y1_root;
 	SCM done_proc;
 };
 

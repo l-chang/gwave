@@ -4,7 +4,7 @@
  * Some drawing things are here if they are related to mouse operations;
  * perhaps they should move.
  *
- * Copyright (C) 1998, 1999 Stephen G. Tell
+ * Copyright (C) 1998-2002 Stephen G. Tell
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.15  2001/12/24 04:10:09  sgt
+ * Add primitives and GUI menu items for Y-zoom and XY-area zoom
+ * add save/restore of Y-zoom state of wavepanels
+ *
  * Revision 1.14  2001/09/22 04:34:58  sgt
  * merge Paul Maurer's patches for better zooming and scrolling in log-xscale
  * mode.
@@ -254,8 +258,16 @@ draw_srange(SelRange *sr)
 }
 
 void
-update_srange(SelRange *sr, int newx2, int newy2, int draw)
+update_srange(SelRange *sr,  GdkEventMotion *event, int draw)
 {
+	int newx2, newy2;
+
+	/* the event->y does goofy things if the motion continues
+	 * outside the window, so we generate our own from the root
+	 * coordinates.  */
+	newx2 = event->x;
+	newy2 = sr->y1 + (event->y_root - sr->y1_root);
+
 	if(sr->drawn)	/* undraw old */
 		draw_srange(sr);
 	sr->drawn = draw;
@@ -266,7 +278,11 @@ update_srange(SelRange *sr, int newx2, int newy2, int draw)
 	if(draw)	/* draw new if requested */
 		draw_srange(sr);
 /*	printf("update_srange type=%d newx=%d newy=%d draw=%d\n",
-	sr->type, sr->x2, sr->y2, draw);*/
+	sr->type, sr->x2, sr->y2, draw);
+	printf("m %d %d %d %d\n",
+	(int)event->x, (int)event->y, 
+	(int)event->x_root, (int)event->y_root);
+*/
 
 }
 
@@ -368,6 +384,8 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 
 			wtable->srange->y1 = wtable->srange->y2 = event->y;
 			wtable->srange->x1 = wtable->srange->x2 = event->x;
+			wtable->srange->x1_root = event->x_root;
+			wtable->srange->y1_root = event->y_root;
 			wtable->srange->wp = wp;
 			break;
 		/* can't start another drag until first one done */
@@ -418,7 +436,7 @@ button_release_handler(GtkWidget *widget, GdkEventButton *event,
 	case M_SELRANGE_ACTIVE:
 		gtk_grab_remove(widget);
 		set_all_wp_cursors(-1);
-		update_srange(wtable->srange, event->x, event->y, 0);
+		update_srange(wtable->srange, (GdkEventMotion *)event, 0);
 		callback_srange();
 		break;
 	default:
@@ -446,7 +464,7 @@ motion_handler(GtkWidget *widget, GdkEventMotion *event,
 		break;
 	case M_SELRANGE_ACTIVE:
 		/* fputc('r', stderr); */
-		update_srange(wtable->srange, event->x, event->y, 1);
+		update_srange(wtable->srange, event, 1);
 		break;
 	default:
 		/* a sort of debugging output if we get in a bad state */

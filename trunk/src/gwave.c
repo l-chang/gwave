@@ -151,7 +151,7 @@ int
 main(int argc, char **argv)
 {
 	void gwave_main(int argc, char **argv);
-	scwm_gh_enter(argc, argv, gwave_main);
+	gh_enter(argc, argv, gwave_main);
 	return 0;
 }
 
