@@ -1,6 +1,6 @@
 /*
  * scwm_guile.c
- * Copyright (C) 1999 SteveTell
+ * Copyright (C) 1999 Steve Tell
  *
  * based heavily on callbacks.c from SCWM:
  * Copyright (C) 1997-1999 Maciej Stachowiak and Greg J. Badros
@@ -42,20 +42,13 @@
 #include "dmalloc.h"
 #endif
 
-int fDocumentPrimitiveFormals = 0;
-
-SCWM_HOOK(error_hook, "error-hook", 5,
+SCM_HOOK(error_hook, "error-hook", 5, (SCM a, SCM b, SCM c, SCM d, SCM e),
 "Called on all kinds of errors and exceptions.
 Whenever an error or other uncaught throw occurs on any callback,
 whether a hook, a mouse binding, a key binding, a menu entry, a file
 being processed, or anything else, error-hook will be invoked. Each
 procedure in the hook will be called with the throw arguments; these
-will generally include information about the nature of the error. ");
-
-SCWM_HOOK(load_processing_hook,"load-processing-hook",1,
-"This hook is invoked for every several top-level s-exps in the startup file.
-The hook procedures are invoked with one argument, the count of the
-s-expressions evaluated thus far. See also `set-load-processing-hook-frequency!'.");
+will generally include information about the nature of the error.");
 
 struct scwm_body_apply_data {
   SCM proc;
@@ -215,14 +208,15 @@ scwm_safe_call7 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM
 
 /* FIXDOC: We need a way to cross-reference concepts in docs. */
 
-/**CONCEPT: Hooks
-  Hooks are used throughout scwm to provide a convenient mechanism for
+SCM_CONCEPT("Hooks",
+"Hooks are used throughout gwave to provide a convenient mechanism for
 user callbacks on particular events. Fundamentally, a hook is just a
 variable that contains a list of procedures that are called in order
 when the relevant event occurs. However, several convenience macros
 are provided for manipulating hooks; see `add-hook!', `remove-hook!',
-`reset-hook!', and `run-hook'. 
-*/
+`reset-hook!', and `run-hook'.
+Hooks are a part of later versions of guile, but gwave provides hooks
+even when running under old versions of guile.");
 
 #ifdef HAVE_SCM_MAKE_HOOK
 
@@ -285,7 +279,8 @@ scm_empty_hook_p(SCM hook)
   return gh_bool2scm(!gh_pair_p(gh_cddr(hook)));
 }
 
-#else
+#else /* !HAVE_SCM_MAKE_HOOK */
+
 
 SCM
 scm_empty_hook_p(SCM hook)
@@ -518,7 +513,7 @@ SCM scwm_run_hook_message_only (SCM hook, SCM args)
   return SCM_UNSPECIFIED;
 }
 
-#endif
+#endif /* HAVE_SCM_MAKE_HOOK */
 
 /* Slightly tricky - we want to catch errors per expression, but only
    establish a new dynamic root per load operation, as it's perfectly
@@ -552,9 +547,6 @@ scwm_catching_load_from_port (SCM port)
 
   while (!SCM_EOF_OBJECT_P(expr = scm_read (port))) {  
     answer = scwm_catching_eval_x (expr);
-    if (++i % clnsProcessingHook == 0) {
-      call1_hooks(load_processing_hook, gh_int2scm(i));
-    }
   }
   scm_close_port (port);
 
@@ -660,39 +652,6 @@ SCM scwm_safe_eval_str (char *string)
 				     scm_handle_by_message_noexit, "scwm", 
 				     &stack_item);
 }
-
-SCM_DEFINE(set_load_processing_frequency_x, "set-load-processing-frequency!", 1, 0, 0,
-	   (SCM num_lines),
-"Invoke hooks on `load-processing-hook' every NUM-LINES lines. 
-Returns the old value")
-#define FUNC_NAME s_set_load_processing_frequency_x
-{
-  int i = clnsProcessingHook;
-  VALIDATE_ARG_INT_MIN_COPY(1,num_lines,1,clnsProcessingHook);
-  return gh_int2scm(i);
-}
-#undef FUNC_NAME
-
-#if 0
-SCM
-scwm_make_gsubr(const char *name, int req, int opt, int var, SCM (*fcn)(), char 
-*szArgList)
-{
-  static SCM sym_arglist = SCM_UNDEFINED;
-  if (SCM_UNDEFINED == sym_arglist)
-    sym_arglist = scm_permanent_object(((scm_cell *)scm_intern0("arglist"))->car
-);
-  { /* scope */
-  SCM p = scm_make_gsubr(name,req,opt,var,fcn);
-  if (fDocumentPrimitiveFormals) {
-    SCM arglist = gh_eval_str(szArgList);
-    scm_permanent_object(arglist);
-    scm_set_procedure_property_x(p,sym_arglist,arglist);
-  }
-  return p;
-  }
-}
-#endif
 
 void init_scwm_guile()
 {

@@ -11,16 +11,17 @@ gwave_SOURCES = cmd.c wavewin.c draw.c gwave.c event.c \
 	gtkmisc.c pixmaps.c wavelist.c dnd.c \
 	scwm_guile.c guile-compat.c init_scheme_string.c print.c \
 	gwave.h gtkmisc.h wavewin.h wavelist.h scwm-snarf.h \
-	guile-compat.h arg_unused.h scwm_guile.h validate.h
+	guile-compat.h arg_unused.h scwm_guile.h validate.h guile-ext.h
 gwave_LDADD = $(top_srcdir)/spicefile/libspicefile.a  @GTK_LIBS@ @GUILEGTK_LIBS@ 
 gwave_LDFLAGS =  @GUILE_LDFLAGS@
 
 CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILEGTK_CFLAGS@ \
 	-DDATADIR=\"$(datadir)\" @ggtk_hack_cflags@
 
-DOT_X_FILES = cmd.x wavewin.x wavelist.x scwm_guile.x event.x draw.x print.x
+DOT_X_FILES = gwave.x cmd.x wavewin.x wavelist.x scwm_guile.x event.x \
+	draw.x print.x
 
-DOT_DOC_FILES = cmd.doc wavewin.doc wavelist.doc scwm_guile.doc \
+DOT_DOC_FILES = gwave.doc cmd.doc wavewin.doc wavelist.doc scwm_guile.doc \
 	event.doc draw.doc print.doc
 
 BUILT_SOURCES=init_scheme_string.c scm_init_funcs.h \
@@ -42,11 +43,6 @@ utils = $(top_srcdir)/utilities
 .c.doc:
 	utildir=$(utils) $(utils)/guile-doc-snarf $< $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $< > /dev/null \
 	|| { rm $@; false; }
-
-gwave-procedures.txt: $(DOT_DOC_FILES)
-	cat $(DOT_DOC_FILES) > $@
-
-pkgdata_DATA = gwave-procedures.txt
 
 scm_init_funcs.h: $(top_srcdir)/config.status $(DOT_X_FILES)
 	@echo "Generating scm_init_funcs.h..."
