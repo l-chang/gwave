@@ -117,8 +117,7 @@ displayed portion of the waveforms")
 #undef FUNC_NAME
 
 SCM_DEFINE(wtable_min_xval, "wtable-min-xval", 0, 0, 0, (),
-"return the X coordinate represented by the left edge of the
-displayed portion of the waveforms")
+	   "return the minimum X coordinate of any displayed waveform")
 #define FUNC_NAME s_wtable_min_xval
 {
 	return gh_double2scm(wtable->min_xval);
@@ -126,8 +125,7 @@ displayed portion of the waveforms")
 #undef FUNC_NAME
 
 SCM_DEFINE(wtable_max_xval, "wtable-max-xval", 0, 0, 0, (),
-"return the X coordinate represented by the right edge of the
-displayed portion of the waveforms")
+	   "return the maximum X coordinate of any displayed waveform")
 #define FUNC_NAME s_wtable_max_xval
 {
 	return gh_double2scm(wtable->max_xval);

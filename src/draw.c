@@ -108,12 +108,32 @@ char *val2txt(double val, int mode)
 	return buf;
 }
 
-/* convert user value to pixmap y coord */
-int val2y(double val, double top, double bot, int height, int log)
+/* convert pixmap Y coordinate to user dependent-variable value */
+double y2val(WavePanel *wp, int y)
 {
+	int h = wp->drawing->allocation.height;
+	double frac = - (double)(y - h + 2) / (double)(h - 4);
+	
+	if(wp->logy) {
+		double a;
+		a = frac * (log10(wp->end_yval) - log10(wp->start_yval)) 
+			+ log10(wp->start_yval);
+		return pow(10, a);
+	} else {
+		return frac * (wp->end_yval - wp->start_yval) 
+			+ wp->start_yval;
+	}
+}
+
+/* convert user value to pixmap y coord */
+int val2y(WavePanel *wp, double val)
+{
+	double top = wp->end_yval;
+	double bot = wp->start_yval;
+	int h = wp->drawing->allocation.height;
 	double frac;
 	
-	if(log) {
+	if(wp->logy) {
 		if(bot < 0 || val < 0)
 			return -1;
 
@@ -123,7 +143,7 @@ int val2y(double val, double top, double bot, int height, int log)
 		frac = (val - bot ) / (top - bot);
 	}
 
-	return height - ((height-4) * frac) - 2;
+	return h - ((h-4) * frac) - 2;
 }
 
 /* convert pixmap X coordinate to user independent-variable value */
@@ -209,7 +229,7 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 
 	x1 = 0;
 	yval = wv_interp_value(vw->var, wp->start_xval);
-	y1 = val2y(yval, wp->end_yval, wp->start_yval, h, wp->logy);
+	y1 = val2y(wp, yval);
 
 	for(i = 0, xval = wp->start_xval; i < w; i++ ) {
 		x0 = x1; y0 = y1;
@@ -218,7 +238,7 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 		   && xval <= vw->var->wv_iv->wds->max) {
 
 			yval = wv_interp_value(vw->var, xval);
-			y1 = val2y(yval, wp->end_yval, wp->start_yval, h, wp->logy);
+			y1 = val2y(wp, yval);
 			gdk_draw_line(wp->pixmap, vw->gc, x0,y0, x1,y1);
 		}
 		if(wtable->logx)
@@ -246,7 +266,7 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 
 	/* draw horizontal line at y=zero */
 	if(wp->start_yval < 0 && wp->end_yval > 0) {
-		y = val2y(0, wp->end_yval, wp->start_yval, h, wp->logy);
+		y = val2y(wp, 0);
 		gdk_draw_line(wp->pixmap, pg_gdk_gc, 0, y, w, y);
 	}
 

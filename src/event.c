@@ -21,6 +21,12 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.14  2001/09/22 04:34:58  sgt
+ * merge Paul Maurer's patches for better zooming and scrolling in log-xscale
+ * mode.
+ * Write AC_PROG_GREPSTDOUT and use it to find GNU graph and not the old
+ * att/berkeley one
+ *
  * Revision 1.13  2001/03/20 06:36:45  sgt
  * Change wavepanel measurements to use new MeasureBtn code.
  *
@@ -140,13 +146,88 @@ begining and ending X pixel value of the selection.")
 	
 	scm_protect_object(proc);
 	wtable->srange->done_proc = proc;
+	wtable->srange->type = SR_X;
 
 	set_all_wp_cursors(GDK_RIGHT_SIDE);
 	wtable->mstate = M_SELRANGE_ARMED;
 }
 #undef FUNC_NAME
 
-/* draw or undraw srange line, using XOR gc */
+SCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
+           (SCM proc),
+"Prompt the user to select a range of the visible Y axis using 
+button 1 of the mouse.  
+When finished, PROC is called with 3 arguments, the
+WavePanel where the range is located, and the
+begining and ending Y pixel value of the selection.")
+#define FUNC_NAME s_select_range_y
+{
+	VALIDATE_ARG_PROC(1, proc);
+	
+	scm_protect_object(proc);
+	wtable->srange->done_proc = proc;
+	wtable->srange->type = SR_Y;
+
+	set_all_wp_cursors(GDK_TOP_SIDE);
+	wtable->mstate = M_SELRANGE_ARMED;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(select_range_xy, "select-range-xy", 1, 0, 0,
+           (SCM proc),
+"Prompt the user to select a region of the 
+visible XY plane using button 1 of the mouse.  
+When finished, PROC is called with 5 arguments, the
+WavePanel where the range is located, and the
+begining and ending X and Y pixel values of the selection.")
+#define FUNC_NAME s_select_range_xy
+{
+	VALIDATE_ARG_PROC(1, proc);
+	
+	scm_protect_object(proc);
+	wtable->srange->done_proc = proc;
+	wtable->srange->type = SR_XY;
+
+	set_all_wp_cursors(GDK_TOP_LEFT_CORNER);
+	wtable->mstate = M_SELRANGE_ARMED;
+}
+#undef FUNC_NAME
+
+/* done selecting range; do the callback */
+void
+callback_srange()
+{
+	if(wtable->srange->wp->valid 
+	   && gh_procedure_p(wtable->srange->done_proc)) {
+		wtable->srange->wp->outstanding_smob = 1;
+
+		switch(wtable->srange->type) {
+		case SR_X:
+			scwm_safe_call3(wtable->srange->done_proc, 
+				wtable->srange->wp->smob,
+				gh_int2scm(wtable->srange->x1), 
+				gh_int2scm(wtable->srange->x2));
+			break;
+		case SR_Y:
+			scwm_safe_call3(wtable->srange->done_proc, 
+				wtable->srange->wp->smob,
+				gh_int2scm(wtable->srange->y1), 
+				gh_int2scm(wtable->srange->y2));
+			break;
+		case SR_XY:
+			scwm_safe_call5(wtable->srange->done_proc, 
+				wtable->srange->wp->smob,
+				gh_int2scm(wtable->srange->x1), 
+				gh_int2scm(wtable->srange->x2),
+				gh_int2scm(wtable->srange->y1), 
+				gh_int2scm(wtable->srange->y2));
+			break;
+		}
+		scm_unprotect_object(wtable->srange->done_proc);
+	}
+}
+
+/* draw or undraw srange line(s), using XOR gc */
 void
 draw_srange(SelRange *sr)
 {
@@ -158,20 +239,35 @@ draw_srange(SelRange *sr)
 		gdk_gc_set_function(sr->gc, GDK_XOR);
 	}
 	g_assert(sr->gc != NULL);
-	gdk_draw_line(sr->wp->drawing->window, sr->gc,
-		      sr->x1, sr->y, sr->x2, sr->y);
+	if(sr->type & SR_X)
+		gdk_draw_line(sr->wp->drawing->window, sr->gc,
+			      sr->x1, sr->y1, sr->x2, sr->y1);
+	if(sr->type & SR_Y)
+		gdk_draw_line(sr->wp->drawing->window, sr->gc,
+			      sr->x1, sr->y1, sr->x1, sr->y2);
+	if(sr->type == SR_XY) {
+		gdk_draw_line(sr->wp->drawing->window, sr->gc,
+			      sr->x1, sr->y2, sr->x2, sr->y2);
+		gdk_draw_line(sr->wp->drawing->window, sr->gc,
+			      sr->x2, sr->y1, sr->x2, sr->y2);
+	}
 }
 
 void
-update_srange(SelRange *sr, int newx2, int draw)
+update_srange(SelRange *sr, int newx2, int newy2, int draw)
 {
 	if(sr->drawn)	/* undraw old */
 		draw_srange(sr);
 	sr->drawn = draw;
-	sr->x2 = newx2;
-	if(draw) {	/* draw new if requested */
+	if(sr->type & SR_X)
+		sr->x2 = newx2;
+	if(sr->type & SR_Y)
+		sr->y2 = newy2;
+	if(draw)	/* draw new if requested */
 		draw_srange(sr);
-	}
+/*	printf("update_srange type=%d newx=%d newy=%d draw=%d\n",
+	sr->type, sr->x2, sr->y2, draw);*/
+
 }
 
 /*
@@ -270,8 +366,8 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 			wtable->button_down = event->button;
 			wtable->mstate = M_SELRANGE_ACTIVE;
 
-			wtable->srange->y = event->y;
-			wtable->srange->x1 = event->x;
+			wtable->srange->y1 = wtable->srange->y2 = event->y;
+			wtable->srange->x1 = wtable->srange->x2 = event->x;
 			wtable->srange->wp = wp;
 			break;
 		/* can't start another drag until first one done */
@@ -291,13 +387,6 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 					wp->smob,
 					sgtk_boxed2scm (event, &sgtk_gdk_event_info, 1));
 			} 
-/*			else {
-				wtable->popup_panel = wp;
-				gtk_menu_popup (GTK_MENU (wtable->popup_menu),
-					NULL, NULL, NULL, NULL, 
-					event->button, event->time);
-			}
-*/
 		}
 		break;
 	default:
@@ -329,18 +418,8 @@ button_release_handler(GtkWidget *widget, GdkEventButton *event,
 	case M_SELRANGE_ACTIVE:
 		gtk_grab_remove(widget);
 		set_all_wp_cursors(-1);
-		update_srange(wtable->srange, event->x, 0);
-		
-		if(wtable->srange->wp->valid 
-		   && gh_procedure_p(wtable->srange->done_proc)) {
-			wtable->srange->wp->outstanding_smob = 1;
-			scwm_safe_call3(wtable->srange->done_proc, 
-					wtable->srange->wp->smob,
-					gh_int2scm(wtable->srange->x1), 
-					gh_int2scm(wtable->srange->x2));
-			scm_unprotect_object(wtable->srange->done_proc);
-		}
-
+		update_srange(wtable->srange, event->x, event->y, 0);
+		callback_srange();
 		break;
 	default:
 	}
@@ -367,7 +446,7 @@ motion_handler(GtkWidget *widget, GdkEventMotion *event,
 		break;
 	case M_SELRANGE_ACTIVE:
 		/* fputc('r', stderr); */
-		update_srange(wtable->srange, event->x, 1);
+		update_srange(wtable->srange, event->x, event->y, 1);
 		break;
 	default:
 		/* a sort of debugging output if we get in a bad state */

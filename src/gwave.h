@@ -133,7 +133,8 @@ extern void vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp);
 extern void draw_wavepanel(GtkWidget *widget, GdkEventExpose *event,
 			   WavePanel *wp);
 extern void draw_labels(void);
-extern int val2y(double val, double top, double bot, int height, int log);
+extern double y2val(WavePanel *wp, int y);
+extern int val2y(WavePanel *wp, double val);
 extern double x2val(WavePanel *wp, int x, int log);
 extern int val2x(WavePanel *wp, double val, int log);
 extern char *val2txt(double val, int style);

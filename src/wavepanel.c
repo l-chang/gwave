@@ -298,12 +298,35 @@ SCM_DEFINE(wavepanel_y_zoom_x, "wavepanel-y-zoom!", 3, 0, 0,
 		VALIDATE_ARG_DBL_COPY(1, miny, dmin);
 		VALIDATE_ARG_DBL_COPY(1, maxy, dmax);
 		wp->man_yzoom = 1;
-		wp->start_yval = dmin;
-		wp->end_yval = dmax;
+		if(dmin < dmax) {
+			wp->start_yval = dmin;
+			wp->end_yval = dmax;
+		} else {
+			wp->start_yval = dmax;
+			wp->end_yval = dmin;
+		}
 	}
 	draw_wavepanel(wp->drawing, NULL, wp);
 	draw_wavepanel_labels(wp);
 	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(wavepanel_y_manual_p, "wavepanel-y-manual?", 1, 0, 0,
+	   (SCM wavepanel),
+"If WAVEPANEL's y extents have been zoomed manually, return #t.
+Otherwise, return #f to indicate automatic y-zoom to show the minimum
+and maximum values of all dependent variables")
+#define FUNC_NAME s_wavepanel_y_manual_p
+{
+	WavePanel *wp;
+	int logy;
+	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+
+	if(wp->man_yzoom)
+		return SCM_BOOL_T;
+	else
+		return SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
@@ -436,6 +459,41 @@ in the waveform.")
 	VALIDATE_ARG_INT_COPY(2,xpixel,x);
 	val = x2val(wp, x, wtable->logx);
 	return gh_double2scm(val);
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(wavepanel_y2val, "wavepanel-y2val", 2, 0, 0,
+	   (SCM wavepanel, SCM ypixel),
+"Given a YPIXEL screen-space coordinate in WAVEPANEL, 
+return the value that the dependent variable would have
+at that position.")
+#define FUNC_NAME s_wavepanel_y2val
+{
+	WavePanel *wp;
+	int y;
+	double val;
+	VALIDATE_ARG_WavePanel_COPY_USE_NULL(1,wavepanel,wp);
+	VALIDATE_ARG_INT_COPY(2,ypixel,y);
+	val = y2val(wp, y);
+	return gh_double2scm(val);
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(wavepanel_extents, "wavepanel-extents", 1, 0, 0,
+	   (SCM wavepanel),
+"Return a list indicating the extents of the coordinate
+space displayed currently displayed in WAVEPANEL.  
+The list contains four elements, startX, startY, endX, endY")
+#define FUNC_NAME s_wavepanel_extents
+{
+	WavePanel *wp;
+	SCM answer = SCM_EOL;
+	VALIDATE_ARG_WavePanel_COPY_USE_NULL(1,wavepanel,wp);
+	answer = scm_cons( gh_double2scm(wp->end_yval), answer);
+	answer = scm_cons( gh_double2scm(wp->end_xval), answer);
+	answer = scm_cons( gh_double2scm(wp->start_yval), answer);
+	answer = scm_cons( gh_double2scm(wp->start_xval), answer);
+	return answer;
 }
 #undef FUNC_NAME
 
