@@ -48,6 +48,8 @@ will be to create the button and menus attached to the VisibleWave.");
 
 gint cmd_zoom_absolute(double start, double end)
 {
+ 	double scroll_start, scroll_end;
+
 	if(start <= end) {
 		wtable->start_xval = start;
 		wtable->end_xval = end;
@@ -61,12 +63,26 @@ gint cmd_zoom_absolute(double start, double end)
 	if(wtable->end_xval > wtable->max_xval)
 		wtable->end_xval = wtable->max_xval;
 
-	win_hsadj->page_size = fabs(wtable->end_xval - wtable->start_xval);
+ 	/* Scroll bar always goes from zero to one.
+	   Preform an appropriate transform based on lin/log */
+ 	if (!wtable->logx) {
+ 		scroll_start = ( wtable->start_xval - wtable->min_xval ) 
+			/ ( wtable->max_xval - wtable->min_xval );
+ 		scroll_end   = ( wtable->end_xval   - wtable->min_xval ) 
+			/ ( wtable->max_xval - wtable->min_xval );
+ 	} else {
+ 		scroll_start = log( wtable->start_xval / wtable->min_xval ) 
+			/ log( wtable->max_xval / wtable->min_xval );
+ 		scroll_end   = log( wtable->end_xval   / wtable->min_xval ) 
+			/ log( wtable->max_xval / wtable->min_xval );
+ 	}
+  	win_hsadj->page_size = fabs( scroll_end - scroll_start );
+
 	win_hsadj->page_increment = win_hsadj->page_size/2;
 	win_hsadj->step_increment = win_hsadj->page_size/100;
-	win_hsadj->value = wtable->start_xval;
-	win_hsadj->lower = wtable->min_xval;
-	win_hsadj->upper = wtable->max_xval;
+ 	win_hsadj->value = scroll_start;
+ 	win_hsadj->lower = 0.0;
+ 	win_hsadj->upper = 1.0;
 
 	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "changed");
 	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "value_changed");
@@ -492,22 +508,11 @@ wavetable_update_data()
 		 * try to keep start/end same, but make them sane if needed.
 		 * then update scrollbar.
 		 */
-		if(wtable->start_xval < wtable->min_xval)
-			wtable->start_xval = wtable->min_xval;
-		if(wtable->end_xval > wtable->max_xval)
-			wtable->end_xval = wtable->max_xval;
-		win_hsadj->page_size = fabs(wtable->end_xval - wtable->start_xval);
-		win_hsadj->page_increment = win_hsadj->page_size/2;
-		win_hsadj->step_increment = win_hsadj->page_size/100;
-		win_hsadj->value = wtable->start_xval;
-		win_hsadj->lower = wtable->min_xval;
-		win_hsadj->upper = wtable->max_xval;
-
-		wtable->suppress_redraw = 1;
-		gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "value_changed");
-		wtable->suppress_redraw = 0;
+		cmd_zoom_absolute( wtable->start_xval, wtable->end_xval );
 
 	}
+	/* propagate zoom to panels.  Someday: flags and UI to allow
+	 * "locking" selected panels so they don't zoom/scroll */
 	for(i = 0; i < wtable->npanels; i++) {
 		wp = wtable->panels[i];
 		wp->start_xval = wtable->start_xval;

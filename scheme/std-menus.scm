@@ -232,7 +232,8 @@
        (add-menuitem menu "Delete this File"
 		     (lambda () 
 		       (wavefile-delete! df)
-		       (rebuild-varlist-submenu!)))
+		       (rebuild-varlist-submenu!)
+		       (wtable-redraw!)))
        (add-menuitem menu "Save Configuration as Script"
 		     (lambda () (with-selected-filename "Scriptfile to write"
 				 (lambda (fn) (write-filerestore-script df fn))

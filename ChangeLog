@@ -4,3 +4,16 @@
 	a guile function and some menu code to flip between the
 	built-in "val(cursor1)" and "val(cursor1)-val(cursor0)" functions 
 	for the second measurement.
+
+20010822
+	Enhance file-reading to handle the spice3raw variant produced by
+	Silvaco's SmartSpice.
+	Handle log scales properly for plotting with GNU Graph.
+	
+20010911
+	Better handling of logscale-X, zooming and scrollbar due to a
+	patch from Paul Maurer
+
+20010922
+	configure now rejects non-GNU versions of "graph" even if they're
+	earlier in $PATH

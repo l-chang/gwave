@@ -31,17 +31,24 @@
 ;     (display x2) (newline)
      (x-zoom! (wavepanel-x2val wp x1) (wavepanel-x2val wp x2)))))
 
+(define (pow base power)
+    (exp (* power (log base))))
+
 ; zoom relative to current position.
 ; if zoom factor > 1,  zooms in
 ; if zoom factor < 1,  zooms out
-; TODO: make this do the right thing when the X scale is logarithmic.
 (define-public (x-zoom-relative! zf)
-  (let* ((sx (wtable-start-xval))
-	 (ex   (wtable-end-xval))
-	 (center ( / (+ sx ex) 2))
-	 (width (- ex sx)))
-    (x-zoom! ( - center (/ width (* zf 2)))
-	   ( + center (/ width (* zf 2))))))
+  (let ((sx (wtable-start-xval))
+ 	(ex   (wtable-end-xval)))
+    (if (not (wtable-xlogscale?))
+	(let ((center (/ (+ sx ex) 2))
+ 	      (width (- ex sx)))
+ 	  (x-zoom! (- center (/ width (* zf 2)))
+ 		   (+ center (/ width (* zf 2)))))
+ 	(let ((center (sqrt (* ex sx)))
+ 	      (width (/ ex sx)))
+ 	  (x-zoom! (/ center (pow width (/ 0.5 zf)))
+ 		   (* center (pow width (/ 0.5 zf))))))))
 
 ; zoom X so that edges of displayed are where the vertical cursors are now.
 ; If both vertical bar cursors aren't displayed, do nothing.
