@@ -1,0 +1,31 @@
+Gwave NEWS --- history of user-visible changes.  -*- text -*-
+
+New in 0.0.6:
+- Inserting/deleting waveform panels.
+- added right-button popup menu to waveform panels
+- The compile/install process now uses automake and autoconf to generate
+  the familiar "configure" script
+- An attempt at placing the variable list windows in a more convenient position
+in relation to the main window.  Getting this perfect under all window managers
+is a losing proposition.
+
+New in 0.0.5:
+- Fixed bug in reading hspice files with lots of columns
+- displays signal name list window for files read from the command line.
+  (note: it will probably be behind the main window)
+- incorporated code contributed by Jeff Dionne for reading spice2 rawfiles
+
+New in 0.0.4:
+- Fixed bug and/or warning when first waveform is added to display
+- Ability to drag vertical bar cursors around, in addition to click-to-place
+- Added zoom-to-cursor function; if both cursors have been placed,
+	zooms so that the time between the cursors fills the display.
+- Added zoom-to-window function.  Select this menu option, then
+	press/drag/release mouse button 1 to indicate a region of the X
+	axis that then zooms to fill the display.
+
+New in 0.0.3:
+- Load multiple files at once, either from the command line or 
+interactively.
+- Some operations are moved to pulldown menus.
+
