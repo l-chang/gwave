@@ -21,37 +21,44 @@ Usage:
 wave [-t filetype] [-p number-of-panels] your-waveform-file
 
 Number-of-panels defaults to 2.  It understands CAzM transient output
-(.N/.B/.W) files, and ascii-format output from HSPICE (.tr0, .sw0, and
-.ac0) files.  Generate your hspice output with ".options POST=2 .graph ..."
-If the file type is unspecified, it tries to guess based on
-filename, and then tries all file formats until one succedes.
+(.N/.B/.W) files, and the binary and ascii outputs from HSPICE (.tr0,
+.sw0, and .ac0) files.  
+If the file type is unspecified, it tries to guess
+based on filename, and then tries all file formats until one succedes.
 
-Click on the "variables" button to see a list of signals in your
-simulation output, then drag-and-drop signals into waveform panels.
+Use the View->Variable List menu to see a list of a list of signals in
+your simulation files, then drag-and-drop signals into waveform
+panels.
 
-To delete waves, select using the buttons down the left side of the
-main window, and then press the "delete" button.
+To delete waves, select one or more of them using the buttons down the
+left side of the main window, and then press the "delete" button.
 
 Click on the waveform panels with the left and center mouse buttons to set two
 cursors for measuring.
 
+
+New in 0.3:
+- Load multiple files at once, either from the command line or 
+interactively.
+- Some operations are moved to pulldown menus.
+
+
 Known problems:
 - When a signal is added, it may not get drawn immediately.
   use your window-manager refresh or simply cover and uncover the gwave
-  window.
-- When deleting a signal, a bunch of messages get spewed to stderr,
-- Only one signal is deleted for each click of the delete button.
+  window, or do a zoom in/out.
+- HSPICE data files generated without ".options probe" are not read
+correctly. workaround: always use ".options probe".
 
 
 This tool is far from complete. Partial contents of the To Do list:
 
 Interactively changing the number of panels
-Load multiple files for comparison
 Drag-and-drop to move waveform from one panel to another
 Logarithmic X and Y axes
 Ability to drag vertical bar cursors around, in addition to click-to-place
 Speed up redraws, especialy placing of the cursors
-generate a postscript representation for printing or documentation
+Generate a postscript representation for printing or documentation.
 Override of wave and panel paramters, like min/max Y value, color, etc.
 Saving and restoring waveform/panel configuration 
 Drawing a labeled graticule in the waveform area
