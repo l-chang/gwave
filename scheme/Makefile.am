@@ -1,5 +1,7 @@
 # Makefile.am: process this file with automake to produce Makefile.in
 
+SUFFIXES = .doc .scm
+
 guiledir=$(datadir)/guile/app/gwave
 
 guile_DATA=system.gwaverc cmds.scm dynlink.scm globals.scm minimal.scm \
