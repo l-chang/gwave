@@ -51,6 +51,12 @@ New in 0.0.4:
 	press/drag/release mouse button 1 to indicate a region of the X
 	axis that then zooms to fill the display.
 
+New in 0.0.5:
+- Fixed bug in reading hspice files with lots of columns
+- displays signal name list window for files read from the command line.
+  (note: it will probably be behind the main window)
+- incorporated code contributed by Jeff Dionne for reading spice2 rawfiles
+
 Known problems:
 - HSPICE data files generated without ".options probe" may not be read
 correctly. workaround: try using ".options probe".  This mostly happens with
@@ -72,6 +78,9 @@ Override of wave and panel paramters, like min/max Y value, color, etc.
 Saving and restoring waveform/panel configuration 
 Drawing a labeled graticule in the waveform area
 Seperate lists for selecting voltage/current/etc. types of variables
+Clean up reader code by collecting some idioms that appear again and again
+into common subroutines.  This will make writing new readers a little easier.
+
 
 
 Feedback is welcome - tell@cs.unc.edu
