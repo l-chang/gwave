@@ -151,6 +151,7 @@ extern gint expose_handler(GtkWidget *widget, GdkEventExpose *ev,
 			   WavePanel *wp);
 extern void destroy_handler(GtkWidget *widget, gpointer data);
 extern void wavepanel_dnd_drop (GtkWidget *button, GdkEvent *ev, gpointer d);
+extern void update_cursor(VBCursor *csp, double xval);
 
 /* defined in pixmaps.c */
 extern char *drag_no_xpm[];
