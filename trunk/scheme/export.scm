@@ -155,9 +155,11 @@
 	 (filename-entry (gtk-entry-new))
 	 (browse-btn (gtk-button-new-with-label "Browse"))
 
+	 (hbox2 (gtk-hbox-new #f 10))
+	 (notebook (gtk-notebook-new))
+	 (options-procedure #f)
 	 (plot-procedure #f)
 	 (plot-options '())
-	 (hbox2 (gtk-hbox-new #f 10))
 
 	 (action-hbox (gtk-hbox-new #f 10))
 	 (separator (gtk-hseparator-new))
@@ -193,8 +195,12 @@
 
     ; TODO: notebook with entry for each supported plot filter
     ; containing that filter's various options
+    (gtk-notebook-set-tab-pos notebook 'top)
+    (gtk-box-pack-start vbox notebook #t #t 0)
+    (set! options-procedure (add-gnugraph-panel notebook))
+    (gtk-widget-show notebook)
+
     (set! plot-procedure export-wavepanels-gnugraph)
-    (set! plot-options (list "ps"))
 
     ; row of action buttons
     (gtk-container-border-width action-hbox 10)
@@ -217,7 +223,9 @@
 			      (plot-procedure 
 			       (gtk-entry-get-text filename-entry) 
 			       plist 
-			       plot-options))
+			       (if (procedure? options-procedure)
+				   (options-procedure)
+				   (list))))
 			  (gtk-widget-destroy window)))
     (gtk-widget-show export-btn)
     
