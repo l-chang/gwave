@@ -215,7 +215,10 @@ WaveFile *wf_finish_read(SpiceStream *ss)
 	}
 	g_free(dvals);
 	ss_close(ss);
-	if(rc < 0) {
+	if(rc == -2) {
+		ss_msg(WARN, "wavefile_read", "Multiple sweeps found; ignoring all but the first one");
+		return wf;		
+	} else if(rc < 0) {
 		wf_free(wf);
 		return NULL;
 	} else {

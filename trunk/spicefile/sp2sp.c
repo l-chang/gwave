@@ -286,22 +286,25 @@ ascii_data_output(SpiceStream *sf, int *indices, int nidx,
 	double ival;
 	double *dvals;
 	double *spar = NULL;
-	int needsp;
+	int done;
 
 	dvals = g_new(double, sf->ncols);
 	if(sf->nsweepparam > 0)
 		spar = g_new(double, sf->nsweepparam);
-	for(tab = 0; tab < sf->ntables; tab++) {
+	
+	done = 0;
+	tab = 0;
+	while(!done) {
 		if(sf->nsweepparam > 0) {
 			if(ss_readsweep(sf, spar) <= 0)
 				break;
-			if(sweep_mode == SWEEP_HEAD) {
-				printf("# sweep %d;", tab);
-				for(i = 0; i < sf->nsweepparam; i++) {
-					printf(" %s=%g", sf->spar[i].name, spar[i]);
-				}
-				putchar('\n');
+		}
+		if(tab > 0 && sweep_mode == SWEEP_HEAD) {
+			printf("# sweep %d;", tab);
+			for(i = 0; i < sf->nsweepparam; i++) {
+				printf(" %s=%g", sf->spar[i].name, spar[i]);
 			}
+			putchar('\n');
 		}
 		while((rc = ss_readrow(sf, &ival, dvals)) > 0) {
 			if(ival < begin_val)
@@ -316,7 +319,7 @@ ascii_data_output(SpiceStream *sf, int *indices, int nidx,
 					continue;
 			}
 
-			if((sf->nsweepparam > 0) && (sweep_mode == 1)) {
+			if((sf->nsweepparam > 0) && (sweep_mode == SWEEP_PREPEND)) {
 				for(i = 0; i < sf->nsweepparam; i++) {
 					printf("%g ", spar[i]);
 				}
@@ -338,8 +341,13 @@ ascii_data_output(SpiceStream *sf, int *indices, int nidx,
 			}
 			putchar('\n');
 		}
-		if(rc == 0)  /* real EOF */
-			break;
+		if(rc == -2) {  /* end of sweep, more follow */
+			if(sf->nsweepparam == 0)
+				sweep_mode = SWEEP_HEAD;
+			tab++;
+		} else {  	/* EOF or error */
+			done = 1;
+		}
 	}
 	g_free(dvals);
 	if(spar)
