@@ -47,16 +47,10 @@ struct _MeasureBtn {
 #define MBF_VARC1	5
 #define MBF_VARDIFF	6
 
-
 extern MeasureBtn *measure_button_new(WaveVar *wv, int mfunc);
+void mbtn_set_func(MeasureBtn *mbtn, int mfunc);
 void mbtn_delete(MeasureBtn *mbtn);
 void mbtn_hide(MeasureBtn *mbtn);
 void mbtn_show(MeasureBtn *mbtn);
 void mbtn_update(MeasureBtn *mbtn, gpointer *d);
 void mbtn_update_all();
-
-
-
-
-
-

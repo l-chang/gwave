@@ -39,6 +39,7 @@
 #include <gwave.h>
 #include <wavelist.h>
 #include <wavewin.h>
+#include <measurebtn.h>
 
 SCM_HOOK(new_visiblewave_hook, "new-visiblewave-hook", 1, (SCM vw),
 "This hook is invoked with one VisibleWave argument, VW,
@@ -661,6 +662,26 @@ SCM_DEFINE(set_visiblewave_color_x, "set-visiblewave-color!", 2, 0, 0, (SCM vw, 
 		}
 	}
 	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(set_visiblewave_measure_x, "set-visiblewave-measure!", 3, 0, 0, 
+	   (SCM vw, SCM n, SCM func),
+ "Change the measurement box numbered N (0 or 1) of displayed waveform
+ VW to display the result of the measurement function FUNC")
+#define FUNC_NAME s_set_visiblewave_measure_x
+{
+	VisibleWave *cvw;
+	int mno;
+	int mfunc;
+	VALIDATE_ARG_VisibleWave_COPY(1,vw,cvw);
+	VALIDATE_ARG_INT_RANGE_COPY(2, n, 0, 1, mno);
+	VALIDATE_ARG_INT_RANGE_COPY(3, func, 0, MBF_VARDIFF, mfunc);
+
+	if(cvw->valid) {
+		mbtn_set_func(cvw->mbtn[mno], mfunc);
+		mbtn_update(cvw->mbtn[mno], NULL);
+	}
 }
 #undef FUNC_NAME
 

@@ -43,16 +43,32 @@ GList *all_measure_buttons;
 MeasureBtn *
 measure_button_new(WaveVar *wv, int mfunc)
 {
-	int need_var;
-	char *tip = NULL;
 	MeasureBtn *mbtn;
-	GtkTooltips *gw_tooltips;
 
 	mbtn = g_new0(MeasureBtn, 1);
-	mbtn->measurefunc = mfunc;
 	mbtn->var = wv;
-	
 	mbtn->label = gtk_label_new("");
+	mbtn->button = gtk_button_new();
+
+	mbtn_set_func(mbtn, mfunc);
+	gtk_widget_show(mbtn->label);
+	gtk_widget_set_name(mbtn->button, "wavebutton");
+	gtk_container_add(GTK_CONTAINER(mbtn->button), mbtn->label);
+
+	all_measure_buttons = g_list_prepend(all_measure_buttons, mbtn);
+
+	return mbtn;
+}
+
+void
+mbtn_set_func(MeasureBtn *mbtn, int mfunc)
+{
+	int need_var;
+	char *tip = NULL;
+	GtkTooltips *gw_tooltips;
+
+	mbtn->measurefunc = mfunc;
+
 	switch (mbtn->measurefunc) {
 	case MBF_CURSOR0:
 		gtk_widget_set_name(mbtn->label, "cursor0color");
@@ -96,26 +112,18 @@ measure_button_new(WaveVar *wv, int mfunc)
 		break;
 		
 	}
-	if(need_var && !wv)
+	if(need_var && !mbtn->var)
 		g_error("new_MeasureBtn: measure function %d requires a WaveVar", mfunc);
 
-	gtk_widget_show(mbtn->label);
-
-	mbtn->button = gtk_button_new();
-	gtk_widget_set_name(mbtn->button, "wavebutton");
-	gtk_container_add(GTK_CONTAINER(mbtn->button), mbtn->label);
-
-	all_measure_buttons = g_list_prepend(all_measure_buttons, mbtn);
-
-
-	if(tip) {
-		gw_tooltips = get_gwave_tooltips();
+	gw_tooltips = get_gwave_tooltips();
+	if(tip) 
 		gtk_tooltips_set_tip(GTK_TOOLTIPS(gw_tooltips), 
 				     mbtn->button, tip, "");
-	}
-
-	return mbtn;
+	else
+		gtk_tooltips_set_tip(GTK_TOOLTIPS(gw_tooltips), 
+				     mbtn->button, "", "");
 }
+
 
 void
 mbtn_delete(MeasureBtn *mbtn)
@@ -222,3 +230,4 @@ mbtn_update_all()
 {
 	g_list_foreach(all_measure_buttons, (GFunc)mbtn_update, NULL);
 }
+
