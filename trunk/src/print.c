@@ -35,6 +35,7 @@
 
 #include <gtk/gtk.h>
 #include <config.h>
+#include <scwm_guile.h>
 #include <gwave.h>
 #include <wavewin.h>
 
@@ -97,18 +98,24 @@ export_graph_data(char *file, WavePanel *wp)
 	fclose(fp);
 }
 
-
-
 /*
  * print/export a representation of what is shown on the screen.
  * Only a minimum of options are available so far.
  */
-void
-cmd_print(char *file, char *format, int color, int landscape)
+SCWM_PROC(export_waveimage_x, "export-waveimage!", 2, 2, 0, 
+	  (SCM file, SCM format, SCM color, SCM landscape))
+  /** Export a picture of the current waveform display to FILE, using FORMAT.
+   * if COLOR is t, render the image in color.  If LANDSCAPE is t, the
+   * image will be sized for letter paper in landscape orientation,
+   * else portrait orientation */
+#define FUNC_NAME s_export_waveimage_x
 {
+	char *sfile;
+	char *sformat;
+	int color_flag;
+	int landscape_flag;
 	char **graph_argv;
 	int graph_argc = 0;
-
 	int ngraphs = 0;
 	char **dfnames;
 	char buf1[64], buf2[64], buf3[64], buf4[64];
@@ -118,6 +125,11 @@ cmd_print(char *file, char *format, int color, int landscape)
 	int i;
 	WavePanel *wp;
 	int rc;
+
+	VALIDATE_ARG_STR_NEWCOPY(1, file, sfile);
+	VALIDATE_ARG_STR_NEWCOPY(2, format, sformat);
+	VALIDATE_ARG_BOOL_COPY_USE_F(3, color, color_flag);
+	VALIDATE_ARG_BOOL_COPY_USE_F(4, landscape, landscape_flag);
 
 	dfnames = g_new(char*, wtable->npanels);
 	
@@ -138,7 +150,7 @@ cmd_print(char *file, char *format, int color, int landscape)
 	graph_argv = g_new(char*, 30 + 5*ngraphs);
 	graph_argv[graph_argc++] = graph_prog;
 	graph_argv[graph_argc++] = "-T";
-	graph_argv[graph_argc++] = format;
+	graph_argv[graph_argc++] = sformat;
 	graph_argv[graph_argc++] = "--input-format";
 	graph_argv[graph_argc++] = "a";
 	graph_argv[graph_argc++] = "--width-of-plot";
@@ -168,7 +180,7 @@ cmd_print(char *file, char *format, int color, int landscape)
 			graph_argv[graph_argc++] = strdup(buf2);
 			graph_argv[graph_argc++] = "1";
 		}
-		graph_argv[graph_argc++] = dfnames[i];
+		graph_argv[graph_argc++] = dfnames[ngraphs - i - 1];
 	}
 	graph_argv[graph_argc++] = NULL;
 	printf("running %s", graph_prog);
@@ -177,9 +189,9 @@ cmd_print(char *file, char *format, int color, int landscape)
 	}
 	putchar('\n');
 	
-	outfd = open(file, O_WRONLY|O_CREAT, 0644);
+	outfd = open(sfile, O_WRONLY|O_CREAT, 0644);
 	if(outfd < 0) {
-		perror(file);
+		perror(sfile);
 		goto done;
 	}
 
@@ -217,10 +229,12 @@ cmd_print(char *file, char *format, int color, int landscape)
 	}
 	g_free(dfnames);
 	g_free(graph_argv);
+
+	return SCM_UNSPECIFIED;
 }
 
-
 /* glue routines to gtk menus */
+#if 0
 void
 cmd_export_postscript(GtkWidget *w)
 {
@@ -232,4 +246,14 @@ cmd_export_pnm(GtkWidget *w)
 {
 	cmd_print("gwave_out.pnm", "pnm", 0, 0);
 
+}
+#endif
+
+
+/* guile initialization */
+void init_print()
+{
+#ifndef SCM_MAGIC_SNARFER
+#include "print.x"
+#endif
 }

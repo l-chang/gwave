@@ -9,6 +9,7 @@
 (use-modules 
  (gtk gtk)
  (app gwave std-menus)
+ (app gwave std-args)
  (app gwave std-toolbar)
  (app gwave cmds)
 )

@@ -17,7 +17,7 @@
 ;                1=jge, short, no extra labels. Fit more for digital.
 ; BUG: setting it here affects the panel-creating menu items fine,
 ; but doesn't reset the state of the Options/DefaultPanelType radio-menu items.
-(set! default-wavepanel-type 1)
+;(set! default-wavepanel-type 1)
 
 ; demonstrating how we can add our own menu to the end
 ; of the menubar by using append-hook.

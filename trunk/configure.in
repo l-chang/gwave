@@ -13,7 +13,10 @@ AM_PROG_CC_STDC
 dnl ## Checks for programs ##
 AC_PROG_CC
 AC_PROG_RANLIB
-AC_CHECK_PROG(GRAPH, graph, $ac_dir/$ac_word)
+
+# need to make this find GNU graph only, not tradional berkeley/sysv graph
+# this will fail on linux where /usr/bin/graph is GNU graph.
+AC_CHECK_PROG(GRAPH, graph, $ac_dir/$ac_word,,$PATH,/usr/bin/graph /bin/graph)
 if test ! -z "$GRAPH"; then
 	AC_DEFINE_UNQUOTED(PROG_GRAPH, "$GRAPH")
 fi

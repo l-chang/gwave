@@ -141,6 +141,7 @@ void gwave_main(int argc, char **argv)
 	init_wavelist();
 	init_event();
 	init_draw();
+	init_print();
 	gh_allow_ints();
 	
 	gtk_init(&argc, &argv);
