@@ -11,6 +11,7 @@
   :use-module (app gwave export)
   :use-module (app gwave utils)
   :use-module (app gwave gtk-helpers)
+  :use-module (app gwave gwave-config)
 )
 (read-set! keywords 'prefix)
 (debug-enable 'backtrace)
@@ -138,11 +139,11 @@
     (with-output-to-file shfile 
       (lambda ()
 	(display "#!/bin/sh\n")
-	(format #t "graph ~a\n" (join " " args))
+	(format #t "~a ~a\n" gnugraph-pathname (join " " args))
 	(if (not keeptmp)
 	    (format #t "rm -f ~a\n" (join " " tmpfilelist)))))
 ; (format #t "running sh -C ~a\n" shfile)
-    (subprocess-to-file fname "/bin/sh" (list "sh" "-C" shfile))
+    (subprocess-to-file fname "/bin/sh" (list "sh" shfile))
 ))
 
 (register-plotfilter "GNU Graph" 

@@ -156,8 +156,6 @@
 	 (tmpfcheck (gtk-check-button-new-with-label "Keep Tempfiles"))
 
 	 (notebook (gtk-notebook-new))
-	 (options-procedure #f)
-	 (plot-procedure #f)
 	 (plot-options '())
 
 	 (action-hbox (gtk-hbox-new #f 10))
@@ -211,10 +209,9 @@
 		  ; look up the right one based on the active
 		  ; notebook tab when the go button is clicked
 		  (set! oproc-assoc (assoc-set! oproc-assoc plotproc optproc))
-
-		  (set! options-procedure optproc)
-		  (set! plot-procedure plotproc)))
+		  ))
 	      plot-list)
+;    (format #t "oproc-assoc:~s\n" oproc-assoc)
 
     ; put up somthing helpful if there are no plot modules registered
     (if (= 0 (length plot-list))
@@ -256,7 +253,7 @@
     (gtk-signal-connect export-btn "clicked" 
 			(lambda ()
 			  (let* ((n (gtk-notebook-get-current-page notebook))
-				 (pp (if (>= 0 n)
+				 (pp (if (>= n 0)
 					 (caddr (list-ref plot-list n))
 					 #f))
 				 (op (assoc-ref oproc-assoc pp))
@@ -284,7 +281,8 @@
 		  (open f (logior O_WRONLY O_CREAT O_TRUNC) #o0777)
 		  #f))
 	(null (open "/dev/null" O_RDONLY 0)))
-    ;(format #t "subprocess-to-file ~a ~s\n" cmd arglist)
+    (if gwave-debug
+	(format #t "subprocess-to-file ~a ~s\n" cmd arglist))
     (flush-all-ports)
     ; TODO: search for and stat cmd to make sure it exists and is executable.
     (let ((p (primitive-fork)))
@@ -308,8 +306,9 @@
 	     ; parent
 	     (if port
 		 (close port))
-	     
-	     (format #t "child process ~d started for ~a ~s\n" p cmd arglist)
+
+	     (if gwave-debug
+		 (format #t "child process ~d started for ~a ~s\n" p cmd arglist))
 	     (reap-child)
 	     )))))
 
