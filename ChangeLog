@@ -14,6 +14,10 @@
 	Better handling of logscale-X, zooming and scrollbar due to a
 	patch from Paul Maurer
 
-20010922
+20010927
 	configure now rejects non-GNU versions of "graph" even if they're
 	earlier in $PATH
+
+20011021
+	Clean abort with better error message if we can't find the scheme
+	files or they're fouled up

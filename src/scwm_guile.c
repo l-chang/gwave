@@ -42,6 +42,8 @@
 #include "dmalloc.h"
 #endif
 
+extern char *prog_name;
+
 SCM_HOOK(error_hook, "error-hook", 5, (SCM a, SCM b, SCM c, SCM d, SCM e),
 "Called on all kinds of errors and exceptions.
 Whenever an error or other uncaught throw occurs on any callback,
@@ -117,7 +119,7 @@ scwm_safe_apply (SCM proc, SCM args)
   apply_data.args = args;
 
   return scm_internal_stack_cwdr(scwm_body_apply, &apply_data,
-				 scwm_handle_error, "scwm",
+				 scwm_handle_error, prog_name,
 				 &stack_item);
 }
 
@@ -132,7 +134,7 @@ scwm_safe_apply_message_only (SCM proc, SCM args)
   apply_data.args = args;
 
   return scm_internal_cwdr_no_unwind(scwm_body_apply, &apply_data,
-			   scm_handle_by_message_noexit, "scwm",
+			   scm_handle_by_message_noexit, prog_name,
 			   &stack_item);
 }
 
@@ -533,7 +535,7 @@ scwm_body_eval_x (void *body_data)
 __inline__ static SCM 
 scwm_catching_eval_x (SCM expr) {
   return scm_internal_stack_catch (SCM_BOOL_T, scwm_body_eval_x, &expr,
-			  scwm_handle_error, "scwm");
+			  scwm_handle_error, prog_name);
 }
 
 static int clnsProcessingHook = 5;
@@ -616,6 +618,7 @@ scwm_handle_error (void *ARG_IGNORE(data), SCM tag, SCM throw_args)
       scm_putc ('\n', port);
       exit (2);
     }
+
   /* GJB:FIXME:MS: can the scheme code display a backtrace without the
      stack argument? */
 /*  DBUG((scwm_msg(DBG,"scwm_handle_error","length(throw_args) = %d", gh_length(throw_args));)) */
@@ -635,7 +638,7 @@ errors.")
   SCM_STACKITEM stack_item;
   VALIDATE_ARG_STR(1,fname);
   return scm_internal_cwdr_no_unwind(scwm_body_load, &fname,
-				     scm_handle_by_message_noexit, "scwm", 
+				     scm_handle_by_message_noexit, prog_name, 
 				     &stack_item);
 }
 #undef FUNC_NAME
@@ -649,7 +652,7 @@ SCM scwm_safe_eval_str (char *string)
 {
   SCM_STACKITEM stack_item;
   return scm_internal_cwdr_no_unwind(scwm_body_eval_str, string,
-				     scm_handle_by_message_noexit, "scwm", 
+				     scm_handle_by_message_noexit, prog_name, 
 				     &stack_item);
 }
 

@@ -216,8 +216,19 @@ void gwave_main(int argc, char **argv)
 	*/
 	{ /* scope */
 		extern char *init_scheme_string;
+		SCM res;
 		if(v_flag) {fprintf(stderr, "running init_scheme_string\n");}
-		scwm_safe_eval_str(init_scheme_string);
+		res = scwm_safe_eval_str(init_scheme_string);
+		if(v_flag) {
+			printf("result="); fflush(stdout);
+			scm_display(res, scm_cur_outp);
+			printf("\n"); fflush(stdout);
+		}
+                if(! SCM_EQ_P (res, SCM_BOOL_T)) {
+                        fprintf(stderr, "gwave: aborting due to errors.\n");
+                        exit(1);
+                }
+
 	} /* end scope */
 
 	wtable = g_new0(WaveTable, 1);

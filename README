@@ -11,7 +11,7 @@ Installation:
 	See the INSTALL file
 
 Usage:
-	gwave [-p number-of-panels] [waveform-file ...]
+	gwave [options] [waveform-file ...]
 
 The gwave main window is dominated by one or more "WavePanels" or
 graticules in which waveforms can be displayed.  WavePanels can be
@@ -133,8 +133,8 @@ setting the environment variable SPICE_ASCIIRAWFILE to "1" before
 running spice3. 
 
 Reading of binary rawfiles has only been tested with both ng-spice and
-gwave running on a little-endian machine.  Your mileage may vary.
-
+gwave running on a little-endian machine.  Your mileage may vary (but
+please send bug reports!)
 
 ACS (Al's Circuit Simulator, http://www.geda.seul.org/tools/acs/index.html)
 Gwave should identify and read ACS output files, generated with the '>'
@@ -153,6 +153,10 @@ Tanner Research T-Spice.
 It has been a while since I tried tspice, but gwave should read the output,
 at least from transient analysis runs.  Tspice output is in a variant of the
 cazm format, not surprising since Tanner bought the rights to cazm from MCNC.
+
+Silvaco SmartSpice
+Gwave works with the variant of berkeley spice rawfile format produced by
+SmartSpice.  Both ascii and binary files should work.
 
 
 Your own custom waveforms:
