@@ -1,0 +1,177 @@
+
+gwave - a  viewer for the output of spice-like simulators and other
+sorts of of analog data.
+
+by:
+
+Steve Tell 
+tell@cs.unc.edu or steve@telltronics.org
+
+Installation:
+	See the INSTALL file
+
+Usage:
+	gwave [-p number-of-panels] [waveform-file ...]
+
+The gwave main window is dominated by one or more "WavePanels" or
+graticules in which waveforms can be displayed.  WavePanels can be
+added and deleted with the menus.
+
+As waveform files are loaded from the command line or File->Read menu
+item, a window containing a scrolling list of variables in the file
+pops up.  Use the left mouse button to drag-and-drop variables into
+the WavePanels.  Double-clicking a variable in the the list adds it to
+panel that most recently had a variable dropped in it.  If you choose
+to close the variable list to neaten up your desktop, or lose the list
+under other windows, use the View->Variable List menu to display it
+again or bring it to the top.
+
+To the left side of the WavePanels are buttons corresponding to each
+waveform shown in the panel.  A waveform shown in a panel is called a
+VisibleWave.   There are two GUI functions overloaded onto the button for a
+VisibleWave:
+- Click with the left mousebutton to "select" one or more VisibleWaves.
+- Press and hold the right mousebutton to pop up a menu of operations
+related to that particular VisibleWave.  
+
+To delete waves, select one or more of them and then press the
+"delete" button at the top of the main window.  Alternately, use the
+delete item on the VisibleWave-button popup menu.
+
+Click on the waveform panels with the left and center mouse buttons to
+set two cursors for measuring.  Hold down these mouse buttons to drag
+the cursors.
+
+Pressing and holding the right mouse button while the cursor is in a
+waveform panel brings up a popup menu.  From this menu you can insert
+and delete waveform panels.  Some of the zoom commands are also
+replicated on this menu.
+
+
+-----------------------------------------------------------------------------
+Waveform Input files.
+
+Gwave understands CAzM transient output (.N/.B/.W) files, and the
+binary and ascii outputs from HSPICE (.tr0, .sw0, and .ac0) files.
+Gwave tries to guess the type of the file based on filename, and then
+tries all file formats until one succedes.
+
+Details on using Gwave with the output of various simulators:
+
+Berkeley Spice3F5 and ng-spice.  Gwave can read both the the ascii and
+binary forms of the spice "rawfile" output.  If difficulty is
+encountered with the binary format, Try selecting the ascii form by
+setting the environment variable SPICE_ASCIIRAWFILE to "1" before
+running spice3. 
+
+Reading of binary rawfiles has only been tested with both ng-spice and
+gwave running on a little-endian machine.  Your mileage may vary.
+
+
+ACS (Al's Circuit Simulator, http://www.geda.seul.org/tools/acs/index.html)
+Gwave should identify and read ACS output files, generated with the '>'
+option to a .tran statement.  
+
+Avanti's HSPICE.
+Gwave should work with both ascii and binary output in the form of
+.tr0/.sw0/.ac0 files.  If one form doesn't work for you, try the other form.
+Binary .tr0 files only work when gwave is run on a big-endian machines; if
+running hspice on your Sun and gwave on linux, use ascii .tr0 files.
+(Put .options post=2 in your spice deck)   I used to have problems with
+some .ac0 files but I believe this is fixed.  Try putting ".options probe"
+in your input file if you have troubles.
+
+Tanner Research T-Spice.
+It has been a while since I tried tspice, but gwave should read the output,
+at least from transient analysis runs.  Tspice output is in a variant of the
+cazm format, not surprising since Tanner bought the rights to cazm from MCNC.
+
+
+Your own custom waveforms:
+
+The easiest of the input formats to generate with simple scripts and
+other tools is the "ascii" format.  See the ACS-simulator output file
+tpwl.acs in the examples directory for an example of this format.  The
+first line lists the variable names, seperated by whitespace.  The
+variable in the first column is assumed to be the independent
+variable, for example "time."  Subsequent lines in the file contain
+the data, one timestep per line.  The independent variable must be
+nondecreasing.  Lines in the file can be arbitrarily long.
+
+Note that the '#' in examples/tpwl.acs is for the benefit of other
+tools (such as gnuplot), that don't expect column titles or variable
+names in the file.  To gwave, the first line is not a comment but
+contains whitespace-seperated fields naming the variables.  The result
+is that gwave thinks the independent variable name is "#Time," but
+don't let that bother you.
+
+----------------------------------------------------------------------
+
+The sp2sp utility.  
+
+In addition to gwave, I've included a utility program called "sp2sp"
+(for spice-to-spice).  It uses the same spicefile reaer code to
+convert among some of the goofy raw file formats output by spice-like
+simulators.  Its primary output format is the simple "ascii" format,
+consisting of one line per step, with whitespace-seperated columns.
+This format can be read by gwave, but is also ideal for feeding to
+awk, perl, or gnuplot.
+
+A complete manual page for sp2sp is provided and installed, but here are
+a few hints:
+
+Unlike gwave itself, sp2sp does not autodetect the file format.  Use
+the -t option to specify the input file format.
+
+sp2sp can produce arbitrarily long output lines.  This can cause
+trouble with very old versions of some unix utilities.
+
+Example sp2sp usage:
+
+	sp2sp -t hspice aoi.W.tr0
+
+----------------------------------------------------------------------
+This tool is far from complete. Partial contents of the To Do list:
+
+- better handling of datafiles containing complex numbers.  Currently, 
+  these files are read, but only the real part can be displayed.  
+  Workaround: Sp2sp prints out both the real and imaginary parts; convert
+  the file to generic ascii format using sp2sp.
+
+- Send feedback and error messages from loading of files to a popup window
+  or status line instead of to stdout or stderr.
+- Drag-and-drop to move waveform from one panel to another
+- Speed up redraws and minimize flashing, especialy flashing 
+  of waveform name/value labels when moving cursors.
+- Generate a postscript representation for printing or documentation.
+	(partly done)
+- Override of wave and panel paramters, like min/max Y value, color, etc.
+	Many of these are done.... needs docs...
+- More guile methods to round out the interface, including:
+	SMOBs for WaveVars, access to selected-VisibleWave list, others.
+- Saving and restoring waveform/panel configuration 
+- Drawing a labeled graticule in the waveform area
+- Seperate lists for selecting voltage/current/etc. types of variables
+- Clean up reader code by collecting some idioms that appear again and again
+  into common subroutines.  This will make writing new readers a little easier.
+- Documentation, both user's manual and programmer's manual.
+  Autodocs for guile primitives need to be extracted into text files.
+
+
+Feedback is welcome - tell@cs.unc.edu
+
+----------------------------------------------------------------------
+Acknowledgements
+
+Thanks to my colleagues John Poulton, John Eyles and Fred Heaton for
+giving gwave heavy use over the last several months.
+
+Thanks to Greg Badros and Maciej Stachowiak for the SCWM window
+manager, which inspired me to use guile as the extension language for
+gwave.  A number of code fragments and a bit of the general style of
+the Guile/C interaction was borrowed from SCWM.  Any misinterpretation
+and bugs introduced along the way are most certainly my fault.
+
+And last but not least, thanks to the authors of Gtk+, Guile, and
+Guile-gtk for some great building blocks.
+

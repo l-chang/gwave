@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e -x
+
+if [ $# != 1 ]
+then
+	echo "usage: $0 tarfile" 1>&2
+	exit 1
+fi
+
+tarfile=$1
+dtarfile=`pwd`/$tarfile
+
+base=`basename $tarfile .tar.gz`
+
+cd /tmp
+tar xzvf $dtarfile
+
+cd /tmp/$base
+./configure --prefix=/tmp/gwave-test
+gmake
+gmake install
+
