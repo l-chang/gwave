@@ -173,3 +173,45 @@
     (gtk-file-selection-hide-fileop-buttons window)
     (gtk-widget-show window)
 ))
+
+; Add variable to wavepanel,
+; and then do setup of its color, style, etc.
+(define-public (wavepanel-add-var-setup df wp signame color)
+  (let ((var (wavefile-variable df signame)))
+    (if var
+	(let ((vw (wavepanel-add-variable! wp var)))
+	  (if vw
+	      (set-visiblewave-color! vw color))))))
+
+(define-public (require-n-wavepanels rn)
+    (let ((hn (length (wtable-wavepanels))))
+      (if (< hn rn)
+	  (begin
+	    (print "need " (- rn hn) " more wavepanels\n")
+	    ))))
+
+(define-public (nth-wavepanel n)
+  (list-ref (wtable-wavepanels) n))
+
+; return GWDataFile object for named file, or #f it there is no such file
+(define-public (find-wavefile name)
+  (call-with-current-continuation
+   (lambda (exit)
+     (for-each (lambda (df)
+		 (if (string=? name (wavefile-file-name df))
+		     (exit df)))
+              (wavefile-list))
+     #f)))
+
+(define-public (find-or-load-wavefile name)
+  (let* ((df (find-wavefile name)))
+    (if (not df)
+	(load-wavefile! name))))
+
+;
+; Write out a guile script that when executed by a future gwave,
+; will restore the configuration of waves displayed from a particular datafile
+;
+(define-public (write-waverestore-script df fname)
+  )
+

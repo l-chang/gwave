@@ -212,6 +212,10 @@
 		     (lambda () 
 		       (wavefile-delete! df)
 		       (rebuild-varlist-submenu!)))
+       (add-menuitem menu "Write Wave Config"
+		     (lambda () (with-selected-filename
+				 "Name of config-restore script"
+				 (lambda (fn) (write-waverestore-script df fn))))) 
        (add-menuitem menu #f #f)
        (add-menuitem menu "Close"
 		 (lambda () (wavefile-remove-listwin! df)))
