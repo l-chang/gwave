@@ -68,13 +68,13 @@
     (display "\f\n")
     (cond
      ((eq? doctype 'primitive)
-      (format #t "(~a~a)\n" name (string-join arglist " " 'prefix)))
+      (format #t "Procedure: (~a~a)\n" name (string-join arglist " " 'prefix)))
      ((eq? doctype 'vcell)
-      (format #t "VARIABLE ~a\n" name))
+      (format #t "Variable: ~a\n" name))
      ((eq? doctype 'concept)
-      (format #t "CONCEPT ~a\n" name))
+      (format #t "Concept: ~a\n" name))
      ((eq? doctype 'hook)
-      (format #t "HOOK (~a~a)\n" name (string-join arglist " " 'prefix))))
+      (format #t "Hook: (~a~a)\n" name (string-join arglist " " 'prefix))))
 
     (for-each (lambda (s)
 		(format #t "~a\n" s))

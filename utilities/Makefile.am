@@ -1,10 +1,12 @@
-## $Id: Makefile.am,v 1.5 2003-12-04 04:54:58 sgt Exp $
+## $Id: Makefile.am,v 1.6 2003-12-24 20:42:48 sgt Exp $
 ## process this file with automake to create Makefile.in
 ## (You should run ./autogen.sh from the top level directory)
 
-EXTRA_DIST = ChangeLog guile-doc-snarf.in guile-func-name-check.in guile-snarf.awk.in
+EXTRA_DIST = ChangeLog gwave-doc-snarf.in guile-doc-snarf \
+	guile-func-name-check.in doc-split.in 
 
-noinst_SCRIPTS = gwave-doc-snarf guile-func-name-check guile-snarf.awk doc-split
+noinst_SCRIPTS = gwave-doc-snarf guile-doc-snarf \
+	guile-func-name-check doc-split 
 
 all:
 	chmod +x $(noinst_SCRIPTS)

@@ -99,13 +99,13 @@
 	    (if (not (eof-object? line))
 		(begin
 		  (cond 
-		   ((regexp-exec #+"^CONCEPT" line)
+		   ((regexp-exec #+"^Concept: " line)
 		    (set! fp concept-fp))
-		   ((regexp-exec #+"^HOOK" line)
+		   ((regexp-exec #+"^Hook: " line)
 		    (set! fp hook-fp))
-		   ((regexp-exec #+"^VARIABLE" line)
+		   ((regexp-exec #+"^Variable: " line)
 		    (set! fp var-fp))
-		   ((regexp-exec #+"^\\(" line)
+		   ((regexp-exec #+"^Procedure: " line)
 		    (set! fp proc-fp))
 		   (else
 		    (set! fp #f)))
