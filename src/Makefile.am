@@ -16,7 +16,7 @@ CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILEGTK_CFLAGS@ \
 
 guile_snarfs = cmd.x wavewin.x wavelist.x scwm_guile.x event.x draw.x print.x
 
-##BUILT_SOURCES = init_scheme_string.c scm_init_funcs.h $(guile_snarfs)
+BUILT_SOURCES=init_scheme_string.c scm_init_funcs.h $(guile_snarfs)
 
 init_scheme_string.c: $(top_srcdir)/scheme/minimal.scm
 	echo "char *init_scheme_string = \"\\" > $@
