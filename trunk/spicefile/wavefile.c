@@ -195,9 +195,10 @@ WaveFile *wf_finish_read(SpiceStream *ss)
 	dvals = g_new(double, ss->ncols);
 	row= 0;
 	wf->nvalues = 0;
+	last_ival = -1.0e29;
 	while((rc = ss_readrow(ss, &ival, dvals)) > 0) {
 		if(row > 0 && ival < last_ival) {
-			ss_msg(ERR, "wavefile_read", "independent variable is not nondecreasing\n");
+			ss_msg(ERR, "wavefile_read", "independent variable is not nondecreasing at row %d; ival=%g last_ival=%g\n", row, ival, last_ival);
 			rc = -1;
 			break;
 		}

@@ -60,6 +60,7 @@ struct _SpiceStream {
 	FILE *fp;
 	int lineno;
 	char *linebuf;
+	int line_length;
 	int lbufsize;
 	int expected_vals;
 	int read_vals;
