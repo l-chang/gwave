@@ -1,5 +1,18 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+
+New in 20031202
+- Got docstring extraction from C source to .txt files in doc directory working again
+- applied submitted patch that cleans up warnings from gcc3 about multiline text strings in C code
+
+New in 20030917
+- bugfixes to make the new print/plot stuff work better
+- path to working gnu graph found by configure is passed to scheme code
+
+New in 20030804
+- major new work on print/plot output, gnugraph and gnuplot backends
+- simple data-export function 
+
 New in 20021113
 - tiniest bugfix to accconfig.h: left some CVS-conflict junk behind
 - missing files src/xsnarf.h, src/xguile-snarf added
