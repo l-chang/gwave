@@ -34,53 +34,33 @@ To delete waves, select one or more of them using the buttons down the
 left side of the main window, and then press the "delete" button.
 
 Click on the waveform panels with the left and center mouse buttons to set two
-cursors for measuring.
+cursors for measuring.  Hold down these mouse buttons to drag the cursors.
 
+Pressing and holding the right mouse button while the cursor is in a
+waveform panel brings up a popup menu.  From this menu you can insert
+and delete waveform panels.  Some of the zoom commands are also
+replicated on this menu.
 
-New in 0.0.3:
-- Load multiple files at once, either from the command line or 
-interactively.
-- Some operations are moved to pulldown menus.
-
-New in 0.0.4:
-- Fixed bug and/or warning when first waveform is added to display
-- Ability to drag vertical bar cursors around, in addition to click-to-place
-- Added zoom-to-cursor function; if both cursors have been placed,
-	zooms so that the time between the cursors fills the display.
-- Added zoom-to-window function.  Select this menu option, then
-	press/drag/release mouse button 1 to indicate a region of the X
-	axis that then zooms to fill the display.
-
-New in 0.0.5:
-- Fixed bug in reading hspice files with lots of columns
-- displays signal name list window for files read from the command line.
-  (note: it will probably be behind the main window)
-- incorporated code contributed by Jeff Dionne for reading spice2 rawfiles
 
 Known problems:
 - HSPICE data files generated without ".options probe" may not be read
 correctly. workaround: try using ".options probe".  This mostly happens with
 AC sweeps.
 
-
 This tool is far from complete. Partial contents of the To Do list:
 
-Interactively changing the number of panels instead of using a lame
-command-line option
-Send feedback and error messages from loading of files to a popup window
-or status line instead of to stdout.
-Drag-and-drop to move waveform from one panel to another
-Logarithmic X and Y axes
-Speed up redraws and minimize flashing, especialy flashing 
-of waveform name/value labels when moving cursors.
-Generate a postscript representation for printing or documentation.
-Override of wave and panel paramters, like min/max Y value, color, etc.
-Saving and restoring waveform/panel configuration 
-Drawing a labeled graticule in the waveform area
-Seperate lists for selecting voltage/current/etc. types of variables
-Clean up reader code by collecting some idioms that appear again and again
-into common subroutines.  This will make writing new readers a little easier.
-
-
+- Send feedback and error messages from loading of files to a popup window
+  or status line instead of to stdout.
+- Drag-and-drop to move waveform from one panel to another
+- Logarithmic X and Y axes
+- Speed up redraws and minimize flashing, especialy flashing 
+  of waveform name/value labels when moving cursors.
+- Generate a postscript representation for printing or documentation.
+- Override of wave and panel paramters, like min/max Y value, color, etc.
+- Saving and restoring waveform/panel configuration 
+- Drawing a labeled graticule in the waveform area
+- Seperate lists for selecting voltage/current/etc. types of variables
+- Clean up reader code by collecting some idioms that appear again and again
+  into common subroutines.  This will make writing new readers a little easier.
 
 Feedback is welcome - tell@cs.unc.edu
