@@ -55,6 +55,13 @@ struct hsblock_header {  /* structure of binary tr0 block headers */
 	gint32 block_nbytes;
 };
 
+union gint32bytes {
+	gint32 i;
+	gchar b[4];
+};
+
+static void swap_gint32(gint32 *pi, size_t n);
+
 /* Read spice-type file header - autosense hspice binary or ascii */
 SpiceStream *
 sf_rdhdr_hspice(char *name, FILE *fp)
@@ -234,6 +241,11 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 		ss_msg(DBG, "sf_rdhdr_hsbin", "EOF reading block header");
 		goto fail;
 	}
+	if(hh.h1 == 0x04000000 && hh.h3 == 0x04000000) {
+		/* detected endian swap */
+		sf->flags |= SSF_ESWAP;
+		swap_gint32(&hh, sizeof(hh)/sizeof(gint32));
+	}
 	if(hh.h1 != 4 || hh.h3 != 4) {
 		ss_msg(DBG, "sf_rdhdr_hsbin", "unexepected values in data block header");
 		goto fail;
@@ -259,10 +271,11 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
  fail:
 	if(ahdr)
 		g_free(ahdr);
-	if(sf->dvar)
-		g_free(sf->dvar);
-	if(sf)
+	if(sf) {
+		if(sf->dvar)
+			g_free(sf->dvar);
 		g_free(sf);
+	}
 
 	return NULL;
 }
@@ -392,10 +405,16 @@ sf_readblock_hsbin(FILE *fp, char **bufp, int *bufsize, int offset)
 {
 	struct hsblock_header hh;
 	gint32 trailer;
+	int eswap = 0;
 
 	if(fread(&hh, sizeof(hh), 1, fp) != 1) {
 		ss_msg(DBG, "sf_readblock_hsbin", "EOF reading block header");
 		return 0;
+	}
+	if(hh.h1 == 0x04000000 && hh.h3 == 0x04000000) {
+		/* detected endian swap */
+		eswap = 1;
+		swap_gint32(&hh, sizeof(hh)/sizeof(gint32));
 	}
 	if(hh.h1 != 0x00000004 || hh.h3 != 0x00000004) {
 		ss_msg(DBG, "sf_readblock_hsbin", "unexepected values in block header");
@@ -424,6 +443,9 @@ sf_readblock_hsbin(FILE *fp, char **bufp, int *bufsize, int offset)
 	if(fread(&trailer, sizeof(gint32), 1, fp) != 1) {
 		ss_msg(DBG, "sf_readblock_hsbin", "EOF reading block trailer");
 		return 0;
+	}
+	if(eswap) {
+		swap_gint32(&trailer, 1);
 	}
 	if(trailer != hh.block_nbytes) {
 		ss_msg(DBG, "sf_readblock_hsbin", "block trailer mismatch");
@@ -456,6 +478,9 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 			ss_msg(DBG, "sf_getval_hsbin", "EOF reading block trailer at offset 0x%lx", pos);
 			return 0;
 		}
+		if(sf->flags & SSF_ESWAP) {
+			swap_gint32(&trailer, 1);
+		}
 		if(trailer != sf->expected_vals * sizeof(float)) {
 			ss_msg(DBG, "sf_getval_hsbin", "block trailer mismatch at offset 0x%lx", pos);
 			return -2;
@@ -465,6 +490,13 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 		if(fread(&hh, sizeof(hh), 1, sf->fp) != 1) {
 			ss_msg(DBG, "sf_getval_hsbin", "EOF reading block header at offset 0x%lx", pos);
 			return 0;
+		}
+		if(hh.h1 == 0x04000000 && hh.h3 == 0x04000000) {
+			/* detected endian swap */
+			sf->flags |= SSF_ESWAP;
+			swap_gint32(&hh, sizeof(hh)/sizeof(gint32));
+		} else {
+			sf->flags &= ~SSF_ESWAP;
 		}
 		if(hh.h1 != 0x00000004 || hh.h3 != 0x00000004) {
 			ss_msg(ERR, "sf_getval_hsbin", "unexepected values in block header at offset 0x%lx", pos);
@@ -480,6 +512,9 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 	}
 	sf->read_vals++;
 
+	if(sf->flags & SSF_ESWAP) {
+		swap_gint32((gint32 *)&val, 1);
+	}
 	*dval = val;
 	return 1;
 }
@@ -693,4 +728,22 @@ sf_guessrows_hsbin(SpiceStream *sf)
 		return 0;
 	
 	return st.st_size / (sizeof(float)  * sf->ncols);
+}
+
+
+static void
+swap_gint32(gint32 *pi, size_t n)
+{
+	union gint32bytes *p = (union gint32bytes *)pi;
+	size_t i;
+	gchar temp;
+	for(i = 0; i < n; i++) {
+		temp = p[i].b[3] ;
+		p[i].b[3] = p[i].b[0];
+		p[i].b[0] = temp;
+
+		temp = p[i].b[2] ;
+		p[i].b[2] = p[i].b[1];
+		p[i].b[1] = temp;
+	}
 }

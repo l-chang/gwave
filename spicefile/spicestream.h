@@ -58,6 +58,7 @@ struct _SpiceStream {
 
 	/* the following stuff is for private use of reader routines */
 	FILE *fp;
+	int flags;
 	int lineno;
 	char *linebuf;
 	int line_length;
@@ -69,6 +70,9 @@ struct _SpiceStream {
 	int read_sweepparam;
 	char *linep;
 };
+
+/* values for flags field */
+#define SSF_ESWAP 1
 
 #define ss_readrow(sf, ivp, dvp) ((sf->readrow)(sf, ivp, dvp))
 #define ss_readsweep(sf, swp) ((sf->readsweep)(sf, swp))
