@@ -14,7 +14,7 @@ On Red Hat Linux, I use these RPMs:
 	glib-devel-1.2.6-7	(included in RH6.2)
 	guile-gtk-0.19-1
 
-		http://www.ping.de/sites/zagadka/guile-gtk/download/guile-gtk-0.19.tar.gz	
+	http://www.ping.de/sites/zagadka/guile-gtk/download/guile-gtk-0.19.tar.gz	
 
 	guile-1.4-2sgt
 		http://www.telltronics.org/~tell/dist/guile-1.4-2sgt.i386.rpm
@@ -22,9 +22,14 @@ On Red Hat Linux, I use these RPMs:
 
 The guile-1.4 RPMs are of my own construction (you've been warned).
 
-Gwave has also been minimaly tested with version 1.3.4 of guile and
-guile-gtk 0.17.  (guile 1.3.4 and guile-gtk 0.17 go together; 
-mixing versions these versions with those above is probably futile.)
+On Guile and Guile-gtk versions
+Here are combinations known to work:
+       guile           guile-gtk
+        1.4             0.19
+        1.3.4           0.18
+        1.3.4           0.17
+Mixing guile-gtk 0.19 with guile-1.3.4 definitely fails,
+as does guile-gtk 0.18 with guile-1.4.
 
 Gwave may work with earlier versions of guile too, but I haven't
 tested this recently.  The Guile and guile-gtk shipped with RedHat
