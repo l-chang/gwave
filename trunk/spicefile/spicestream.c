@@ -44,6 +44,7 @@ extern SpiceStream *sf_rdhdr_cazm(char *name, FILE *fp);
 extern SpiceStream *sf_rdhdr_s3raw(char *name, FILE *fp);
 extern SpiceStream *sf_rdhdr_s2raw(char *name, FILE *fp);
 extern SpiceStream *sf_rdhdr_ascii(char *name, FILE *fp);
+extern SpiceStream *sf_rdhdr_nsout(char *name, FILE *fp);
 static int ss_readrow_none(SpiceStream *, double *ivar, double *dvars);
 
 SSMsgLevel spicestream_msg_level = WARN;
@@ -63,6 +64,7 @@ static DFormat format_tab[] = {
 	{"spice3raw", sf_rdhdr_s3raw },
 	{"spice2raw", sf_rdhdr_s2raw },
 	{"ascii", sf_rdhdr_ascii },
+	{"nsout", sf_rdhdr_nsout },
 };
 static const int NFormats = sizeof(format_tab)/sizeof(DFormat);
 
