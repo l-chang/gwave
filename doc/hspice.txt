@@ -1,0 +1,146 @@
+
+
+Notes on output files from hspice  (.tr0, .sw0, .ac0)
+
+
+Header includes an integer that seems to indicate the type of a variable.
+It doesn't seem to mean much for an independent variable.
+
+Values seen:
+
+3	voltage as independent var in sweep
+1	voltage as dependent var in sweep or transient
+2	voltage as dependent var in AC analysis
+15	current
+
+
+
+hspice file format "9601" is the default in hspice 98.2 (9007 was
+previous).  Difference is in how nodenames 16 characters and longer
+are handled.  As written, our filereader always does 9601 correctly,
+and does 9007 correctly if nodnames are 15 characters or shorter.
+I don't think the 9007/exactly-16 case is worth fixing.
+
+
+-----------------------------------------------------------------------------
+
+About Binary Hspice files:
+generate with ".options POST=1"
+
+Appear to have 16-byte binary header, then an ascii header similar
+(identical?)  to that from an ascii hspice file, followed by binary
+data.
+
+output from test.hsp:
+ascii has 292 floating-point values - 97 rows of three, plus one extra.
+binary has 1192 bytes in the binary data section - could be 149 doubles or
+298 floats, or maybe some is some sort of header/trailer/control info.
+
+binary header is:
+00 00 00 04 00 00 00 2b  00 00 00 04 00 00 01 58   .......+.......X
+
+guess: 4 32-bit ints,
+fourth one is length in bytes of the ascii header portion.  In this case,
+binary data starts at offset 0x0168.
+
+confirmed by adding another output item to test1.hsp - start of binary data
+moves to offset 0x0180, 4th integer in header is 0x170.
+With four plotted items, the pattern in the binary data is real obvious.
+
+Looks like there are 5 more 32-bit longwords, then binary floats.
+
+test1.tr0.binary:
+000170  20 20 20 20 20 20 20 20  24 26 25 23 20 20 20 20           $&%#    
+000180  00 00 01 70 00 00 00 04  00 00 01 85 00 00 00 04   ...p............
+000190  00 00 06 14 00 00 00 00  00 00 00 00 00 00 00 00   ................
+0001a0  80 00 00 00 2f 09 70 5f  00 00 00 00 00 00 00 00   ..../.p_........
+0001b0  80 00 00 00 2f 89 70 5f  00 00 00 00 00 00 00 00   ..../.p_........
+
+floating-point data appears to start at offset 0x194 here.
+could be that the value 0x195 (word at 0x188) is related to this offset.
+the value 0x614 at offset 0x190 appears related to the size of the floating-point
+data.  At the end of the file we have:
+
+000780  af c5 1b fa 34 54 d0 cd  00 00 00 00 00 00 00 00   ....4T..........
+000790  af 6c 87 f9 34 56 bf 95  00 00 00 00 00 00 00 00   .l..4V..........
+0007a0  af 24 5e 7d 71 49 f2 ca  00 00 06 14               .$^}qI......
+
+Data block size is 0x7a8-0x194, or 0x614.
+Last word is 0x614 - matches word at 0x190.  Clearly is block-size.
+
+Pattern for both the ascii header and the floating point data appears to be:
+4-word header, last word indicating data size, followed by data, then a 1-word
+trailer consisting of the size-word.
+
+last question: what are the 32-bit floating-point values?
+single-precision IEEE? single-precision native floating point?  On HP,
+these are the same so we really can't tell.  We haven't got any hspice
+binaries for other architectures, so lets blow this off for now.
+
+-----------------------------------------------------------------------------
+
+More complications in both ascii and binary files without ".options probe".
+
+First bit of quickAC.ac0:
+
+00050004000000009601    a simple ac run 
+                09/17/9816:07:48 Copyright (C) 1985-1997 by Avant! Corporation.
+                           0 
+                          2       1       1       1       8       2       2 
+  8       8     HERTZ           0               1               2 
+I(v1            v(1             v(2             i(r2            i(c1 
+$&%#            v(1             v(2             i(r2            i(c1 
+ .10000E+04 .00000E+00 .00000E+00 .10000E+01 .00000E+00 .50000E+00-.15708E-02
+-.50000E-03-.15708E-05 .10000E+01 .50000E+00 .50000E-03 .31416E-05 .12589E+04
+ .00000E+00 .00000E+00 .10000E+01 .00000E+00 .49999E+00-.19775E-02-.50001E-03
+-.19775E-05 .10000E+01 .50000E+00 .50000E-03 .39550E-05 .15849E+04 .00000E+00
+ .00000E+00 .10000E+01 .00000E+00 .49999E+00-.24895E-02-.50001E-03-.24895E-05
+ .10000E+01 .49999E+00 .49999E-03 .49790E-05 .19953E+04 .00000E+00 .00000E+00
+ .10000E+01 .00000E+00 .49998E+00-.31340E-02-.50002E-03-.31340E-05 .10000E+01
+
+
+For the first time, the first number in the header line is not 1.  The
+sum of those two numbers, less 1 (for the independent var), seems to
+be the number of dependent variables that we have column headings for.
+
+New variable type - 8 - seems to be another current.
+
+Problem is that there are 13 columns, as determined by looking for the
+repeating pattern of the frequency column.
+
+Hypothesis: 
+first number in header is number of things put in automaticly.
+independent variable counts for 1.  The rest of them (four, in this case)
+are complex, responsible for two columns.
+
+Works for quickAC.ac0,  chokes on quickINV.tr0:
+
+
+
+00070002000000009601    inverter circuit 
+                09/17/9818:22:46 Copyright (C) 1985-1997 by Avant! Corporation.
+                           0 
+                          1       1       1       1       1       8       8 
+  1       1     TIME            0               in              out 
+vcc             I(vcc           I(vin           v(in            v(out 
+$&%#            I(vcc           I(vin           v(in            v(out 
+ .00000E+00 .00000E+00 .20000E+00 .49989E+01 .50000E+01-.90576E-06 .00000E+00
+ .20000E+00 .49989E+01 .50000E-10 .00000E+00 .20000E+00 .49989E+01 .50000E+01
+-.90576E-06-.54210E-19 .20000E+00 .49989E+01 .10000E-09 .00000E+00 .20000E+00
+ .49989E+01 .50000E+01-.90576E-06-.54210E-19 .20000E+00 .49989E+01 .30000E-09
+ .00000E+00 .20000E+00 .49989E+01 .50000E+01-.90576E-06-.54210E-19 .20000E+00
+ .49989E+01 .80000E-09 .00000E+00 .20000E+00 .49989E+01 .50000E+01-.90576E-06
+ .00000E+00 .20000E+00 .49989E+01 .13000E-08 .00000E+00 .20000E+00 .49989E+01
+ .50000E+01-.90576E-06 .00000E+00 .20000E+00 .49989E+01 .20000E-08 .00000E+00
+ .20000E+00 .49989E+01 .50000E+01-.90576E-06-.13553E-19 .20000E+00 .49989E+01
+ .21000E-08 .00000E+00 .66000E+00 .49940E+01 .50000E+01 .11557E-04-.54467E-04
+
+
+Header indicates 8 dependent variables, column headings for:
+
+TIME            0               in              out 
+vcc             I(vcc           I(vin           v(in            v(out 
+
+Only 9 columns of data - looks like none of them are complex.
+I've got no idea how to differentiate these cases from this header info.
+
