@@ -2,6 +2,10 @@
  * test routine for WaveFile data file readers
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2000/08/09 23:37:39  sgt
+ * ss_hspice.c - wrote sf_guessrows_hsbin routine.
+ * others - instrumented to count reallocs and print out the number.
+ *
  * Revision 1.3  2000/01/07 05:04:48  tell
  * updating with old changes as we construct the CVS
  *
@@ -19,6 +23,8 @@
 #include <glib.h>
 
 #include "wavefile.h"
+
+void test_interp(WaveFile *wf, double mytm);
 
 int
 main(int argc, char **argv)
@@ -117,26 +123,33 @@ main(int argc, char **argv)
 	if(v_flag) {
 		double mytm;
 		double delta;
-		int idx;
 
 		mytm = wds_get_point(wf->iv->wds, 0);
-		delta = (wds_get_point(wf->iv->wds, wf->nvalues-1) - mytm) / 40;
+		delta = (wds_get_point(wf->iv->wds, wf->nvalues-1) - mytm) / 40.0;
 		printf("40 divisions, delta=%g\n", delta);
-		for(i = 0; i < 41; i++, mytm += delta) {
-			idx = wf_find_point(wf->iv, mytm);
-			printf("last %8s < %8.4g is %8.4g at [%2d];",
-			       wf->iv->wv_name,
-			       mytm,
-			       wds_get_point(wf->iv->wds, idx),
-			       idx);
-			fflush(stdout);
-			printf("%8s at %8s=%8.4g is %8.4g\n",
-			       wf->dv[0].wv_name,
-			       wf->iv->wv_name,
-			       mytm,
-			       wv_interp_value(&wf->dv[0], mytm));
+		for(i = 0; i <= 41; i++, mytm += delta) {
+			test_interp(wf, mytm);
 		}
+		mytm = wds_get_point(wf->iv->wds, wf->nvalues-2);
+		test_interp(wf, mytm);
    	}
-
 	exit(0);
+}
+
+void
+test_interp(WaveFile *wf, double mytm)
+{
+	int idx;
+	idx = wf_find_point(wf->iv, mytm);
+	printf("last %8s < %14.8g is %14.8g at [%4d];",
+	       wf->iv->wv_name,
+	       mytm,
+	       wds_get_point(wf->iv->wds, idx),
+	       idx);
+	fflush(stdout);
+	printf("%8s at %8s=%14.8g is %14.8g\n",
+	       wf->dv[0].wv_name,
+	       wf->iv->wv_name,
+	       mytm,
+	       wv_interp_value(&wf->dv[0], mytm));
 }
