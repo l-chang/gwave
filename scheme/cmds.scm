@@ -61,7 +61,7 @@
 ; had this in C.
 ;
 
-; these should be a real data structure of some kind
+; instead of multiple lists, these should be a real data structure of some kind
 (define-public wavepanel-type-names    (list "Std"	"Jge"))
 (define-public wavepanel-num-types (length wavepanel-type-names))
 (define            panel-type-heights  (list 100 	25))
@@ -149,20 +149,22 @@
     (gtk-widget-show window)
 ))
 
-; Add variable to wavepanel,
-; and then do setup of its color, style, etc.
+; Add variable to wavepanel, and then do setup of its color, style, etc.
+; Mainly for use from scripts that restore a saved configuration.
+; TODO: don't add the variable if already present in the specified panel.
 (define-public (wavepanel-add-var-setup df wp signame color)
-  (let ((var (wavefile-variable df signame)))
-    (if var
-	(let ((vw (wavepanel-add-variable! wp var)))
-	  (if vw
-	      (set-visiblewave-color! vw color))))))
+  (if df
+      (let ((var (wavefile-variable df signame)))
+	(if var
+	    (let ((vw (wavepanel-add-variable! wp var)))
+	      (if vw
+		  (set-visiblewave-color! vw color)))))))
 
 (define-public (require-n-wavepanels rn)
     (let ((hn (length (wtable-wavepanels))))
-      (if (< hn rn)
-	  (begin
-	    (print "need " (- rn hn) " more wavepanels\n")))
+;      (if (< hn rn)
+;	  (begin
+;	    (print "need " (- rn hn) " more wavepanels\n")))
       (do ((i hn
 	      (+ i 1)))
 	  ((not (< i rn)))
@@ -182,33 +184,42 @@
               (wavefile-list))
      #f)))
 
+; locate a already-loaded wavefile by name, and if that fails,
+; try to load it.  If that fails too, return #f.
 (define-public (find-or-load-wavefile name)
   (let* ((df (find-wavefile name)))
     (if (not df)
-	(load-wavefile! name))))
-
+	(load-wavefile! name)
+	df)))
 ;
 ; Write out a guile script that when executed by a future gwave,
 ; will restore the configuration of waves displayed from a particular datafile
 (define-public (write-filerestore-script df fname)
-  (let ((p (open-output-file fname)))
+  (let ((p (open fname (logior O_WRONLY O_CREAT) #o0777)))
     (with-output-to-port p 
       (lambda () 
-	(print "; gwave script\n")
-	(print "(require-n-wavepanels " (length (wtable-wavepanels)) ")\n")
+	(write-script-header)
 	(write-wfr-script df)))
     (close-port p)))
 
 ; Similar, but writes configuration-restoring script for all datafiles
 (define-public (write-allrestore-script sname)
-  (let ((p (open-output-file sname)))
+  (let ((p (open sname (logior O_WRONLY O_CREAT) #o0777)))
+    (print "port=" p "\n")
     (with-output-to-port p 
       (lambda () 
-	(print "; gwave script\n")
-	(print "(require-n-wavepanels " (length (wtable-wavepanels)) ")\n")
+	(write-script-header)
 	(for-each (lambda (df) (write-wfr-script df))
 		  (wavefile-list))))
     (close-port p)))
+
+; write header part of configuration-restoring script, 
+; specifying "/path/to/gwave -s" as its interpreter.
+(define (write-script-header)
+  (print "#!" gwave-bin-gwave-path " -s\n!#\n")
+  (print "; gwave script\n")
+  (print "(require-n-wavepanels " (length (wtable-wavepanels)) ")\n")
+)
 
 ; write portion of script to restore waves for a single wavefile
 (define (write-wfr-script df)

@@ -20,13 +20,11 @@
 ;
 ; TODO:  better checking of option arguments;
 ;  make sure numeric ones are numbers, and within valid range. 
-;  Clean up arg parsing in gwave.c, don't exit on error.
-;  Detect argument errors here and print nice error message
-;  coordinate usage messages with C
 ;
 (define opts (getopt-long (program-arguments)
              `((nobacktrace  (single-char #\n))
                (panels       (single-char #\p) (value #t))
+               (script       (single-char #\s) (value #t))
 	       (verbose      (single-char #\v))
 	       (debug        (single-char #\x))
 	       )))
@@ -41,9 +39,16 @@
     (if a
         (set! initial-panels (string->number (cdr a)))))
 
+(define startup-script #f)
+(let ((s (assq 'script opts)))
+    (if s
+	(if (string? (cdr s))
+	    (set! startup-script (cdr s)))))
+
 (define cmdline-files (pick string? (assq '() opts)))
 
 ;(display "opts:") (display opts) (newline)
+;(display "script:") (display startup-script)(newline)
 ;(display "args: verbose=")(display verbose)
 ;(display " npanels=")(display npanels)
 ;(display " files=")
@@ -70,6 +75,10 @@
    ; add the initial set of panels
    (do ((i 0 (+ i 1))) ((>= i initial-panels))
      (wtable-insert-typed-panel! #f default-wavepanel-type))
+
+   ; execute script specified with -s 
+   (if startup-script
+       (load startup-script))
 ))
 
 
