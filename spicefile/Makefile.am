@@ -12,3 +12,9 @@ noinst_PROGRAMS = test_read
 test_read_SOURCES =  test_read.c
 test_read_LDFLAGS = @GTK_LIBS@
 test_read_LDADD = libspicefile.a
+
+bin_PROGRAMS=sp2sp
+sp2sp_SOURCES=sp2sp.c
+sp2sp_LDFLAGS= @GTK_LIBS@
+sp2sp_LDADD= libspicefile.a
+

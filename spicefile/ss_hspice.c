@@ -43,9 +43,14 @@ static SpiceStream *hs_process_header(int nauto, int nprobe,
 				      int nsweepparam, char *line, char *name);
 static int sf_readsweep_hsascii(SpiceStream *sf, double *svar);
 static int sf_readsweep_hsbin(SpiceStream *sf, double *svar);
-
 static int sf_endblock_hsbin(SpiceStream *sf);
 
+struct hsblock_header {  /* structure of binary tr0 block headers */
+	gint32 h1;
+	gint32 h2;
+	gint32 h3;
+	gint32 block_nbytes;
+};
 
 /* Read spice-type file header - autosense hspice binary or ascii */
 SpiceStream *
@@ -177,36 +182,23 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 
 	SpiceStream *sf = NULL;
 	char *ahdr = NULL;
-	int ahdrsize;
+	int ahdrsize = 0;
+	int ahdrend = 0;
+	int n;
 	int datasize;
 	int nauto, nprobe, nsweepparam, ntables;
 	char nbuf[16];
+	struct hsblock_header hh;
 	
-	gint32 ibuf[4];
+	do {
+		n = sf_readblock_hsbin(fp, &ahdr, &ahdrsize, ahdrend);
+		if(n <= 0)
+			goto fail;
+		ahdrend += n;
+		ahdr[ahdrend] = '\0';
 
-	if(fread(ibuf, sizeof(gint32), 4, fp) != 4) {
-		ss_msg(DBG, "rdhdr_hsbin", "EOF reading block1 header");
-		return NULL;
-	}
-	if(ibuf[0] != 4 || ibuf[2] != 4) {
-		ss_msg(DBG, "rdhdr_hsbin", "unexepected values in block1 header");
-		return NULL;
-	}
-	ahdrsize = ibuf[3];
-	ahdr = g_new(char, ahdrsize+1);
-	if(fread(ahdr, sizeof(char), ahdrsize, fp) != ahdrsize) {
-		ss_msg(DBG, "rdhdr_hsbin", "EOF reading block1");
-		goto fail;
-	}
-	ahdr[ahdrsize] = '\0';
-	if(fread(ibuf, sizeof(gint32), 1, fp) != 1) {
-		ss_msg(DBG, "rdhdr_hsbin", "EOF reading block1 trailer");
-		goto fail;
-	}
-	if(ibuf[0] != ahdrsize) {
-		ss_msg(DBG, "rdhdr_hsbin", "block1 trailer mismatch");
-		goto fail;
-	}
+	} while(!strstr(ahdr, "$&%#"));
+
 	/* ahdr is an ascii header that describes the variables in
 	 * much the same way that the first lines of the ascii format do,
 	 * except that there are no newlines
@@ -235,20 +227,20 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	if(!sf)
 		goto fail;
 	
-	if(fread(ibuf, sizeof(gint32), 4, fp) != 4) {
-		ss_msg(DBG, "rdhdr_hsbin", "EOF reading block2 header");
+	if(fread(&hh, sizeof(hh), 1, fp) != 1) {
+		ss_msg(DBG, "sf_rdhdr_hsbin", "EOF reading block header");
 		goto fail;
 	}
-	if(ibuf[0] != 4 || ibuf[2] != 4) {
-		ss_msg(DBG, "rdhdr_hsbin", "unexepected values in block2 header");
+	if(hh.h1 != 4 || hh.h3 != 4) {
+		ss_msg(DBG, "sf_rdhdr_hsbin", "unexepected values in data block header");
 		goto fail;
 	}
 
-	datasize = ibuf[3];
+	datasize = hh.block_nbytes;
 	sf->expected_vals = datasize / sizeof(float);
 	sf->read_vals = 0;
 	
-	ss_msg(DBG, "rdhdr_hsbin", "datasize=%d expect %d columns, %d values; reading block2 at 0x%lx", datasize, sf->ncols, sf->expected_vals, ftell(fp));
+	ss_msg(DBG, "sf_rdhdr_hsbin", "datasize=%d expect %d columns, %d values;\n  reading first data block at 0x%lx", datasize, sf->ncols, sf->expected_vals, ftell(fp));
 
 
 	sf->fp = fp;
@@ -382,6 +374,112 @@ hs_process_header(int nauto, int nprobe, int nsweepparam, char *line, char *name
 	return NULL;
 }
 
+/*
+ * Read a "block" from an HSPICE binary file.
+ * Returns number of bytes read, 0 for EOF, negative for error.
+ * The body of the block is copied into the buffer pointed to by the
+ * buffer-pointer pointed to by bufp, at offset offset.
+ * The buffer is expanded with g_realloc if necessary. 
+ * If bufp is NULL, a new buffer  is allocated.   The buffer
+ * size is maintained in the int pointed to by bufsize. 
+ *
+ */
+static int
+sf_readblock_hsbin(FILE *fp, char **bufp, int *bufsize, int offset)
+{
+	struct hsblock_header hh;
+	gint32 trailer;
+
+	if(fread(&hh, sizeof(hh), 1, fp) != 1) {
+		ss_msg(DBG, "sf_readblock_hsbin", "EOF reading block header");
+		return 0;
+	}
+	if(hh.h1 != 0x00000004 || hh.h3 != 0x00000004) {
+		ss_msg(DBG, "sf_readblock_hsbin", "unexepected values in block header");
+		return -1;
+	}
+	if(bufp == NULL) {   /* new buffer: exact fit */
+		*bufsize = hh.block_nbytes;
+		*bufp = g_new(char, *bufsize);
+	}
+
+	/* need to expand: double buffer size or make room for two blocks 
+	 * this size, whichever is larger.  Better to realloc more now and
+	 * cut down on the number of future reallocs.
+	 */
+	if(*bufsize < offset + hh.block_nbytes) {
+		if(2 * *bufsize > (*bufsize + 2 * hh.block_nbytes))
+			*bufsize *= 2;
+		else
+			*bufsize += 2 * hh.block_nbytes;
+		*bufp = g_realloc(*bufp, *bufsize);
+	}
+	if(fread(*bufp + offset, sizeof(char), hh.block_nbytes, fp) != hh.block_nbytes) {
+		ss_msg(DBG, "sf_readblock_hsbin", "EOF reading block body");
+		return 0;
+	}
+	if(fread(&trailer, sizeof(gint32), 1, fp) != 1) {
+		ss_msg(DBG, "sf_readblock_hsbin", "EOF reading block trailer");
+		return 0;
+	}
+	if(trailer != hh.block_nbytes) {
+		ss_msg(DBG, "sf_readblock_hsbin", "block trailer mismatch");
+		return -2;
+	}
+	return hh.block_nbytes;
+}
+
+/*
+ * helper routine: get next floating-point value from data part of binary
+ * hspice file.   Handles the block-structure of hspice files; all blocks
+ * encountered are assumed to be data blocks.  We don't use readblock_hsbin because
+ * some versions of hspice write very large blocks, which would require a 
+ * very large buffer.
+ * 
+ * Returns 0 on EOF, 1 on success, negative on error.
+ */
+static int
+sf_getval_hsbin(SpiceStream *sf, double *dval)
+{
+	long pos;
+	float val;
+	int i;
+	struct hsblock_header hh;
+	gint32 trailer;
+
+	if(sf->read_vals >= sf->expected_vals) {
+		pos = ftell(sf->fp);
+		if(fread(&trailer, sizeof(gint32), 1, sf->fp) != 1) {
+			ss_msg(DBG, "sf_getval_hsbin", "EOF reading block trailer at offset 0x%lx", pos);
+			return 0;
+		}
+		if(trailer != sf->expected_vals * sizeof(float)) {
+			ss_msg(DBG, "sf_getval_hsbin", "block trailer mismatch at offset 0x%lx", pos);
+			return -2;
+		}
+
+		pos = ftell(sf->fp);
+		if(fread(&hh, sizeof(hh), 1, sf->fp) != 1) {
+			ss_msg(DBG, "sf_getval_hsbin", "EOF reading block header at offset 0x%lx", pos);
+			return 0;
+		}
+		if(hh.h1 != 0x00000004 || hh.h3 != 0x00000004) {
+			ss_msg(ERR, "sf_getval_hsbin", "unexepected values in block header at offset 0x%lx", pos);
+			return -1;
+		}
+		sf->expected_vals = hh.block_nbytes / sizeof(float);
+		sf->read_vals = 0;
+	}
+	if(fread(&val, sizeof(float), 1, sf->fp) != 1) {
+		pos = ftell(sf->fp);
+		ss_msg(ERR, "sf_getval_hsbin", "unexepected EOF in data at offset 0x%lx", pos);
+		return -1;
+	}
+	sf->read_vals++;
+
+	*dval = val;
+	return 1;
+}
 
 /*
  * helper routine: get next value from ascii hspice file.
@@ -389,6 +487,7 @@ hs_process_header(int nauto, int nprobe, int nsweepparam, char *line, char *name
  * Lines may look like either of these two examples:
 0.66687E-090.21426E+010.00000E+000.00000E+000.25000E+010.71063E-090.17877E+01
  .00000E+00 .30000E+01 .30000E+01 .30000E+01 .30000E+01 .30000E+01 .30092E-05
+ * There may be whitespace at the end of the line before the newline.
  *
  * Returns 0 on EOF, 1 on success.
  */
@@ -397,21 +496,42 @@ sf_getval_hsascii(SpiceStream *sf, double *val)
 {
 	char vbuf[16];
 	char *vp;
+	char *cp;
+	int l;
 
 	if(!sf->linep || (*sf->linep==0) || *sf->linep == '\n') {
 		if(fgets(sf->linebuf, sf->lbufsize, sf->fp) == NULL)
 			return 0;
+		
+		l = strlen(sf->linebuf);
+		if(l) {  /* delete whitespace at end of line */
+			cp = sf->linebuf + l - 1;
+			while(cp > sf->linebuf && *cp && isspace(*cp))
+				*cp-- = '\0';
+		}
 		sf->linep = sf->linebuf;
-		/* fprintf(stderr, "#line: %s\n", sf->linebuf); */
+		sf->line_length = strlen(sf->linep);
+		/* fprintf(stderr, "#line: \"%s\"\n", sf->linebuf); */
 	}
+	if(sf->linep > sf->linebuf + sf->line_length) {
+		ss_msg(WARN, "sf_getval_hsascii", 
+		       "%s: internal error or bad line in file", sf->filename);
+		return 0;
+	}
+
 	strncpy(vbuf, sf->linep, 11);
 	sf->linep += 11;
 	vbuf[11] = 0;
+	if(strlen(vbuf) != 11) {
+		/* incomplete float value - probably truncated or
+		   partialy-written file */
+		return 0;
+	}
 	vp = vbuf;
 	while(isspace(*vp)) /* atof doesn't like spaces */
 		vp++;
 	*val = atof(vp);
-	/* fprintf(stderr, "#vp=\"%s\" val=%f\n", vp, val); */
+	/* fprintf(stderr, "#vp=\"%s\" val=%f\n", vp, *val); */
 	return 1;
 }
 
@@ -464,95 +584,38 @@ static int
 sf_readrow_hsbin(SpiceStream *sf, double *ivar, double *dvars)
 {
 	int i;
+	int rc;
 	float val;
 	long pos;
 
 	if(!sf->read_sweepparam) { /* first row of table */
-		if(sf_readsweep_hsascii(sf, NULL) <= 0) /* discard sweep parameters, if any */
+		if(sf_readsweep_hsbin(sf, NULL) <= 0) /* discard sweep parameters, if any */
 			return -1;  
 	}
-	if(fread(&val, sizeof(float), 1, sf->fp) != 1) {
-		pos = ftell(sf->fp);
-		ss_msg(ERR, "sf_readrow_hsbin", "unexepected EOF in data at offset 0x%lx", pos);
-		return 0;
-	}
-	sf->read_vals++;
-	if(sf->read_vals > sf->expected_vals) {
-		pos = ftell(sf->fp);
-		ss_msg(DBG, "sf_readrow_hsbin", "exiting after %d values at offset 0x%lx",
-		       sf->read_vals, pos);
-		return 0;
-	}
-	if(val >= (1e30 - DBL_EPSILON)) {
-		pos = ftell(sf->fp);
-		ss_msg(DBG, "sf_readrow_hsbin", "end of table at infinite ivar value at offset 0x%lx", pos);
 
-		return sf_endblock_hsbin(sf);
+	rc = sf_getval_hsbin(sf, ivar);
+	if(rc == 0)		/* file EOF */
+		return 0;
+	if(rc < 0)
+		return -1;
+	if(*ivar >= 1.0e29) { /* "infinity" at end of data table */
+		sf->read_tables++;
+		if(sf->read_tables == sf->ntables)
+			return 0; /* end of data, should also be EOF but we don't check */
+		else {
+			sf->read_sweepparam = 0;
+			sf->read_rows = 0;
+			return -2;  /* end of table, more tables follow */
+		}
 	}
-	*ivar = val;
-
+	sf->read_rows++;
 	for(i = 0; i < sf->ncols-1; i++) {
-		if(sf->read_vals >= sf->expected_vals) {
-			pos = ftell(sf->fp);
-			ss_msg(ERR, "sf_readrow_hsbin", "mid-row exit after %d values at field %d, offset 0x%lx",
-			       sf->read_vals, i, pos);
+		if(sf_getval_hsbin(sf, &dvars[i]) != 1) {
+			ss_msg(WARN, "sf_readrow_hsbin", "%s: EOF or error reading data field %d in row %d of table %d; file is incomplete.", sf->filename, i, sf->read_rows, sf->read_tables);
 			return 0;
 		}
-		
-		if(fread(&val, sizeof(float), 1, sf->fp) != 1) {
-			pos = ftell(sf->fp);
-			ss_msg(ERR, "sf_readrow_hsbin", "unexpected EOF at field %d, offset 0x%lx", i, pos);
-			return -1;
-		}
-		dvars[i] = val;
-		sf->read_vals++;
 	}
 	return 1;
-}
-
-/*
- * End of block processing for hspice binary files.
- * the file is assumed to be positioned for reading the single-word block
- * trailer.
- *
- * Returns:
- *	-1 on error or unexpected EOF
- *	-2 on end of block with another block to follow
- *	0 on normal EOF
- */
-static int
-sf_endblock_hsbin(SpiceStream *sf)
-{
-	gint32 ibuf[4];
-	int datasize;
-
-	sf->read_tables++;
-	if(fread(ibuf, sizeof(gint32), 1, sf->fp) != 1) {
-		ss_msg(ERR, "sf_endblock_hsbin", "EOF reading block trailer");
-		return -1;
-	}
-	if(fread(ibuf, sizeof(gint32), 4, sf->fp) != 4) {
-		if(sf->read_tables == sf->ntables) {
-			return 0;
-		} else {
-			ss_msg(ERR, "sf_endblock_hsbin", "EOF but more tables expected");
-			return -1;
-		}
-
-	}
-	if(ibuf[0] != 4 || ibuf[2] != 4) {
-		ss_msg(ERR, "sf_endblock_hsbin", "unexepected values in block2 header");
-		return -1;
-	}
-
-	datasize = ibuf[3];
-	sf->expected_vals = datasize / sizeof(float);
-	sf->read_vals = 0;
-	sf->read_sweepparam = 0;
-	return -2;  /* end of table, more tables follow */
-
-	if(sf->read_tables == sf->ntables)
-		return 0; /* EOF */
 }
 
 /*
@@ -588,12 +651,11 @@ sf_readsweep_hsbin(SpiceStream *sf, double *svar)
 {
 	int i;
 	long pos;
-	float val;
+	double val;
 	for(i = 0; i < sf->nsweepparam; i++) {
-		if(fread(&val, sizeof(float), 1, sf->fp) != 1) {
-			pos = ftell(sf->fp);
-			ss_msg(ERR, "sf_readsweep_hsbin", "unexepected EOF in data at offset 0x%lx", pos);
-			return 0;
+		if(sf_getval_hsbin(sf, &val) != 1) {
+			ss_msg(ERR, "sf_readsweep_hsbin", "EOF or error reading sweep parameter\n");
+			return -1;
 		}
 		if(svar)
 			svar[i] = val;
@@ -602,4 +664,3 @@ sf_readsweep_hsbin(SpiceStream *sf, double *svar)
 	sf->read_sweepparam = 1;
 	return 1;
 }
-
