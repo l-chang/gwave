@@ -172,6 +172,6 @@ extern char *possible_drag_types[];
 extern char *accepted_drop_types[];
 extern GList *wdata_list;  /* List of GWDataFile *'s */
 extern GtkTooltips *get_gwave_tooltips();
-
+extern SCM glist2scm(GList *list, SCM (*toscm)(void*));
 
 #endif

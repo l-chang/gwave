@@ -14,6 +14,8 @@
 #include "config.h"
 #endif
 
+#include <scwm_guile.h>
+#include <guile-compat.h>
 
 char *
 remote_guile_eval(char *req, char **outp, char **errp)

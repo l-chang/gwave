@@ -1,4 +1,4 @@
-/* $Id: xsnarf.h,v 1.1 2002-03-28 06:35:43 sgt Exp $
+/* $Id: xsnarf.h,v 1.2 2003-12-03 03:58:16 sgt Exp $
  * xsnarf.h
  * 
  * an init-function and document snarfing system for guile, but indepenendent
@@ -36,13 +36,13 @@
 #  define XSCM_SNARF_HERE(X)
 #  define XSCM_SNARF_INIT(X)
 #  define XSCM_SNARF_DOCS(TYPE, FNAME, ARGLIST, REQ, OPT, VAR, DOCSTRING) \
-^^ { \
-fname FNAME ^^ \
-type TYPE ^^ \
-location __FILE__ __LINE__ ^^ \
-arglist ARGLIST ^^ \
-argsig REQ OPT VAR ^^ \
-DOCSTRING ^^ }
+^^ ( \
+(fname FNAME) \
+(type TYPE ) \
+(location __FILE__ __LINE__ ) \
+(arglist #ARGLIST ) \
+(argsig REQ OPT VAR ) \
+(doc DOCSTRING))
 # else
 #  define XSCM_SNARF_HERE(X) X
 #  define XSCM_SNARF_INIT(X)
@@ -68,13 +68,13 @@ XSCM_SNARF_DOCS(primitive, PRIMNAME, ARGLIST, REQ, OPT, VAR, DOCSTRING)
 
 #define XSCM_HOOK(var, name, nargs, arglist, docstring) \
 XSCM_SNARF_HERE(static SCM var)\
-XSCM_SNARF_INIT( SCM__INIT_HOOK(var, name, nargs) ); \
-XSCM_SNARF_DOCS(hook, name, arglist, nargs, 0, 0, docstring)
+XSCM_SNARF_DOCS(hook, name, arglist, nargs, 0, 0, docstring) \
+XSCM_SNARF_INIT( SCM__INIT_HOOK(var, name, nargs) )
 
 #define XSCM_GLOBAL_HOOK(var, name, nargs, arglist, docstring) \
 XSCM_SNARF_HERE(SCM var)\
-XSCM_SNARF_INIT( SCM__INIT_HOOK(var, name, nargs) ); \
-XSCM_SNARF_DOCS(hook, name, arglist, nargs, 0, 0, docstring)
+XSCM_SNARF_DOCS(hook, name, arglist, nargs, 0, 0, docstring) \
+XSCM_SNARF_INIT( SCM__INIT_HOOK(var, name, nargs) )
 
 #define XSCM_CONCEPT(name, docstring)\
 XSCM_SNARF_DOCS(concept, name, 0, 0, 0, 0, docstring)
