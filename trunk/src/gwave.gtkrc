@@ -19,6 +19,7 @@ style "cursor1"
 
 # This sets the waveform button background.
 style "wavebutton" { bg[NORMAL] = { 0.25, 0.25, 0.25 } }
+style "wavebutton" { base[NORMAL] = { 0.25, 0.25, 0.25 } }
 widget "*wavebutton" style "wavebutton"
 
 #
