@@ -108,24 +108,56 @@ char *val2txt(double val, int mode)
 	return buf;
 }
 
-/* convert value to pixmap y coord */
-int val2y(double val, double top, double bot, int height)
+/* convert user value to pixmap y coord */
+int val2y(double val, double top, double bot, int height, int log)
 {
-	return height - ((height-4) * ((val - bot ) / (top - bot))) - 2;
+	double frac;
+	
+	if(log) {
+		if(bot < 0 || val < 0)
+			return -1;
+
+		frac = (log10(val) - log10(bot)) / 
+			(log10(top) - log10(bot));
+	} else {
+		frac = (val - bot ) / (top - bot);
+	}
+
+	return height - ((height-4) * frac) - 2;
 }
 
-double x2val(WavePanel *wp, int x)
+double x2val(WavePanel *wp, int x, int log)
 {
 	int w = wp->drawing->allocation.width;
-	return ((double)x/(double)w) * (wp->end_xval - wp->start_xval) 
-		+ wp->start_xval;
+	double frac = (double)x / (double)w;
+
+	if(log) {
+		double a;
+		a = frac * (log10(wp->end_xval) - log10(wp->start_xval)) 
+			+ log10(wp->start_xval);
+		return pow(a, 10);
+	} else {
+		return frac * (wp->end_xval - wp->start_xval) 
+			+ wp->start_xval;
+	}
 }
 
-int val2x(WavePanel *wp, double val)
+int val2x(WavePanel *wp, double val, int log)
 {
 	int w = wp->drawing->allocation.width;
+	double frac;
 
-	return w * ((val - wp->start_xval) / (wp->end_xval - wp->start_xval));
+	if(log) {
+		if(val < 0 || wp->start_xval)
+			return -1;
+
+		frac = (log10(val) - log10(wp->start_xval)) /
+			(log10(wp->end_xval) - log10(wp->start_xval));
+	} else {
+		frac = (val - wp->start_xval) /
+			(wp->end_xval - wp->start_xval);
+	}
+	return w * frac;
 }
 
 
@@ -174,17 +206,22 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 
 	x1 = 0;
 	yval = wv_interp_value(vw->var, wp->start_xval);
-	y1 = val2y(yval, wp->max_yval, wp->min_yval, h);
+	y1 = val2y(yval, wp->max_yval, wp->min_yval, h, wp->logy);
 
-	for(i = 0, xval = wp->start_xval; i < w; i++, xval += xstep) {
+	for(i = 0, xval = wp->start_xval; i < w; i++ ) {
 		x0 = x1; y0 = y1;
 		x1 = x0 + 1;
 		if(vw->var->wv_iv->wds->min <= xval 
 		   && xval <= vw->var->wv_iv->wds->max) {
+
 			yval = wv_interp_value(vw->var, xval);
-			y1 = val2y(yval, wp->max_yval, wp->min_yval, h);
+			y1 = val2y(yval, wp->max_yval, wp->min_yval, h, wp->logy);
 			gdk_draw_line(wp->pixmap, vw->gc, x0,y0, x1,y1);
 		}
+		if(wtable->logx)
+			xval = x2val(wp, x0+1, wtable->logx);
+		else
+			xval += xstep;
 	}
 }
 
@@ -206,7 +243,7 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 
 	/* draw horizontal line at y=zero */
 	if(wp->min_yval < 0 && wp->max_yval > 0) {
-		y = val2y(0, wp->max_yval, wp->min_yval, h);
+		y = val2y(0, wp->max_yval, wp->min_yval, h, wp->logy);
 		gdk_draw_line(wp->pixmap, pg_gdk_gc, 0, y, w, y);
 	}
 
@@ -219,7 +256,7 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 		if(csp->shown) {
 			if(wp->start_xval <= csp->xval 
 			   && csp->xval <= wp->end_xval) {
-				x = val2x(wp, csp->xval);
+				x = val2x(wp, csp->xval, wtable->logx);
 				gdk_draw_line(wp->pixmap, csp->gdk_gc,
 					      x, 0, x, h);
 			}
