@@ -10,6 +10,7 @@
   :use-module (gtk gtk)
   :use-module (gtk gdk)
   :use-module (app gwave std-menus)
+  :use-module (app gwave globals)
 )
 (read-set! keywords 'prefix)
 
@@ -38,6 +39,9 @@
 			      (gtk-menu-popup (make-vwb3-menu vw) #f #f
 					      (gdk-event-button event)
 					      (gdk-event-time event)))))
+   (gtk-tooltips-set-tip gwave-tooltips (visiblewave-button vw) 
+			 "VisibleWave Button:\nClick button 1 to select wave.\nPress button 3 for options menu." "")
+
 ))
 
 ; create dynamic menu to be popped up with mousebutton 3 on the 
@@ -198,17 +202,23 @@
 			   (gtk-widget-destroy window)))
      (gtk-box-pack-start hbox close #t #t 0)
      (gtk-widget-show close)
+     (gtk-tooltips-set-tip gwave-tooltips close 
+			   "Apply changes and close options window" "")
 
      (gtk-box-pack-start hbox apply #t #t 0)
      (gtk-signal-connect apply "clicked" 
 			 (lambda () (styleproc)))
      (gtk-widget-show apply)
+     (gtk-tooltips-set-tip gwave-tooltips apply
+			   "Apply changes to VisibleWave" "")
 
      (gtk-box-pack-start hbox cancel #t #t 0)
      (gtk-signal-connect cancel "clicked" 
 			 (lambda () 
 			   (gtk-widget-destroy window)))
      (gtk-widget-show cancel)
+     (gtk-tooltips-set-tip gwave-tooltips cancel
+			   "Close options window, discarding changes" "")
      
      (gtk-widget-set-flags close '(can-default))
      (gtk-widget-grab-default close)
