@@ -26,3 +26,17 @@ read at a time.
 A WaveFile comprises all of the datapoints for all values of the
 independent variable, suitable for fast random access.  It is implemented
 using a SpiceStream to read a whole file into memory.
+
+
+Two complete programs are provided.
+
+sp2sp ("spice to spice") uses SpiceStream to convert any file format
+supported by the SpiceStream layer into one of several ASCII printable
+formats.  In addition to testing the SpiceStream code, this is
+extremely useful for converting files any of the binary formats into a
+printable form, where they can easily be processed by awk, perl, or
+some other scripting language.   
+
+Test_read tests the WaveFile abstraction by loading a file into memory
+and printing various information about it.
+
