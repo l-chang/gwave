@@ -1,12 +1,14 @@
-## $Id: Makefile.am,v 1.2 2000-08-08 06:41:49 sgt Exp $
+## $Id: Makefile.am,v 1.3 2000-08-08 07:03:33 sgt Exp $
 ## process this file with automake to create Makefile.in
 ## (You should run ./autogen.sh from the top level directory)
 
 # Lots of this documentation stuff was borrowed from scwm.  It doesn't 
-# all work yet.
+# all work yet.  If you have docbook-to-man, you should be able to build
+# sp2sp.1 from sp2sp.sgml, however.
 
-gwavedocDATA=gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt gwave.sgml
-EXTRA_DIST=Guile.notes HPUX.notes hspice.txt spice.txt sp2sp.stml $(gwavedocDATA)
+# gwavedocDATA=gwave-procedures.txt gwave-variables.txt gwave-hooks.txt gwave-concepts.txt gwave.sgml
+
+EXTRA_DIST=Guile.notes HPUX.notes hspice.txt spice.txt sp2sp.sgml
 
 # Use scwmdoc to build the documentation files
 # Set envvar $SCWMDOC_TEST_OPTIONS to  "-F" for a faster test
