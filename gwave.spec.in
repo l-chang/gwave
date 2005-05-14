@@ -70,7 +70,7 @@ rm -rf $RPM_BUILD_ROOT
 # %config %{prefix}/share/guile/app/gwave/system.gwaverc
 
 %doc AUTHORS COPYING ChangeLog
-%doc INSTALL NEWS README
+%doc INSTALL NEWS README FAQ
 %doc doc/sp2sp.sgml doc/spice3.txt
 %doc doc/hspice.txt doc/hspice-output.txt
 %doc doc/gwave-concepts.txt  doc/gwave-procedures.txt

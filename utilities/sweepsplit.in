@@ -1,0 +1,121 @@
+#!@PERL@
+#
+# split the output of "sp2sp -s head" into multiple files, one per sweep.
+#
+
+use FileHandle;
+use Getopt::Long;
+
+sub usage {
+	print STDERR "usage: sweepsplit [options] [file  [name]]
+or:    sp2sp -s head | sweepsplit [options]
+Options:
+     -a Len         Use Len digits when constructing numered output file names
+     -s N           Dump only sweep number N to stdout
+     -t Type        Assume input is of type T (passed to sp2sp)
+";
+
+}
+
+
+Getopt::Long::config('no_auto_abbrev',
+                     'no_ignore_case','no_ignore_case_always');
+
+$dump_sweepno = -1;
+$suffixlength = 2;
+$verbose = 0;
+$fnbase = '';
+$nsweeps = 0;
+
+%optctl = ("s=i"               => \$dump_sweepno,
+	   "a|suffixlength=i"  => \$suffixlength,
+	   "t=s"               => \$infile_type,
+           "v|verbose!"        => \$verbose
+);
+
+if(!GetOptions(%optctl)) {
+	&usage();
+        exit 1;
+}
+
+if($#ARGV >= 0) {  # input filename provided
+	$infname = shift(@ARGV);
+}
+if($#ARGV >= 0) {  # base part of output filenames specified
+	$fnbase = shift(@ARGV);
+}
+
+if(!$fnbase) { # If no output filename specified, construct one.
+	if($infname) {
+		$fnbase = $infname;
+		$fnbase =~ s|^.*/([^/]+)$|$1|;   # remove leading directory names
+		$fnbase =~ s|\.[^.]*$||;   # remove trailing .suffix
+	} else {
+		$fnbase = 'sp';
+	}
+}
+
+$infp = new FileHandle;
+if($infname) {
+	if($infile_type) {
+		$topt = "-t $infile_type";
+	}
+	$infp->open("sp2sp -s head $topt $infname|") || die "pipe from sp2sp $infname: $!";
+} else {
+	$infp->fdopen(STDIN, "r");
+}
+
+
+$heads = $infp->getline;
+
+while($_ = $infp->getline) {
+
+	if($_ =~ m/^\#\s*sweep\s*(\d+);/) {
+		$sweepno = $1;
+		open_outfile($sweepno);
+		$nsweeps++;
+	} else {
+		if(!$fp) {
+			open_outfile(0);
+			$nsweeps++;
+		}
+		print $fp $_;
+	}
+}
+
+$infp->close || "pipe from sp2sp $infname: $!";
+
+if($fp) {
+	$fp->close;
+} else {
+	print STDERR "no sweeps found\n";
+	exit 1;
+}
+
+printf "%d sweeps\n", $nsweeps;
+
+exit 0;
+#############################################################################
+
+sub open_outfile
+{
+	my($sweepno) = @_;
+
+	if($fp) {
+		$fp->close;
+	}
+	if($dump_sweepno == -1 || $dump_sweepno == $sweepno) {
+		$fname = sprintf "%s%0*d.asc", $fnbase, $suffixlength, $sweepno;
+	} else {
+		$fname = '/dev/null';
+	}
+	$fp = new FileHandle $fname,"w";
+	if(!defined($fp)) {
+		die "$fname: $!";
+	}
+	print $fp $heads;
+	
+	# would like to include sweep number as comment - but gwave
+	# can't deal with this.  to be fixed.
+	# print $fp $_;
+}

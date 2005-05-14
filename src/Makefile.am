@@ -19,7 +19,7 @@ gwave_SOURCES = cmd.c wavewin.c draw.c gwave.c event.c \
 gwave_LDADD = ../spicefile/libspicefile.a  @GTK_LIBS@ @GUILEGTK_LIBS@ 
 gwave_LDFLAGS =  @GUILE_LDFLAGS@
 
-CFLAGS = @CFLAGS@ @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILEGTK_CFLAGS@ \
+AM_CFLAGS = @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILEGTK_CFLAGS@ \
 	-DDATADIR=\"$(datadir)\" -DBINGWAVE=\"$(bindir)/gwave\" @ggtk_hack_cflags@
 
 DOT_X_FILES = gwave.x cmd.x wavewin.x wavelist.x scwm_guile.x event.x \
@@ -41,11 +41,11 @@ SUFFIXES = .x .doc
 utils = $(top_srcdir)/utilities
 
 .c.x:
-	./xguile-snarf $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $< > $@ \
+	./xguile-snarf $(DEFS) $(INCLUDES) $(CPPFLAGS)  $(AM_CFLAGS) $(CFLAGS) $< > $@ \
 	|| { rm $@; false; }
 
 .c.doc:
-	$(CPP) -DXSCM_MAGIC_SNARF_DOCS $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $< > $@.snarf
+	$(CPP) -DXSCM_MAGIC_SNARF_DOCS $(DEFS) $(INCLUDES) $(CPPFLAGS)  $(AM_CFLAGS) $(CFLAGS) $< > $@.snarf
 	@GUILE@ -e main -s $(utils)/gwave-doc-snarf $@.snarf > $@
 	rm $@.snarf
 
