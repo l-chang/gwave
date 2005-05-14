@@ -5,7 +5,7 @@ dnl 	value-if-found, value-if-unfound)
 dnl try all programs in $PATH named program-to-find, grepping their
 dnl stdout for the indicated string.  First one to pass wins.
 dnl
-AC_DEFUN(AC_PROG_GREPSTDOUT,
+AC_DEFUN([AC_PROG_GREPSTDOUT],
 [# Extract the first word of "$2", so it can be a program name with args.
 set dummy $2; ac_word=[$]2
 AC_MSG_CHECKING([for suitable $ac_word])
