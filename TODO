@@ -1,4 +1,21 @@
 
+Gtk 2.0
+	use guile-gnome-platform
+	first, just get it working, maybe with compile-time back compatibility
+	then redo wavelist with better widget
+	better file selection widget (wildcard/regexp to help find files)
+
+Handle files with multiple sweeps
+	- and other files that we can't do now, like where indepdendent
+	variable goes backwards in time
+	
+Management of displays of many variables
+	- scrolling list for variable buttons within each WavePanel
+		on left side of button area
+	- way to set actual/min/max height of WavePanel? 
+	        just see what happens by default.
+	- vertical scrollbar for whole WaveWin, on right side
+
 ability to get wave data from guile
 	(wavevar-value x) - return value at x-coord.
 	what else? how to expose the structure of wavevars?
@@ -48,13 +65,12 @@ prevent switching to log-scale if the axis includes 0 or negative values.
 Accept drag-and-drop from a file manager to add files, run scripts
 Allow drag-and-drop from one wavepanel to another to move wave
 
-Improve notion of a current/selected wavepanel
-	draw highlighted outline			inprog, needs work
-
 Alternate ways of getting wavevars into panels
 	selected-panel notion helps, but double-click not intuitive enough
 	selected-list of wavevars
-	wavevar toolbar with "add" button adds selected wavevars to selected panel
+	wavevar toolbar with "add" button adds selected wavevars to selected
+	panel. 
+	Deferred: needs better scrolling-list for variables.
 	
 hook to choose better short-tags for files
 	example based on regular expression on filename
@@ -62,6 +78,9 @@ hook to choose better short-tags for files
 
 -----------------------------------------------------------------------------
 tasks list items finished:
+
+Improve notion of a current/selected wavepanel
+	draw highlighted outline			DONE
 
 way to highlight selected visiblewaves DONE based on patch from Serban Popescu
 

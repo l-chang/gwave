@@ -20,6 +20,15 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.24  2004/12/26 23:49:32  sgt
+ * add notion of "selected" panels.  left-click in panel (including cursor0-move)
+ * selects, shift-click selects without unselecting others.
+ * double-click in wavelist adds to first selected panel.
+ * selected panels have a highlighted outline.
+ * add ability to change the "tag" (shorthand identifier) for a file
+ * added example of using this to put case name into the tag to
+ * experimental .gwaverc
+ *
  * Revision 1.23  2003/12/03 03:58:16  sgt
  * clean up string literals containing newlines, all in documentation
  * strings.
@@ -149,7 +158,9 @@ static const int n_file_tags = sizeof(file_tag_chars)/sizeof(char);
 static int next_file_tagno = 0;
 
 static GtkWidget *create_wavelist_menu(GWDataFile *wdata);
-void add_variables_to_list(GWDataFile *wdata);
+void gwfile_add_wv_to_list(gpointer d /*WaveVar* */,
+			   gpointer p /*GWDataFile */);
+
 static gint wavelist_button_click(GtkWidget *widget,
 				  GdkEventButton *event, gpointer data);
 
@@ -182,6 +193,7 @@ load_wave_file(char *fname, char *ftype)
 		g_free(wdata);
 		return NULL;
 	}
+	wdata->wf->udata = wdata;
 
 	/* give the file a short (fow now, 1-character) "tag" to identify it
 	 * in the menu and variable labels.  
@@ -191,15 +203,8 @@ load_wave_file(char *fname, char *ftype)
 	wdata->ftag[0] = file_tag_chars[next_file_tagno];
 	wdata->ftag[1] = '\0';
 	next_file_tagno = (next_file_tagno + 1) % n_file_tags;
-	wdata->wvhs = g_new0(WaveVarH, wdata->wf->wf_ndv);
 	wdata->ndv = wdata->wf->wf_ndv;
-
-	/* userdata pointer in variable gets backpointer to wdata struct */
-	for(i = 0; i < wdata->wf->wf_ndv; i++) {
-		WaveVar *dv = &wdata->wf->dv[i];
-		dv->udata = wdata;
-		wdata->wvhs[i].df = wdata;
-	}
+	wdata->wvhl = NULL; /* empty GSList  of WaveVarH* */
 
 	wdata_list = g_list_append(wdata_list, wdata);
 	wdata->outstanding_smob = 1;
@@ -244,6 +249,7 @@ void
 delete_wave_file(GtkWidget *w, GWDataFile *wdata)
 {
 	int i;
+	GSList *list;
 /* remove references from displayed waves */
 	remove_wfile_waves(wdata);
 
@@ -251,10 +257,14 @@ delete_wave_file(GtkWidget *w, GWDataFile *wdata)
 	if(wdata->wlist_win && GTK_WIDGET_VISIBLE(wdata->wlist_win))
 		gtk_widget_destroy(wdata->wlist_win);
 	
-/* invalidate handles to WaveVars */
-	for(i = 0; i < wdata->wf->wf_ndv; i++) {
-		wdata->wvhs[i].wv = NULL;
+/* invalidate WaveVar pointers in handles.
+ * Can't free WaveVar because un-GCed smobs may point to them
+ */	
+	for(list = wdata->wvhl; list; list = list->next) {
+		WaveVarH *wvh = (WaveVarH *)list->data;
+		wvh->wv = NULL;
 	}
+
 /* now nuke the data */
 	wf_free(wdata->wf);
 	wdata->wf = NULL;
@@ -307,10 +317,6 @@ reload_wave_file(GtkWidget *w, GWDataFile *wdata)
 	wdata->wf = new_wf;
 /*	printf("reload_wave_file(%s) old=%lx new=%lx\n",
 	       wdata->wf->wf_filename, old_wf, new_wf); */
-	for(i = 0; i < wdata->wf->wf_ndv; i++) {
-		WaveVar *dv = &wdata->wf->dv[i];
-		dv->udata = wdata;
-	}
 
 	update_wfile_waves(wdata);
 
@@ -318,7 +324,7 @@ reload_wave_file(GtkWidget *w, GWDataFile *wdata)
 	if(wdata->wlist_win && GTK_WIDGET_VISIBLE(wdata->wlist_win)) {
 		gtk_container_foreach(GTK_CONTAINER(wdata->wlist_box),
 				      (GtkCallback) gtk_widget_destroy, NULL);
-		add_variables_to_list(wdata);
+		wf_foreach_wavevar(wdata->wf, gwfile_add_wv_to_list, wdata);
 	}
 
 	wf_free(old_wf);
@@ -389,38 +395,45 @@ get_gwave_tooltips()
 }
 
 /*
- * Add a button for each variable in the file 
- * to the win_wlist box for it.  
+ * Callback for use with wv_foreach_wavevar:
+ *
+ * Add a button for each variable in the file to the win_wlist box for it.
  * Arrange for the buttons to be drag-and-drop sources for placing the
  * variables into wavepanels.
+ *
+ * formerly add_variables_to_list(GWDataFile *wdata)
  */
 void
-add_variables_to_list(GWDataFile *wdata)
+gwfile_add_wv_to_list(gpointer d, gpointer p)
 {
+	WaveVar *wv = (WaveVar *)d;
+	GWDataFile *wdata = (GWDataFile *)p;
 	int i;
 	GtkWidget *button;
 	GtkTooltips *gw_tooltips;
+	
 	gw_tooltips = get_gwave_tooltips();
 
-	for(i = 0; i < wdata->wf->wf_ndv; i++) {
-		WaveVar *dv = &wdata->wf->dv[i];
-/*		button = gtk_toggle_button_new_with_label(dv->wv_name); */
-		button = gtk_button_new_with_label(dv->wv_name);
-		
-		gtk_box_pack_start (GTK_BOX (wdata->wlist_box), button, FALSE, FALSE, 0);
-		gtk_widget_show (button);
-
-		gtk_tooltips_set_tip(GTK_TOOLTIPS(gw_tooltips), button,
-				     "Wavefile Variable.\nDrag-and-Drop to a WavePanel.",
-				     "");
-
-		dnd_setup_source(wdata->wlist_win, button, dv);
-
-		gtk_signal_connect (GTK_OBJECT(button), "button-press-event",
-			    GTK_SIGNAL_FUNC(wavelist_button_click), 
-			    (gpointer) dv);
-
+	if(wv_is_multisweep(wv)) {
+		char lab[4096];
+		sprintf(lab, "%s @ %s=%g", wv->wv_name, 
+			wv->wtable->name, wv->wtable->swval);
+		button = gtk_button_new_with_label(lab);
+	} else {
+		button = gtk_button_new_with_label(wv->wv_name);
 	}
+		
+	gtk_box_pack_start (GTK_BOX (wdata->wlist_box), button, FALSE, FALSE, 0);
+	gtk_widget_show (button);
+	gtk_tooltips_set_tip(GTK_TOOLTIPS(gw_tooltips), button,
+		     "Wavefile Variable.\nDrag-and-Drop to a WavePanel.",
+		     "");
+
+	dnd_setup_source(wdata->wlist_win, button, wv);
+
+	gtk_signal_connect (GTK_OBJECT(button), "button-press-event",
+			    GTK_SIGNAL_FUNC(wavelist_button_click), 
+			    (gpointer) wv);
 }
 
 /*
@@ -520,7 +533,7 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 		gtk_widget_show (wdata->wlist_box);
 
 		dnd_init(wdata->wlist_win);
-		add_variables_to_list(wdata);
+		wf_foreach_wavevar(wdata->wf, gwfile_add_wv_to_list, wdata);
 
 		call1_hooks(new_wavelist_hook, wdata->smob);
 
@@ -600,6 +613,20 @@ XSCM_DEFINE(wavefile_file_name, "wavefile-file-name", 1, 0, 0,
 
 }
 #undef FUNC_NAME
+
+XSCM_DEFINE(wavefile_nsweeps, "wavefile-nsweeps", 1, 0, 0,
+           (SCM obj),
+	   "Returns the number of sweeps for which data is present in GWDataFile OBJ.")
+#define FUNC_NAME s_wavefile_nsweeps
+{
+	GWDataFile *wdata;
+	VALIDATE_ARG_GWDataFile_COPY(1, obj, wdata);
+
+	return gh_int2scm(wdata->wf->wf_ntables);
+}
+#undef FUNC_NAME
+/* TODO: get sweepname and sweepvar-value for each sweep in a data file */
+
 
 XSCM_DEFINE(wavefile_tag, "wavefile-tag", 1, 0, 0,
            (SCM obj),
@@ -685,36 +712,50 @@ XSCM_DEFINE(wavefile_all_variables, "wavefile-all-variables", 1, 0, 0, (SCM df),
 
 	if(!wdata->wf)
 		return result;
+/*
+  TODO figure out how to cons while getting for_each_wavevar to walk
+ the list for us
+
 	for(i = 0; i < wdata->wf->wf_ndv; i++) {
 		WaveVar *dv = &wdata->wf->dv[i];
 		wdata->wvhs[i].wv = dv;
 		SGT_NEWCELL_SMOB(wvsmob, WaveVar, &wdata->wvhs[i]);
 		result = scm_cons(wvsmob, result);
 	}
+*/
 	return scm_reverse(result);
 }
 #undef FUNC_NAME
 
 
-XSCM_DEFINE(wavefile_variable, "wavefile-variable", 2, 0, 0,
-	   (SCM df, SCM vname),
-	   "Returns a WaveVar representing the variable named VNAME in the GWDataFile DF.  Return #f if there is no variable named VNAME")
+XSCM_DEFINE(wavefile_variable, "wavefile-variable", 3, 0, 0,
+	    (SCM df, SCM vname, SCM swindex),
+   "Returns a WaveVar representing the variable named VNAME in sweep/table/segment SWINDEX in the GWDataFile DF.  Return #f if there is no variable named VNAME")
 #define FUNC_NAME s_wavefile_variable
 {
 	GWDataFile *wdata;
 	SCM result = SCM_BOOL_F;
 	char *s;
 	int i;
+	int swp;
 	VALIDATE_ARG_GWDataFile_COPY(1, df, wdata);
-	VALIDATE_ARG_STR_NEWCOPY(1, vname, s);
-
-	if(wdata->wf) {
-		for(i = 0; i < wdata->wf->wf_ndv; i++) {
-			WaveVar *dv = &wdata->wf->dv[i];
-			if(0==strcmp(s, dv->sv->name)) {
-				wdata->wvhs[i].wv = dv;
-				SGT_NEWCELL_SMOB(result, WaveVar, &wdata->wvhs[i]);
+	VALIDATE_ARG_STR_NEWCOPY(2, vname, s);
+	VALIDATE_ARG_INT_MIN_COPY(3, swindex, 0, swp);
+	
+	if(wdata->wf && swp < wdata->wf->wf_ntables) {
+		WaveVar *wv = wf_find_variable(wdata->wf, s, swp);
+		if(wv) {
+			WaveVarH *wvh;
+			if(!wv->udata) {
+				wvh = g_new0(WaveVarH, 1);
+				wvh->wv = wv;
+				wvh->df = wdata;
+				wv->udata = wvh;
+				wdata->wvhl = g_slist_prepend(wdata->wvhl, wvh);
+			} else {
+				wvh = (WaveVarH *)wv->udata;
 			}
+			SGT_NEWCELL_SMOB(result, WaveVar, wvh);
 		}
 	}
 	g_free(s);
@@ -728,10 +769,42 @@ XSCM_DEFINE(variable_signame, "variable-signame", 1, 0, 0,
 #define FUNC_NAME s_variable_signame
 {
 	WaveVar *wv;
-	VALIDATE_ARG_WaveVar_COPY(1,var,wv);
+	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,var,wv);
 	
 	if(wv)
 		return gh_str02scm(wv->sv->name);
+	else
+		return SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+
+XSCM_DEFINE(variable_sweepname, "variable-sweepname", 1, 0, 0,
+	   (SCM var),
+	   "Return the sweep name or table name for the variable VAR.")
+#define FUNC_NAME s_variable_sweepname
+{
+	WaveVar *wv;
+	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,var,wv);
+	
+	if(wv)
+		return gh_str02scm(wv->wtable->name);
+	else
+		return SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+
+XSCM_DEFINE(variable_sweepindex, "variable-sweepindex", 1, 0, 0,
+	   (SCM var),
+	   "Return the sweep table index for the variable VAR.  Sweeps/tables are numbered starting with 0. ")
+#define FUNC_NAME s_variable_sweepindex
+{
+	WaveVar *wv;
+	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,var,wv);
+	
+	if(wv)
+		return gh_int2scm(wv->wtable->swindex);
 	else
 		return SCM_BOOL_F;
 }
@@ -744,7 +817,7 @@ XSCM_DEFINE(variable_wavefile, "variable-wavefile", 1, 0, 0,
 #define FUNC_NAME s_variable_wavefile
 {
 	WaveVarH *wvh;
-	VALIDATE_ARG_WaveVarH_COPY(1,var,wvh);
+	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,var,wvh);
 	
 	if(wvh->wv) {
 		wvh->df->outstanding_smob = 1;
@@ -827,13 +900,11 @@ int wavefile_try_free(GWDataFile *wdata)
 	if(wdata->wf)
 		return 0;
 
-	for(i = 0; i < wdata->ndv; i++) {
-		if(wdata->wvhs[i].wv)
-			return 0;
-	}
+	if(wdata->wvhl)  /* nonempty list means outstanding handles remain */
+		return 0;
+
 	fprintf(stderr, "free GWDataFile 0x%x during gc\n", wdata);
 	n = wdata->ndv;
-	g_free(wdata->wvhs);
 	g_free(wdata);
 	return sizeof(GWDataFile) + n*sizeof(WaveVarH);
 }
@@ -880,7 +951,14 @@ scm_sizet
 free_WaveVar(SCM obj)
 {
 	WaveVarH *wvh = WaveVarH(obj);
+	GWDataFile *df;
+	df = wvh->df;
+
 	wvh->wv = NULL;
+	wvh->df = NULL;
+	df->wvhl = g_slist_remove(df->wvhl, wvh);
+	g_free(wvh);
+
 	return wavefile_try_free(wvh->df);
 }
 

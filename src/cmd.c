@@ -277,7 +277,9 @@ update_wfile_waves(GWDataFile *wdata)
 
 	while((vdi = g_list_nth_data(vw_delete_list, 0)) != NULL) {
 		foundone = 1;
-		wv = wf_find_variable(wdata->wf, vdi->vw->varname);
+		wv = wf_find_variable(wdata->wf, 
+				      vdi->vw->var->wv_name,
+				      vdi->vw->var->wtable->swindex);
 		if(wv) {
 			/* printf("updated variable %s to %lx\n", vdi->vw->varname, wdata->wf); */
 			vdi->vw->gdf = wdata;
@@ -333,7 +335,7 @@ SCM
 add_var_to_panel(WavePanel *wp, WaveVar *dv)
 {
 	VisibleWave *vw;
-
+	
 	if(wp == NULL) {
 		wp = first_selected_wavepanel();
 		if(wp == NULL) {
@@ -346,7 +348,8 @@ add_var_to_panel(WavePanel *wp, WaveVar *dv)
 	vw->wp = wp;
 	vw->var = dv;
 	vw->varname = g_strdup(dv->wv_name);
-	vw->gdf = (GWDataFile *)dv->udata;
+	vw->gdf = wvar_gwdatafile(dv);
+
 	vw->colorn = wp->nextcolor;
 	wp->nextcolor = (wp->nextcolor + 1)%NWColors;
 

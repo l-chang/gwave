@@ -58,10 +58,15 @@ EXTERN long scm_tc16_scwm_GWDataFile;
   else cvar = GWDataFile(scm); \
   } while (0)
 
-  /* "handles" to actual WaveVars.  We can 
-   * invalidate these when freeing the WaveFile,
-   * even if un-gc'ed WaveVar smobs still want to point to
-   * them. */
+/* "handles" to actual WaveVars.  We can 
+ * invalidate these when freeing the WaveFile,
+ * even if un-gc'ed WaveVar smobs still want to point to
+ * them. 
+ * Pointers to WaveVarH are stored:
+ *	in the udata pointer of WaveVar, if one has been alocated
+ *	in the wvhl list in the GWDataFile
+ *	in possibly many guile smobs.
+*/
 struct _WaveVarH { 
 	WaveVar *wv;
 	GWDataFile *df;
@@ -81,8 +86,12 @@ struct _GWDataFile {
 	SCM smob;
 	int outstanding_smob;	/* if the guile world has a pointer, defer freeing. */
 	int ndv;
-	WaveVarH *wvhs;
+	GSList *wvhl;
 };
+
+/* given a wavevar, how to get back to a gwdatafile... follow pointers
+ * to wtable to WaveFile to GWDataFile */
+#define wvar_gwdatafile(WV) ((GWDataFile*)(WV)->wtable->wf->udata)
 
 
 /***********************************************************************
