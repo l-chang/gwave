@@ -65,9 +65,18 @@ vw_get_label_string(char *buf, int buflen, VisibleWave *vw)
 	gdf = vw->gdf;
 	g_assert(gdf != NULL);
 
-	l = buflen - strlen(gdf->ftag) - 10;
-	n = MIN(l, 15);
-	sprintf(buf, "%s: %.*s", gdf->ftag, n, vw->varname);
+	if(wv_is_multisweep(vw->var)) {
+		l = buflen - strlen(gdf->ftag) - 10;
+		n = MIN(l, 15);
+		snprintf(buf, buflen, "%s: %.*s @ %.10s=%g",
+			gdf->ftag,
+			n, vw->varname,
+			vw->var->wtable->name, vw->var->wtable->swval);
+	} else {
+		l = buflen - strlen(gdf->ftag) - 10;
+		n = MIN(l, 15);
+		snprintf(buf, buflen, "%s: %.*s", gdf->ftag, n, vw->varname);
+	}
 }
 
 /*

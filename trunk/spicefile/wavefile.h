@@ -3,7 +3,7 @@
  * wavefile.h - definitions for WaveFile, routines and data structures
  * for reading and working with entire datasets of waveform data.
  *
- * Copyright 1999, Stephen G. Tell.
+ * Copyright 1999,2005 Stephen G. Tell.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,10 +25,12 @@
 #define WAVEFILE_H
 
 #include <spicestream.h>
+#include <glib.h>
 
 typedef struct _WaveFile WaveFile;
 typedef struct _WaveVar WaveVar;
 typedef struct _WDataSet WDataSet;
+typedef struct _WvTable WvTable;
 
 /* Wave Data Set - 
  * an array of double-precision floating-point values,  used to store a
@@ -62,7 +64,7 @@ struct _WDataSet {
  */
 struct _WaveVar {
 	SpiceVar *sv;
-	WaveFile *wfile;  /* backpointer to file */
+	WvTable *wtable;  /* backpointer to file */
 	WDataSet *wds;	/* data for one or more columns */
 	void *udata;
 };
@@ -70,19 +72,43 @@ struct _WaveVar {
 #define wv_name		sv->name
 #define wv_type		sv->type
 #define wv_ncols	sv->ncols
-#define wv_nvalues	wfile->nvalues
-#define wv_iv		wfile->iv
+#define wv_nvalues	wtable->nvalues
+#define wv_iv		wtable->iv
+#define wv_file		wtable->wf
 
-struct _WaveFile {
-	SpiceStream *ss;
+#define wv_is_multisweep(WV) ((WV)->wtable->wf->wf_ntables>1)
+
+/*
+ * Wave Table - association of one or more dependent variables with
+ *	a contiguous, nondecreasing independent variable.
+ */
+struct _WvTable {
+	WaveFile *wf;
+	int swindex;	/* index of the sweep, 0-based */
+	char *name;	/* name of the sweep, if any, else NULL */
+	double swval;	/* value at which the sweep was taken */
 	int nvalues;	/* number of rows */
 	WaveVar *iv;	/* pointer to single independent variable */
 	WaveVar *dv;	/* pointer to array of dependent var info */
 };
 
+#define wt_ndv	wf->ss->ndv
+
+/*
+ * WaveFile - data struture containing all of the data from a file.
+ */
+struct _WaveFile {
+	SpiceStream *ss;
+	GPtrArray *tables;  /* array of WvTable* */
+	void *udata;
+};
+
 #define wf_filename	ss->filename
 #define wf_ndv		ss->ndv
 #define wf_ncols	ss->ncols
+#define wf_ntables	tables->len
+#define wf_wtable(WF,I)	(WvTable*)g_ptr_array_index((WF)->tables, (I))
+
 
 /* defined in wavefile.c */
 extern WaveFile *wf_read(char *name, char *format);
@@ -90,6 +116,7 @@ extern double wv_interp_value(WaveVar *dv, double ival);
 extern int wf_find_point(WaveVar *iv, double ival);
 extern double wds_get_point(WDataSet *ds, int n);
 extern void wf_free(WaveFile *df);
-extern WaveVar *wf_find_variable(WaveFile *wf, char *varname);
+extern WaveVar *wf_find_variable(WaveFile *wf, char *varname, int swpno);
+extern void wf_foreach_wavevar(WaveFile *wf, GFunc func, gpointer *p);
 
 #endif /* WAVEFILE_H */

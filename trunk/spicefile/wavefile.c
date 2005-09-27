@@ -62,9 +62,12 @@ regexp_compile(char *str)
 #endif
 
 WaveFile *wf_finish_read(SpiceStream *ss);
+WvTable *wf_read_table(SpiceStream *ss, WaveFile *wf, int *statep, double *ivalp, double *dvals);
 void wf_init_dataset(WDataSet *ds);
 inline void wf_set_point(WDataSet *ds, int n, double val);
 void wf_free_dataset(WDataSet *ds);
+WvTable *wvtable_new(WaveFile *wf);
+void wt_free(WvTable *wt);
 
 typedef struct {
 	char *name;
@@ -164,69 +167,152 @@ WaveFile *wf_read(char *name, char *format)
 
 /* 
  * read all of the data from a SpiceStream and store it in the WaveFile
- * structure
+ * structure.
  */
 WaveFile *wf_finish_read(SpiceStream *ss)
 {
 	WaveFile *wf;
-	int row;
-	int i, j, rc;
+	int rc;
 	double ival;
-	double last_ival;
 	double *dvals;
-	WaveVar *dv;
+	WvTable *wt;
+	int state;
+	double *spar = NULL;
 
 	wf = g_new0(WaveFile, 1);
 	wf->ss = ss;
-
-	wf->iv = g_new0(WaveVar, 1);
-	wf->iv->sv = ss->ivar;
-	wf->iv->wfile = wf;
-	wf->iv->wds = g_new0(WDataSet, 1);
-	wf_init_dataset(wf->iv->wds);
-
-	wf->dv = g_new0(WaveVar, wf->ss->ndv);
-	for(i = 0; i < wf->ss->ndv; i++) {
-		wf->dv[i].wfile = wf;
-		wf->dv[i].sv = &ss->dvar[i];
-		wf->dv[i].wds = g_new0(WDataSet, wf->dv[i].sv->ncols);
-		for(j = 0; j < wf->dv[i].sv->ncols; j++)
-			wf_init_dataset(&wf->dv[i].wds[j]);
-	}
-	
+	wf->tables = g_ptr_array_new();
 	dvals = g_new(double, ss->ncols);
-	row= 0;
-	wf->nvalues = 0;
-	last_ival = -1.0e29;
-	while((rc = ss_readrow(ss, &ival, dvals)) > 0) {
-		if(row > 0 && ival < last_ival) {
-			ss_msg(ERR, "wavefile_read", "independent variable is not nondecreasing at row %d; ival=%g last_ival=%g\n", row, ival, last_ival);
-			rc = -1;
-			break;
+
+	state = 0;
+	do {
+		wt = wf_read_table(ss, wf, &state, &ival, dvals);
+		if(wt) {
+			ss_msg(DBG, "wf_finish_read", "table with %d rows; state=%d", wt->nvalues, state);
+			wt->swindex = wf->wf_ntables;
+			g_ptr_array_add(wf->tables, wt);
+			if(!wt->name) {
+				char tmp[128];
+				sprintf(tmp, "tbl%d", wf->wf_ntables);
+				wt->name = g_strdup(tmp);
+			}
+		} else {
+			ss_msg(DBG, "wf_finish_read", "NULL table; state=%d", state);
 		}
-		last_ival = ival;
-		wf_set_point(wf->iv->wds, row, ival);
-		for(i = 0; i < wf->ss->ndv; i++) {
-			dv = &wf->dv[i];
-			for(j = 0; j < dv->wv_ncols; j++)
-				wf_set_point(&dv->wds[j], row,
-					     dvals[dv->sv->col - 1 + j ]);
-		}
-		row++;
-		wf->nvalues++;
-	}
+	} while(state > 0);
+
 	g_free(dvals);
+	g_free(spar);
 	ss_close(ss);
-	if(rc == -2) {
-		ss_msg(WARN, "wavefile_read", "Multiple sweeps found; ignoring all but the first one");
-		return wf;		
-	} else if(rc < 0) {
+
+	if(state < 0) {
 		wf_free(wf);
 		return NULL;
 	} else {
 		return wf;
 	}
 }
+
+/*
+ * read data for a single table (sweep or segment) from spicestream.
+ * on entry:
+ *	state=0: no previous data; dvals is allocated but garbage
+ *	state=1: first row of data is in *ivalp, and vals[].
+ * on exit:
+ *	return NULL: fatal error, *statep=-1
+ *	return non-NULL: valid wvtable*
+ *
+ *	state=-1 fatal error
+ *	state=0: successful completion of reading whole file
+ * 	state=1:  finished table but more tables remain,
+ *			none of the next table has yet been read
+ * 	state=2:  finished table but more tables remain and
+ *		*ivalp,dvals[] contain first row of next table.
+ */
+WvTable *
+wf_read_table(SpiceStream *ss, WaveFile *wf,
+	      int *statep, double *ivalp, double *dvals)
+{
+	WvTable *wt;
+	int row;
+	WaveVar *dv;
+	double last_ival;
+	double spar;
+	int rc, i, j;
+
+	if(ss->nsweepparam > 0) {		
+		if(ss->nsweepparam == 1) {
+			if(ss_readsweep(ss, &spar) <= 0) {
+				*statep = -1;
+				return NULL;
+			}
+		} else {
+			ss_msg(ERR, "wf_read_table", "nsweepparam=%d; multidimentional sweeps not supported\n", ss->nsweepparam);
+			*statep = -1;
+			return NULL;
+		}
+	}
+	wt = wvtable_new(wf);
+	if(ss->nsweepparam == 1) {	
+		wt->swval = spar;
+		wt->name = g_strdup(ss->spar[0].name);
+	} else {
+		wt->swval = 0;
+	}
+	
+	if(*statep == 2) {
+		wf_set_point(wt->iv->wds, row, *ivalp);
+		for(i = 0; i < wt->wt_ndv; i++) {
+			dv = &wt->dv[i];
+			for(j = 0; j < dv->wv_ncols; j++)
+				wf_set_point(&dv->wds[j], row,
+					     dvals[dv->sv->col - 1 + j ]);
+		}
+		row = 1;
+		wt->nvalues = 1;
+		last_ival = *ivalp;
+	} else {
+		row = 0;
+		wt->nvalues = 0;
+		last_ival = -1.0e29;
+	}
+
+	while((rc = ss_readrow(ss, ivalp, dvals)) > 0) {
+		if(row > 0 && *ivalp < last_ival) {
+			if(row == 1) {
+				ss_msg(ERR, "wavefile_read", "independent variable is not nondecreasing at row %d; ival=%g last_ival=%g\n", row, *ivalp, last_ival);
+				wt_free(wt);
+				*statep = -1;
+				return NULL;
+				
+			} else {
+				*statep = 2;
+				return wt;
+			}
+		}
+		last_ival = *ivalp;
+		wf_set_point(wt->iv->wds, row, *ivalp);
+		for(i = 0; i < wt->wt_ndv; i++) {
+			dv = &wt->dv[i];
+			for(j = 0; j < dv->wv_ncols; j++)
+				wf_set_point(&dv->wds[j], row,
+					     dvals[dv->sv->col - 1 + j ]);
+		}
+		row++;
+		wt->nvalues++;
+	}
+	if(rc == -2)
+		*statep = 1;
+	else if(rc < 0) {
+		wt_free(wt);
+		*statep = -1;
+		return NULL;
+	} else {
+		*statep = 0;
+	}
+	return wt;
+}
+
 
 /* 
  * Free all memory used by a WaveFile
@@ -235,15 +321,58 @@ void
 wf_free(WaveFile *wf)
 {
 	int i;
-
-	wf_free_dataset(wf->iv->wds);
-	g_free(wf->iv);
-	for(i = 0; i < wf->ss->ndv; i++)
-		wf_free_dataset(wf->dv[i].wds);
-	g_free(wf->dv);
+	WvTable *wt;
+	for(i = 0; i < wf->tables->len; i++) {
+		wt = wf_wtable(wf, i);
+		wt_free(wt);
+	}
+	g_ptr_array_free(wf->tables, 0);
 	ss_delete(wf->ss);
 	g_free(wf);
 }
+
+void wt_free(WvTable *wt)
+{
+	int i;
+	for(i = 0; i < wt->wt_ndv; i++)
+		wf_free_dataset(wt->dv[i].wds);
+	g_free(wt->dv);
+	wf_free_dataset(wt->iv->wds);
+	g_free(wt->iv);
+	if(wt->name)
+		g_free(wt->name);
+	g_free(wt);
+}
+
+/*
+ * create a new, empty WvTable for a WaveFile
+ */
+WvTable *
+wvtable_new(WaveFile *wf)
+{
+	WvTable *wt;
+	SpiceStream *ss = wf->ss;
+	int i, j;
+
+	wt = g_new0(WvTable, 1);
+	wt->wf = wf;
+	wt->iv = g_new0(WaveVar, 1);
+	wt->iv->sv = ss->ivar;
+	wt->iv->wtable = wt;
+	wt->iv->wds = g_new0(WDataSet, 1);
+	wf_init_dataset(wt->iv->wds);
+
+	wt->dv = g_new0(WaveVar, wf->ss->ndv);
+	for(i = 0; i < wf->wf_ndv; i++) {
+		wt->dv[i].wtable = wt;
+		wt->dv[i].sv = &ss->dvar[i];
+		wt->dv[i].wds = g_new0(WDataSet, wt->dv[i].sv->ncols);
+		for(j = 0; j < wt->dv[i].sv->ncols; j++)
+			wf_init_dataset(&wt->dv[i].wds[j]);
+	}
+	return wt;
+}
+
 
 /*
  * initialize common elements of WDataSet structure 
@@ -273,6 +402,26 @@ wf_free_dataset(WDataSet *ds)
 			g_free(ds->bptr[i]);
 	g_free(ds->bptr);
 	g_free(ds);
+}
+
+/*
+ * Iterate over all WaveVars in all sweeps/segments in the WaveFile,
+ * calling the function for each one.
+ */
+void
+wf_foreach_wavevar(WaveFile *wf, GFunc func, gpointer *p)
+{
+	WvTable *wt;
+	WaveVar *wv;
+	int i, j;
+	
+	for(i = 0; i < wf->wf_ntables; i++) {
+		wt = wf_wtable(wf, i);
+		for(j = 0; j < wf->wf_ndv; j++) {
+			wv = &wt->dv[j];
+			(func)(wv, p);
+		}
+	}
 }
 
 /*
@@ -344,7 +493,7 @@ wf_find_point(WaveVar *iv, double ival)
 	int n = 0;
 
 	a = 0;
-	b = iv->wfile->nvalues - 1;
+	b = iv->wv_nvalues - 1;
 	if(ival >= ds->max)
 		return b;
 	while(a+1 < b) {
@@ -385,8 +534,8 @@ wv_interp_value(WaveVar *dv, double ival)
 
    	li = wf_find_point(iv, ival);
 	ri = li + 1;
-	if(ri >= dv->wfile->nvalues)
-		return wds_get_point(dv->wds, dv->wfile->nvalues-1);
+	if(ri >= dv->wv_nvalues)
+		return wds_get_point(dv->wds, dv->wv_nvalues-1);
 
 	lx = wds_get_point(&iv->wds[0], li);
 	rx = wds_get_point(&iv->wds[0], ri);
@@ -409,12 +558,17 @@ wv_interp_value(WaveVar *dv, double ival)
  * Find a named variable, return pointer to WaveVar
  */
 WaveVar *
-wf_find_variable(WaveFile *wf, char *varname)
+wf_find_variable(WaveFile *wf, char *varname, int swpno)
 {
 	int i;
+	WvTable *wt;
+	if(swpno >= wf->wf_ntables)
+		return NULL;
+
 	for(i = 0; i < wf->wf_ndv; i++) {
-		if(0==strcmp(wf->dv[i].wv_name, varname))
-			return &wf->dv[i];
+		wt = wf_wtable(wf, swpno);
+		if(0==strcmp(wt->dv[i].wv_name, varname))
+			return &wt->dv[i];
 	}
 	return NULL;
 }

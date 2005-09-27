@@ -223,6 +223,7 @@ dnd_source_data_get(GtkWidget          *widget,
 {
 	WaveVar *dv = (WaveVar *)d;
 	GWDnDData dd;
+	GWDataFile *gdf;
 	char buf[1024];
 
 /*	g_print("dnd_source_data_get: type=%d\n", info); */
@@ -234,8 +235,9 @@ dnd_source_data_get(GtkWidget          *widget,
 		   dv->wv_name);*/
 		break;
 	case TARGET_STRING:
+		gdf = wvar_gwdatafile(dv);
 		sprintf(buf, "%s;%s", 
-			((GWDataFile *)(dv->udata))->wf->wf_filename,
+			gdf->wf->wf_filename,
 			dv->wv_name);
 		
 		gtk_selection_data_set (selection_data,

@@ -352,13 +352,14 @@
 ; Add variable to wavepanel, and then do setup of its color, style, etc.
 ; Mainly for use from scripts that restore a saved configuration.
 ; TODO: don't add the variable if already present in the specified panel.
-(define-public (wavepanel-add-var-setup df wp signame color)
+(define*-public (wavepanel-add-var-setup df wp signame color #:key (sweep 0))
   (if df
-      (let ((var (wavefile-variable df signame)))
+      (let ((var (wavefile-variable df signame sweep)))
 	(if var
 	    (let ((vw (wavepanel-add-variable! wp var)))
 	      (if vw
 		  (set-visiblewave-color! vw color)))))))
+
 
 (define-public (require-n-wavepanels rn)
     (let ((hn (length (wtable-wavepanels))))
@@ -469,7 +470,7 @@
 )
 
 ; write portion of script to restore waves for a single wavefile
-; If "multi" is #t, mutiple file-restoration sections will be written
+; If "multi" is #t, multiple file-restoration sections will be written
 ; to this script.  In this case, we don't provide for the "apply script
 ; to (already loaded) file" function.
 (define (write-wfr-script df multi)
@@ -493,10 +494,14 @@
 	(for-each 
 	 (lambda (vw)
 	   (if (eq? df (visiblewave-file vw))
-	       (print " (wavepanel-add-var-setup df (nth-wavepanel " n
-		      ") \"" 
-		      (visiblewave-varname vw) "\" " 
-		      (visiblewave-color vw) " )\n")
+	       (begin
+		 (print " (wavepanel-add-var-setup df (nth-wavepanel " n
+			") \"" 
+			(visiblewave-varname vw) "\" " 
+			(visiblewave-color vw) )
+		 (if (not (eq? 0 (variable-sweepindex vw)))
+		     (print " #:sweep " (variable-sweepindex vw)))
+		 (print ")\n"))
 	       ))
 	 (wavepanel-visiblewaves (car panels)))
 	(write-wfrp-lines df (cdr panels) (+ n 1)))))
