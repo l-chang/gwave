@@ -67,6 +67,7 @@ struct _WavePanel {
 	double end_yval;
 	int man_yzoom;
 
+	GtkWidget *lmvbox;
 	GtkWidget *lmtable;	/* label and measurement table */
 	GtkWidget *lab_min, *lab_max;
 	GtkWidget *lab_min_hbox, *lab_max_hbox;

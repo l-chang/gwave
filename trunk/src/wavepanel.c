@@ -53,6 +53,9 @@ XSCM_HOOK(new_wavepanel_hook,"new-wavepanel-hook", 1, (SCM wp),
 
 SCM wavepanel_mouse_binding[6];
 
+void wavepanel_lmtable_size_handler(GtkWidget *w,
+				    GtkRequisition *req, gpointer d);
+
 /* generate VisibleWave button label string,
  * for both initial setup and updating.
  */
@@ -163,7 +166,8 @@ new_wave_panel()
 
 /*
  * Construct label/measurement area on the left side of a WavePanel.
- * After revision, this will consist of a table containing 3 columns.
+ * This area consist of a table containing 3 columns.
+ *
  * The top row (row 0) has a single hbox spanning 3 colums.  
  * It may be invisible, and conatains the LogY indicator and maximum Y value
  * label.
@@ -177,17 +181,16 @@ void setup_wavepanel_lmtable(WavePanel *wp, int showlabels)
 {
 	char lbuf[128];
 	GtkWidget *vbox;
+        GtkWidget *scrolled_window;
 
-	wp->lmtable = gtk_table_new(2, 3, FALSE);
-	gtk_widget_set_usize(wp->lmtable, 220, -1);
-	gtk_widget_show(wp->lmtable);
+	// outer label/measurement vbox, will have 3 entries
+	wp->lmvbox = gtk_vbox_new(FALSE, 0);
+	gtk_widget_show(wp->lmvbox);
 
+	// hbox with logY and maxY labels
 	wp->lab_max_hbox = gtk_hbox_new(FALSE, 0);
-	gtk_table_attach(GTK_TABLE(wp->lmtable), wp->lab_max_hbox,
-			 0, 3, 0, 1,
-			 GTK_EXPAND|GTK_FILL,
-			 0,
-			 0, 0 );
+	gtk_box_pack_start(GTK_BOX(wp->lmvbox), wp->lab_max_hbox, 
+			   FALSE, FALSE, 0);
 
 	strcpy(lbuf, val2txt(wp->end_yval, 0));
 	wp->lab_max = gtk_label_new(lbuf);
@@ -198,27 +201,62 @@ void setup_wavepanel_lmtable(WavePanel *wp, int showlabels)
 	wp->lab_logscale = gtk_label_new("LogY");
 	gtk_box_pack_start(GTK_BOX(wp->lab_max_hbox), wp->lab_logscale,
 			 FALSE, FALSE, 0);
+	
 
+	// table for buttons and masurements.  row 0 is space-filling dummy.
+
+	vbox = gtk_vbox_new(FALSE, 0);
+	gtk_widget_show(vbox);
+
+	wp->lmtable = gtk_table_new(1, 3, FALSE);
+	gtk_widget_set_usize(wp->lmtable, 150, -1);
+	gtk_widget_show(wp->lmtable);
+
+	gtk_table_attach(GTK_TABLE(wp->lmtable), vbox,
+			 0, 3, 0, 1,
+			 0,
+			 GTK_EXPAND|GTK_FILL,
+			 0, 0 );
+
+	// wrap scrolled window with vertical scrollbar around table
+	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scrolled_window),
+                                  GTK_POLICY_NEVER, 
+                                  GTK_POLICY_ALWAYS);
+	gtk_scrolled_window_set_placement(GTK_SCROLLED_WINDOW (scrolled_window),
+					  GTK_CORNER_TOP_RIGHT);
+	GTK_WIDGET_UNSET_FLAGS (GTK_SCROLLED_WINDOW (scrolled_window)->vscrollbar, GTK_CAN_FOCUS);
+	gtk_widget_show (scrolled_window);
+
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_window),
+					      wp->lmtable);
+	gtk_container_set_focus_vadjustment(
+		GTK_CONTAINER (wp->lmtable),
+		gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window)));
+
+
+	gtk_box_pack_start(GTK_BOX(wp->lmvbox), scrolled_window,
+			   TRUE, TRUE, 0);
+
+
+	// last item in the outer vbox: hbox for minY label
 	strcpy(lbuf, val2txt(wp->start_yval, 0));
 	wp->lab_min = gtk_label_new(lbuf);
 	gtk_widget_show(wp->lab_min);
 	wp->lab_min_hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_end(GTK_BOX(wp->lab_min_hbox), wp->lab_min,
 			 FALSE, FALSE, 0);
-	vbox = gtk_vbox_new(FALSE, 0);
-	gtk_widget_show(vbox);
-	gtk_box_pack_end(GTK_BOX(vbox), wp->lab_min_hbox, FALSE, FALSE, 0);
+	gtk_box_pack_end(GTK_BOX(wp->lmvbox), wp->lab_min_hbox,
+			 FALSE, FALSE, 0);
 
-	gtk_table_attach(GTK_TABLE(wp->lmtable), vbox,
-			 0, 3, 1, 2,
-			 GTK_EXPAND|GTK_FILL,
-			 GTK_EXPAND|GTK_FILL,
-			 0, 0 );
 	if(showlabels) {
 		gtk_widget_show(wp->lab_min_hbox);
 		gtk_widget_show(wp->lab_max_hbox);
 	}
 
+	// take action when the label/measure table wants to change size
+	gtk_signal_connect(GTK_OBJECT(wp->lmtable), "size-request", 
+			   wavepanel_lmtable_size_handler, (gpointer)wp);
 }
 
 /*
@@ -281,7 +319,7 @@ void destroy_wave_panel(WavePanel *wp)
 	while((vw = g_list_nth_data(wp->vwlist, 0)) != NULL) {
 		remove_wave_from_panel(wp, vw);
 	}
-	gtk_widget_destroy(wp->lmtable);
+	gtk_widget_destroy(wp->lmvbox);
 	gtk_widget_destroy(wp->drawing);
 	gdk_pixmap_unref(wp->pixmap);
 	wp->valid = 0;
@@ -289,6 +327,32 @@ void destroy_wave_panel(WavePanel *wp)
 	if(wp->outstanding_smob == 0)
 		g_free(wp);
 }
+
+/*
+ * Gtk+ signal handler called a panel's lmtable changes size.  
+ *   If there isn't room to show the whole width, force it larger, but
+ *   don't let it get too big.
+ *   Seems to restore the behavior from before the ScrolledWindow was added,
+ *   when the label/button area always fit.
+ */
+void
+wavepanel_lmtable_size_handler(GtkWidget *w,
+			       GtkRequisition *req, gpointer d)
+{
+	WavePanel *wp = (WavePanel *)d;
+
+/*	printf("wavepanel_lmtable_size_handler: reqw=%d alloc=%d\n", 
+  req->width, wp->lmtable->allocation.width); */
+
+	if(req->width > 100 
+	   && wp->lmtable->allocation.width > 100
+	   && req->width > wp->lmtable->allocation.width) {
+		gtk_widget_set_usize(wp->lmtable,
+				     (req->width > 350 ? 350 : req->width), -1);
+	}
+}
+
+
 
 XSCM_DEFINE(wavepanel_selected_p, "wavepanel-selected?", 1, 0, 0, 
 	    (SCM wavepanel),
@@ -522,7 +586,7 @@ XSCM_DEFINE(wavepanel_y2val, "wavepanel-y2val", 2, 0, 0,
 
 XSCM_DEFINE(wavepanel_disp_rect, "wavepanel-disp-rect", 1, 0, 0,
 	   (SCM wavepanel),
-"Return a list containing coordinates of the space displayed "
+"Return a list containing coordinates of the space "
 "currently displayed by the current zoom setting of WAVEPANEL. " 
 "The list contains four elements, startX, startY, endX, endY")
 #define FUNC_NAME s_wavepanel_disp_rect
@@ -575,6 +639,31 @@ XSCM_DEFINE(set_wavepanel_minheight_x, "set-wavepanel-minheight!", 2, 0, 0,
 	return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
+
+
+XSCM_DEFINE(wavepanel_debug_x, "wavepanel-debug!", 1, 0, 0,
+	   (SCM wavepanel),
+	    "Causes debug info about WAVEPANEL to be printed to stdout")
+#define FUNC_NAME s_wavepanel_debug_x
+{
+	WavePanel *wp;
+	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+
+	printf("wavepanel lmtable req=%d,%d alloc=%d,%d\n",
+	       wp->lmtable->requisition.width,
+	       wp->lmtable->requisition.height,
+	       wp->lmtable->allocation.width,
+	       wp->lmtable->allocation.height);
+	printf("          vbox req=%d,%d alloc=%d,%d\n",
+	       wp->lmvbox->requisition.width,
+	       wp->lmvbox->requisition.height,
+	       wp->lmvbox->allocation.width,
+	       wp->lmvbox->allocation.height );      
+	
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 
 /*****************************************************************************
  * Standard stuff for the WavePanel SMOB */

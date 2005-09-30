@@ -69,7 +69,7 @@ struct _WaveTable {
 
 	GtkWidget *xlhbox;	/* GtkHBox containing x-axis labels */
 	GtkWidget *lab_xlogscale;
-	GtkWidget *table;
+	GtkWidget *table;	/* the main table containing all panels */
 	VBCursor *cursor[2];
 	SelRange *srange;
 	double min_xval;	/* minimum and maximum data x values, */

@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.25  2005/09/27 05:33:53  sgt
+ * sweeps working decently well,
+ * although wavelist selection for them is ugly.
+ *
  * Revision 1.24  2004/12/26 23:49:32  sgt
  * add notion of "selected" panels.  left-click in panel (including cursor0-move)
  * selects, shift-click selects without unselecting others.
@@ -517,16 +521,10 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 				   TRUE, TRUE, 0);
 		gtk_widget_show (scrolled_window);
 
-
 		wdata->wlist_box = gtk_vbox_new (FALSE, 0);
 		gtk_container_border_width (GTK_CONTAINER (wdata->wlist_box), 10);
-#ifdef GTK_V12
 		gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_window),
 						      wdata->wlist_box);
-#else
-		gtk_container_add (GTK_CONTAINER(scrolled_window),
-				   wdata->wlist_box);
-#endif
 		gtk_container_set_focus_vadjustment(
 			GTK_CONTAINER (wdata->wlist_box),
 			gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolled_window)));
@@ -899,14 +897,13 @@ int wavefile_try_free(GWDataFile *wdata)
 		return 0;
 	if(wdata->wf)
 		return 0;
-
 	if(wdata->wvhl)  /* nonempty list means outstanding handles remain */
 		return 0;
 
-	fprintf(stderr, "free GWDataFile 0x%x during gc\n", wdata);
+/*	fprintf(stderr, "free GWDataFile 0x%x during gc\n", wdata); */
 	n = wdata->ndv;
 	g_free(wdata);
-	return sizeof(GWDataFile) + n*sizeof(WaveVarH);
+	return sizeof(GWDataFile);
 }
 
 /* standard SMOB functions for GWDataFile: free, mark, print, GWDataFile? */
@@ -952,14 +949,16 @@ free_WaveVar(SCM obj)
 {
 	WaveVarH *wvh = WaveVarH(obj);
 	GWDataFile *df;
+	scm_sizet fsize;
 	df = wvh->df;
 
+	df->wvhl = g_slist_remove(df->wvhl, wvh);
+	fsize = wavefile_try_free(wvh->df);
 	wvh->wv = NULL;
 	wvh->df = NULL;
-	df->wvhl = g_slist_remove(df->wvhl, wvh);
 	g_free(wvh);
 
-	return wavefile_try_free(wvh->df);
+	return fsize + sizeof(WaveVarH);
 }
 
 SCM
