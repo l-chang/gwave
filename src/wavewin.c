@@ -100,7 +100,7 @@ XSCM_DEFINE(wtable_start_xval, "wtable-start-xval", 0, 0, 0, (),
 "displayed portion of the waveforms")
 #define FUNC_NAME s_wtable_start_xval
 {
-	return gh_double2scm(wtable->start_xval);
+	return scm_make_real(wtable->start_xval);
 }
 #undef FUNC_NAME
 
@@ -109,7 +109,7 @@ XSCM_DEFINE(wtable_end_xval, "wtable-end-xval", 0, 0, 0, (),
 "displayed portion of the waveforms")
 #define FUNC_NAME s_wtable_end_xval
 {
-	return gh_double2scm(wtable->end_xval);
+	return scm_make_real(wtable->end_xval);
 }
 #undef FUNC_NAME
 
@@ -117,7 +117,7 @@ XSCM_DEFINE(wtable_min_xval, "wtable-min-xval", 0, 0, 0, (),
 	   "return the minimum X coordinate of any displayed waveform")
 #define FUNC_NAME s_wtable_min_xval
 {
-	return gh_double2scm(wtable->min_xval);
+	return scm_make_real(wtable->min_xval);
 }
 #undef FUNC_NAME
 
@@ -125,7 +125,7 @@ XSCM_DEFINE(wtable_max_xval, "wtable-max-xval", 0, 0, 0, (),
 	   "return the maximum X coordinate of any displayed waveform")
 #define FUNC_NAME s_wtable_max_xval
 {
-	return gh_double2scm(wtable->max_xval);
+	return scm_make_real(wtable->max_xval);
 }
 #undef FUNC_NAME
 
@@ -137,7 +137,7 @@ XSCM_DEFINE(wtable_vcursor, "wtable-vcursor", 1, 0, 0, (SCM cur),
 	VALIDATE_ARG_INT_RANGE_COPY(1, cur, 0, 2, icno);
 	if(!wtable->cursor[icno]->shown)
 		return SCM_BOOL_F;
-	return gh_double2scm(wtable->cursor[icno]->xval);
+	return scm_make_real(wtable->cursor[icno]->xval);
 }
 #undef FUNC_NAME
 

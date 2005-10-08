@@ -77,17 +77,17 @@ GtkWidget *win_xlabel_left, *win_xlabel_right;
 
 /* variables accessible from C and guile */
 
-XSCM_VCELL_INIT(scm_gwave_version, "gwave-version-string",  gh_str02scm(VERSION),
+XSCM_VCELL_INIT(scm_gwave_version, "gwave-version-string",  scm_makfrom0str(VERSION),
 "This variable is initialized to contain the version string for gwave, as"
 "set in configure.in.");
 
-XSCM_VCELL_INIT(scm_gwave_datadir, "gwave-datadir",  gh_str02scm(DATADIR),
+XSCM_VCELL_INIT(scm_gwave_datadir, "gwave-datadir",  scm_makfrom0str(DATADIR),
 "This variable is initialized to contain the compiled-in pathname to"
 "the installed data directory, typicaly PREFIX/share, as set by configure."
 "It is used by the startup code as a default location for finding gwave's"
 "guile modules.");
 
-XSCM_VCELL_INIT(scm_gwave_bingwave, "gwave-bin-gwave-path", gh_str02scm(BINGWAVE),
+XSCM_VCELL_INIT(scm_gwave_bingwave, "gwave-bin-gwave-path", scm_makfrom0str(BINGWAVE),
 "This variable is initialized to contain the compiled-in pathname to"
 "the installed gwave executable, typicaly PREFIX/bin/gwave, as set by configure."
 "It is used by the procedures that write out gwave configuration-restoring"
@@ -160,11 +160,11 @@ main(int argc, char **argv)
 	if (getenv("GUILE_WARN_DEPRECATED") == NULL)
 		putenv("GUILE_WARN_DEPRECATED=no");
 
-	gh_enter(argc, argv, gwave_main);
+	scm_boot_guile(argc, argv, gwave_main, NULL);
 	return 0;
 }
 
-void gwave_main(int argc, char **argv)
+void gwave_main(void *p, int argc, char **argv)
 {
 	int c;
 	int i;
@@ -214,17 +214,17 @@ void gwave_main(int argc, char **argv)
 	assert( SCM_CONSP(scm_gwave_tooltips) );
 
 #ifdef GUILE_GTK_EXTRA_LOADPATH
-	gh_eval_str("(set! %load-path (cons \"" GUILE_GTK_EXTRA_LOADPATH "\" %load-path))");
+	scm_c_eval_string("(set! %load-path (cons \"" GUILE_GTK_EXTRA_LOADPATH "\" %load-path))");
 #endif
 
 	/* the default for this seems to have changed between guile-1.3
 	   and guile-1.3.2;  only the first clause is needed when 
 	   we drop support for guile-1.3.2 */
 	if (!nobacktrace) {
-		gh_eval_str("(debug-enable 'debug)(debug-enable 'backtrace) (read-enable 'positions)");
+		scm_c_eval_string("(debug-enable 'debug)(debug-enable 'backtrace) (read-enable 'positions)");
 	} /* else {
- 		gh_eval_str("(debug-disable 'debug)(read-disable 'positions)");
-		}*/
+	scm_c_eval_str("(debug-disable 'debug)(read-disable 'positions)");
+	}*/
 
 	/* the compiled-in initial scheme code comes from minimal.scm,
 	   built into init_scheme_string.c by the Makefile

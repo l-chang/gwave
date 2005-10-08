@@ -537,7 +537,7 @@ XSCM_DEFINE(wavepanel_bind_mouse, "wavepanel-bind-mouse", 2, 0, 0,
 	VALIDATE_ARG_PROC(2, proc);
 
 /* TODO: find right way to initialize and test to remove old binding.
-  if(gh_procedure_p(wavepanel_mouse_binding[bnum])) {
+  if(SCM_NFALSEP(scm_procedure_p(wavepanel_mouse_binding[bnum])) {
                 scm_unprotect_object(wavepanel_mouse_binding[bnum]);
         }
 */
@@ -563,7 +563,7 @@ XSCM_DEFINE(wavepanel_x2val, "wavepanel-x2val", 2, 0, 0,
 	VALIDATE_ARG_WavePanel_COPY_USE_NULL(1,wavepanel,wp);
 	VALIDATE_ARG_INT_COPY(2,xpixel,x);
 	val = x2val(wp, x, wtable->logx);
-	return gh_double2scm(val);
+	return scm_make_real(val);
 }
 #undef FUNC_NAME
 
@@ -580,7 +580,7 @@ XSCM_DEFINE(wavepanel_y2val, "wavepanel-y2val", 2, 0, 0,
 	VALIDATE_ARG_WavePanel_COPY_USE_NULL(1,wavepanel,wp);
 	VALIDATE_ARG_INT_COPY(2,ypixel,y);
 	val = y2val(wp, y);
-	return gh_double2scm(val);
+	return scm_make_real(val);
 }
 #undef FUNC_NAME
 
@@ -594,10 +594,10 @@ XSCM_DEFINE(wavepanel_disp_rect, "wavepanel-disp-rect", 1, 0, 0,
 	WavePanel *wp;
 	SCM answer = SCM_EOL;
 	VALIDATE_ARG_WavePanel_COPY_USE_NULL(1,wavepanel,wp);
-	answer = scm_cons( gh_double2scm(wp->end_yval), answer);
-	answer = scm_cons( gh_double2scm(wp->end_xval), answer);
-	answer = scm_cons( gh_double2scm(wp->start_yval), answer);
-	answer = scm_cons( gh_double2scm(wp->start_xval), answer);
+	answer = scm_cons( scm_make_real(wp->end_yval), answer);
+	answer = scm_cons( scm_make_real(wp->end_xval), answer);
+	answer = scm_cons( scm_make_real(wp->start_yval), answer);
+	answer = scm_cons( scm_make_real(wp->start_xval), answer);
 	return answer;
 }
 #undef FUNC_NAME
@@ -612,10 +612,10 @@ XSCM_DEFINE(wavepanel_max_rect, "wavepanel-max-rect", 1, 0, 0,
 	WavePanel *wp;
 	SCM answer = SCM_EOL;
 	VALIDATE_ARG_WavePanel_COPY_USE_NULL(1,wavepanel,wp);
-	answer = scm_cons( gh_double2scm(wp->max_yval), answer);
-	answer = scm_cons( gh_double2scm(wp->max_xval), answer);
-	answer = scm_cons( gh_double2scm(wp->min_yval), answer);
-	answer = scm_cons( gh_double2scm(wp->min_xval), answer);
+	answer = scm_cons( scm_make_real(wp->max_yval), answer);
+	answer = scm_cons( scm_make_real(wp->max_xval), answer);
+	answer = scm_cons( scm_make_real(wp->min_yval), answer);
+	answer = scm_cons( scm_make_real(wp->min_xval), answer);
 	return answer;
 }
 #undef FUNC_NAME

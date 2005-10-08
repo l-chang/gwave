@@ -593,7 +593,7 @@ XSCM_DEFINE(visiblewave_varname, "visiblewave-varname", 1, 0, 0, (SCM vw),
 	if(!cvw->valid) 
 		return SCM_BOOL_F;
 	else
-		return gh_str02scm(cvw->varname);
+		return scm_makfrom0str(cvw->varname);
 
 }
 #undef FUNC_NAME
@@ -641,7 +641,7 @@ XSCM_DEFINE(visiblewave_color, "visiblewave-color", 1, 0, 0, (SCM vw),
 	if(!cvw->valid)
 		return SCM_BOOL_F;
 	else
-		return gh_int2scm(cvw->colorn);
+		return scm_long2num(cvw->colorn);
 }
 #undef FUNC_NAME
 
@@ -656,7 +656,7 @@ XSCM_DEFINE(wavevar_min, "wavevar-min", 1, 0, 0, (SCM wv),
 	if(!cvw->valid)
 		return SCM_BOOL_F;
 	else
-		return gh_double2scm(cvw->var->wds->min);
+		return scm_make_real(cvw->var->wds->min);
 }
 #undef FUNC_NAME
 
@@ -670,7 +670,7 @@ XSCM_DEFINE(wavevar_max, "wavevar-max", 1, 0, 0, (SCM wv),
 	if(!cvw->valid)
 		return SCM_BOOL_F;
 	else
-		return gh_double2scm(cvw->var->wds->max);
+		return scm_make_real(cvw->var->wds->max);
 }
 #undef FUNC_NAME
 
@@ -684,7 +684,7 @@ XSCM_DEFINE(wavevar_interp_val, "wavevar-interp-val", 2, 0, 0, (SCM vw, SCM xval
 	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,vw,var);
 	VALIDATE_ARG_DBL_COPY(1, xval, x);
 
-	return gh_double2scm(wv_interp_value(var, x));
+	return scm_make_real(wv_interp_value(var, x));
 }
 #undef FUNC_NAME
 
