@@ -20,6 +20,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.26  2005/09/30 04:31:36  sgt
+ * add scrollbar to wavepanel button/measure lists to better control panel
+ * height vs. number of buttons
+ * fix gc issue with sweep rework
+ *
  * Revision 1.25  2005/09/27 05:33:53  sgt
  * sweeps working decently well,
  * although wavelist selection for them is ugly.
@@ -201,7 +206,6 @@ load_wave_file(char *fname, char *ftype)
 
 	/* give the file a short (fow now, 1-character) "tag" to identify it
 	 * in the menu and variable labels.  
-	 * TODO: let user set the tag if they so choose.
 	 */
 	wdata->ftag = g_new(char, 2);
 	wdata->ftag[0] = file_tag_chars[next_file_tagno];
@@ -613,16 +617,43 @@ XSCM_DEFINE(wavefile_file_name, "wavefile-file-name", 1, 0, 0,
 #undef FUNC_NAME
 
 XSCM_DEFINE(wavefile_nsweeps, "wavefile-nsweeps", 1, 0, 0,
-           (SCM obj),
-	   "Returns the number of sweeps for which data is present in GWDataFile OBJ.")
+           (SCM df),
+	   "Returns the number of sweeps for which data is present in GWDataFile DF.")
 #define FUNC_NAME s_wavefile_nsweeps
 {
 	GWDataFile *wdata;
-	VALIDATE_ARG_GWDataFile_COPY(1, obj, wdata);
+	VALIDATE_ARG_GWDataFile_COPY(1, df, wdata);
 
 	return gh_int2scm(wdata->wf->wf_ntables);
 }
 #undef FUNC_NAME
+
+XSCM_DEFINE(wavefile_sweeps, "wavefile-sweeps", 1, 0, 0,
+           (SCM df),
+	   "Returns a list of sweeps contained in GWDataFile DF.  Each element of the list is a pair, of the form (sweepname . sweepvalue)")
+#define FUNC_NAME s_wavefile_nsweeps
+{
+	GWDataFile *wdata;
+	SCM result = SCM_EOL;
+	SCM p;
+	WvTable *wt;
+	WaveFile *wf;
+	int i, j;
+	VALIDATE_ARG_GWDataFile_COPY(1, df, wdata);
+
+	if(!wdata->wf)
+		return result;
+
+	wf = wdata->wf;
+	for(i = 0; i < wf->wf_ntables; i++) {
+		wt = wf_wtable(wf, i);
+		p = scm_cons(gh_str02scm(wt->name), gh_double2scm(wt->swval));
+		result = scm_cons(p, result);
+	}
+	return scm_reverse(result);
+}
+#undef FUNC_NAME
+
 /* TODO: get sweepname and sweepvar-value for each sweep in a data file */
 
 
@@ -705,22 +736,35 @@ XSCM_DEFINE(wavefile_all_variables, "wavefile-all-variables", 1, 0, 0, (SCM df),
 	GWDataFile *wdata;
 	SCM result = SCM_EOL;
 	SCM wvsmob;
-	int i;
+
+	WaveFile *wf;
+	WvTable *wt;
+	int i, j;
 	VALIDATE_ARG_GWDataFile_COPY(1, df, wdata);
 
 	if(!wdata->wf)
 		return result;
-/*
-  TODO figure out how to cons while getting for_each_wavevar to walk
- the list for us
 
-	for(i = 0; i < wdata->wf->wf_ndv; i++) {
-		WaveVar *dv = &wdata->wf->dv[i];
-		wdata->wvhs[i].wv = dv;
-		SGT_NEWCELL_SMOB(wvsmob, WaveVar, &wdata->wvhs[i]);
-		result = scm_cons(wvsmob, result);
+	wf = wdata->wf;
+	for(i = 0; i < wf->wf_ntables; i++) {
+		wt = wf_wtable(wf, i);
+		for(j = 0; j < wf->wf_ndv; j++) {
+			WaveVar *wv;
+			WaveVarH *wvh;
+			wv = &wt->dv[j];
+			if(!wv->udata) {
+                                wvh = g_new0(WaveVarH, 1);
+                                wvh->wv = wv;
+                                wvh->df = wdata;
+                                wv->udata = wvh;
+                                wdata->wvhl = g_slist_prepend(wdata->wvhl, wvh);
+			} else {
+				wvh = (WaveVarH *)wv->udata;
+			}
+			SGT_NEWCELL_SMOB(wvsmob, WaveVar, wvh);
+			result = scm_cons(wvsmob, result);
+		}
 	}
-*/
 	return scm_reverse(result);
 }
 #undef FUNC_NAME
@@ -971,10 +1015,14 @@ int
 print_WaveVar(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
 {
 	WaveVarH *wvh = WaveVarH(obj);
-	
+	char buf[128];
+
 	scm_puts("#<WaveVar ", port);
 	if(wvh->wv) {
 		scm_puts(wvh->df->wf->wf_filename, port);
+		scm_puts(",", port);
+		sprintf(buf, "%d", wvh->wv->wtable->swindex);
+		scm_puts(buf,port);
 		scm_puts(",", port);
 		scm_puts(wvh->wv->sv->name, port);
 	} else
