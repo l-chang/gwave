@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.27  2005/10/08 04:55:33  sgt
+ * fix wavefile-all-variables to work with all sweeps
+ * create wavefile-sweeps to return list of sweep info
+ *
  * Revision 1.26  2005/09/30 04:31:36  sgt
  * add scrollbar to wavepanel button/measure lists to better control panel
  * height vs. number of buttons
@@ -609,7 +613,7 @@ XSCM_DEFINE(wavefile_file_name, "wavefile-file-name", 1, 0, 0,
 	VALIDATE_ARG_GWDataFile_COPY(1, obj, wdata);
 
 	if(wdata->wf)
-		return gh_str02scm(wdata->wf->wf_filename);
+		return scm_makfrom0str(wdata->wf->wf_filename);
 	else
 		return SCM_BOOL_F;
 
@@ -624,7 +628,7 @@ XSCM_DEFINE(wavefile_nsweeps, "wavefile-nsweeps", 1, 0, 0,
 	GWDataFile *wdata;
 	VALIDATE_ARG_GWDataFile_COPY(1, df, wdata);
 
-	return gh_int2scm(wdata->wf->wf_ntables);
+	return scm_long2num(wdata->wf->wf_ntables);
 }
 #undef FUNC_NAME
 
@@ -647,15 +651,12 @@ XSCM_DEFINE(wavefile_sweeps, "wavefile-sweeps", 1, 0, 0,
 	wf = wdata->wf;
 	for(i = 0; i < wf->wf_ntables; i++) {
 		wt = wf_wtable(wf, i);
-		p = scm_cons(gh_str02scm(wt->name), gh_double2scm(wt->swval));
+		p = scm_cons(scm_makfrom0str(wt->name), scm_make_real(wt->swval));
 		result = scm_cons(p, result);
 	}
 	return scm_reverse(result);
 }
 #undef FUNC_NAME
-
-/* TODO: get sweepname and sweepvar-value for each sweep in a data file */
-
 
 XSCM_DEFINE(wavefile_tag, "wavefile-tag", 1, 0, 0,
            (SCM obj),
@@ -665,7 +666,7 @@ XSCM_DEFINE(wavefile_tag, "wavefile-tag", 1, 0, 0,
 	GWDataFile *wdata;
 	VALIDATE_ARG_GWDataFile_COPY(1, obj, wdata);
 
-	return gh_str02scm(wdata->ftag);
+	return scm_makfrom0str(wdata->ftag);
 }
 #undef FUNC_NAME
 
@@ -814,7 +815,7 @@ XSCM_DEFINE(variable_signame, "variable-signame", 1, 0, 0,
 	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,var,wv);
 	
 	if(wv)
-		return gh_str02scm(wv->sv->name);
+		return scm_makfrom0str(wv->sv->name);
 	else
 		return SCM_BOOL_F;
 }
@@ -830,7 +831,7 @@ XSCM_DEFINE(variable_sweepname, "variable-sweepname", 1, 0, 0,
 	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,var,wv);
 	
 	if(wv)
-		return gh_str02scm(wv->wtable->name);
+		return scm_makfrom0str(wv->wtable->name);
 	else
 		return SCM_BOOL_F;
 }
@@ -846,7 +847,7 @@ XSCM_DEFINE(variable_sweepindex, "variable-sweepindex", 1, 0, 0,
 	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,var,wv);
 	
 	if(wv)
-		return gh_int2scm(wv->wtable->swindex);
+		return scm_long2num(wv->wtable->swindex);
 	else
 		return SCM_BOOL_F;
 }

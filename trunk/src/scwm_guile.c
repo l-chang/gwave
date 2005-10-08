@@ -62,7 +62,7 @@ static SCM
 scwm_body_apply (void *body_data)
 {
   struct scwm_body_apply_data *ad = (struct scwm_body_apply_data *) body_data;
-  return gh_apply(ad->proc, ad->args);
+  return scm_apply(ad->proc, ad->args, SCM_EOL);
 }
 
 /* Use scm_internal_cwdr to establish a new dynamic root - this causes
@@ -151,7 +151,7 @@ scwm_safe_call1 (SCM proc, SCM arg)
 {
   /* This means w must cons (albeit only once) on each callback of
      size one - seems lame. */
-  return scwm_safe_apply (proc, gh_list(arg, SCM_UNDEFINED));
+  return scwm_safe_apply (proc, scm_list_1(arg));
 }
 
 
@@ -160,7 +160,7 @@ scwm_safe_call2 (SCM proc, SCM arg1, SCM arg2)
 {
   /* This means w must cons (albeit only once) on each callback of
      size two - seems lame. */
-  return scwm_safe_apply (proc, gh_list(arg1, arg2, SCM_UNDEFINED));
+  return scwm_safe_apply (proc, scm_list_2(arg1, arg2));
 }
 
 SCM
@@ -168,7 +168,7 @@ scwm_safe_call3 (SCM proc, SCM arg1, SCM arg2, SCM arg3)
 {
   /* This means w must cons (albeit only once) on each callback of
      size two - seems lame. */
-  return scwm_safe_apply (proc, gh_list(arg1, arg2, arg3, SCM_UNDEFINED));
+  return scwm_safe_apply (proc, scm_list_3(arg1, arg2, arg3));
 }
 
 SCM
@@ -176,7 +176,7 @@ scwm_safe_call4 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
   /* This means w must cons (albeit only once) on each callback of
      size two - seems lame. */
-  return scwm_safe_apply (proc, gh_list(arg1, arg2, arg3, arg4, SCM_UNDEFINED));
+  return scwm_safe_apply (proc, scm_list_4(arg1, arg2, arg3, arg4));
 }
 
 SCM
@@ -184,23 +184,19 @@ scwm_safe_call5 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5)
 {
   /* This means w must cons (albeit only once) on each callback of
      size two - seems lame. */
-  return scwm_safe_apply (proc, gh_list(arg1, arg2, arg3, arg4, arg5, SCM_UNDEFINED));
+  return scwm_safe_apply (proc, scm_list_5(arg1, arg2, arg3, arg4, arg5));
 }
 
 SCM
 scwm_safe_call6 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
-  /* This means w must cons (albeit only once) on each callback of
-     size two - seems lame. */
-  return scwm_safe_apply (proc, gh_list(arg1, arg2, arg3, arg4, arg5, arg6, SCM_UNDEFINED));
+  return scwm_safe_apply (proc, scm_list_n(arg1, arg2, arg3, arg4, arg5, arg6, SCM_UNDEFINED));
 }
 
 SCM
 scwm_safe_call7 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6, SCM arg7)
 {
-  /* This means w must cons (albeit only once) on each callback of
-     size two - seems lame. */
-  return scwm_safe_apply (proc, gh_list(arg1, arg2, arg3, arg4, arg5, arg6, arg7, SCM_UNDEFINED));
+  return scwm_safe_apply (proc, scm_list_n(arg1, arg2, arg3, arg4, arg5, arg6, arg7, SCM_UNDEFINED));
 }
 
 
@@ -220,12 +216,12 @@ static SCM run_hook_proc;
 
 __inline__ SCM scwm_run_hook(SCM hook, SCM args)
 {
-  return scwm_safe_apply(run_hook_proc, gh_cons(hook,args));
+  return scwm_safe_apply(run_hook_proc, scm_cons(hook,args));
 }
 
 __inline__ SCM scwm_run_hook_message_only(SCM hook, SCM args)
 {
-  return scwm_safe_apply_message_only(run_hook_proc, gh_cons(hook,args));
+  return scwm_safe_apply_message_only(run_hook_proc, scm_cons(hook,args));
 }
 
 
@@ -236,43 +232,43 @@ __inline__ SCM call0_hooks(SCM hook)
 
 __inline__ SCM call1_hooks(SCM hook, SCM arg1)
 {
-  return scwm_run_hook(hook,gh_list(arg1,SCM_UNDEFINED));
+  return scwm_run_hook(hook,scm_list_1(arg1));
 }
 
 __inline__ SCM call2_hooks(SCM hook, SCM arg1, SCM arg2)
 {
-  return scwm_run_hook(hook,gh_list(arg1,arg2,SCM_UNDEFINED));
+  return scwm_run_hook(hook,scm_list_2(arg1,arg2));
 }
 
 __inline__ SCM call3_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3)
 {
-  return scwm_run_hook(hook,gh_list(arg1,arg2,arg3,SCM_UNDEFINED));
+  return scwm_run_hook(hook,scm_list_n(arg1,arg2,arg3,SCM_UNDEFINED));
 }
 
 __inline__ SCM call4_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
-  return scwm_run_hook(hook,gh_list(arg1,arg2,arg3,arg4,SCM_UNDEFINED));
+  return scwm_run_hook(hook,scm_list_n(arg1,arg2,arg3,arg4,SCM_UNDEFINED));
 }
 
 __inline__ SCM call5_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5)
 {
-  return scwm_run_hook(hook,gh_list(arg1,arg2,arg3,arg4,arg5,SCM_UNDEFINED));
+  return scwm_run_hook(hook,scm_list_n(arg1,arg2,arg3,arg4,arg5,SCM_UNDEFINED));
 }
 
 __inline__ SCM call6_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
-  return scwm_run_hook(hook,gh_list(arg1,arg2,arg3,arg4,arg5,arg6,SCM_UNDEFINED));
+  return scwm_run_hook(hook,scm_list_n(arg1,arg2,arg3,arg4,arg5,arg6,SCM_UNDEFINED));
 }
 
 __inline__ SCM call7_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6, SCM arg7)
 {
-  return scwm_run_hook(hook,gh_list(arg1,arg2,arg3,arg4,arg5,arg6,arg7,SCM_UNDEFINED));
+  return scwm_run_hook(hook,scm_list_n(arg1,arg2,arg3,arg4,arg5,arg6,arg7,SCM_UNDEFINED));
 }
 
 SCM
 scm_empty_hook_p(SCM hook)
 {
-  return gh_bool2scm(!gh_pair_p(gh_cddr(hook)));
+  return scm_hook_empty_p(hook);
 }
 
 
@@ -321,7 +317,7 @@ static SCM
 scwm_body_load (void *body_data)
 {
   SCM filename = *(SCM *) body_data;
-  SCM port = scm_open_file (filename, gh_str02scm("r"));
+  SCM port = scm_open_file (filename, scm_makfrom0str("r"));
   return scwm_catching_load_from_port (port);
 }
 
@@ -329,7 +325,7 @@ static SCM
 scwm_body_eval_str (void *body_data)
 {
   char *string = (char *) body_data;
-  SCM port = scm_mkstrport (SCM_MAKINUM (0), gh_str02scm(string), 
+  SCM port = scm_mkstrport (SCM_MAKINUM (0), scm_makfrom0str(string), 
 			    SCM_OPN | SCM_RDNG, "scwm_safe_eval_str");
   return scwm_catching_load_from_port (port);
 }
@@ -364,7 +360,7 @@ scwm_handle_error (void *ARG_IGNORE(data), SCM tag, SCM throw_args)
          ugly hack --04/27/99 gjb */
       if (SCM_NIMP (fl) && SCM_FLUIDP (fl)) {
         SCM stack = DEREF_LAST_STACK;
-        SCM subr = gh_car (throw_args);
+        SCM subr = SCM_CAR (throw_args);
         SCM message = SCM_CADR (throw_args);
         SCM args = SCM_CADDR (throw_args);
         
@@ -385,11 +381,9 @@ scwm_handle_error (void *ARG_IGNORE(data), SCM tag, SCM throw_args)
       scm_putc ('\n', port);
       exit (2);
     }
-
   /* GJB:FIXME:MS: can the scheme code display a backtrace without the
      stack argument? */
-/*  DBUG((scwm_msg(DBG,"scwm_handle_error","length(throw_args) = %d", gh_length(throw_args));)) */
-  return scwm_run_hook_message_only(error_hook, gh_cons(tag, throw_args));
+  return scwm_run_hook_message_only(error_hook, scm_cons(tag, throw_args));
 }
 
 
@@ -412,7 +406,7 @@ XSCM_DEFINE(safe_load, "safe-load", 1, 0, 0,
 
 SCM scwm_safe_load (char *filename)
 {
-  return safe_load(gh_str02scm(filename));
+  return safe_load(scm_makfrom0str(filename));
 }
 
 SCM scwm_safe_eval_str (char *string)

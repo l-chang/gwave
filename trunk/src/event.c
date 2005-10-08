@@ -21,6 +21,15 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.19  2004/12/26 23:49:32  sgt
+ * add notion of "selected" panels.  left-click in panel (including cursor0-move)
+ * selects, shift-click selects without unselecting others.
+ * double-click in wavelist adds to first selected panel.
+ * selected panels have a highlighted outline.
+ * add ability to change the "tag" (shorthand identifier) for a file
+ * added example of using this to put case name into the tag to
+ * experimental .gwaverc
+ *
  * Revision 1.18  2003/12/03 03:58:16  sgt
  * clean up string literals containing newlines, all in documentation
  * strings.
@@ -216,29 +225,29 @@ void
 callback_srange()
 {
 	if(wtable->srange->wp->valid 
-	   && gh_procedure_p(wtable->srange->done_proc)) {
+	   && SCM_NFALSEP(scm_procedure_p(wtable->srange->done_proc))) {
 		wtable->srange->wp->outstanding_smob = 1;
 
 		switch(wtable->srange->type) {
 		case SR_X:
 			scwm_safe_call3(wtable->srange->done_proc, 
 				wtable->srange->wp->smob,
-				gh_int2scm(wtable->srange->x1), 
-				gh_int2scm(wtable->srange->x2));
+				scm_long2num(wtable->srange->x1), 
+				scm_long2num(wtable->srange->x2));
 			break;
 		case SR_Y:
 			scwm_safe_call3(wtable->srange->done_proc, 
 				wtable->srange->wp->smob,
-				gh_int2scm(wtable->srange->y1), 
-				gh_int2scm(wtable->srange->y2));
+				scm_long2num(wtable->srange->y1), 
+				scm_long2num(wtable->srange->y2));
 			break;
 		case SR_XY:
 			scwm_safe_call5(wtable->srange->done_proc, 
 				wtable->srange->wp->smob,
-				gh_int2scm(wtable->srange->x1), 
-				gh_int2scm(wtable->srange->x2),
-				gh_int2scm(wtable->srange->y1), 
-				gh_int2scm(wtable->srange->y2));
+				scm_long2num(wtable->srange->x1), 
+				scm_long2num(wtable->srange->x2),
+				scm_long2num(wtable->srange->y1), 
+				scm_long2num(wtable->srange->y2));
 			break;
 		}
 		scm_unprotect_object(wtable->srange->done_proc);

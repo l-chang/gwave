@@ -541,7 +541,7 @@ XSCM_DEFINE(spice_number, "spice->number", 1, 0, 0, (SCM str),
 
 	dval = spice2val(s);
 	free(s);
-	return gh_double2scm(dval);
+	return scm_make_real(dval);
 }
 #undef FUNC_NAME
 
@@ -554,7 +554,7 @@ XSCM_DEFINE(number_spice, "number->spice", 1, 0, 0, (SCM val),
 	char *s;
 	VALIDATE_ARG_DBL_COPY(1, val, dval);
 	s = val2txt(dval, 0);
-	return gh_str02scm(s);
+	return scm_makfrom0str(s);
 }
 #undef FUNC_NAME
 
