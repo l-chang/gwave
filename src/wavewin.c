@@ -322,12 +322,16 @@ void setup_waveform_window(void)
 	gtk_box_pack_start(GTK_BOX(wtable->vbox),
 			   win_main_toolbar, FALSE, FALSE, 0);
 
-	/* label with cursor status, and the three cursor measurebuttons */
+	/* label with cursor status, and the cursor measurebuttons */
 	wtable->xmeasure_hbox = gtk_hbox_new(FALSE, 0);
 	gtk_widget_show(wtable->xmeasure_hbox);
 	gtk_box_pack_start(GTK_BOX(wtable->vbox),
 			   wtable->xmeasure_hbox, FALSE, FALSE, 0);
 
+	wtable->cursor_mbtn[3] = measure_button_new(NULL, MBF_RECIPCURDIFF);
+	gtk_box_pack_end(GTK_BOX(wtable->xmeasure_hbox),
+			 wtable->cursor_mbtn[3]->button,  FALSE, FALSE, 0);
+ 
 	wtable->cursor_mbtn[2] = measure_button_new(NULL, MBF_CURSORDIFF);
 	gtk_box_pack_end(GTK_BOX(wtable->xmeasure_hbox),
 			   wtable->cursor_mbtn[2]->button,  FALSE, FALSE, 0);
@@ -573,6 +577,21 @@ XSCM_DEFINE(wtable_wavepanels, "wtable-wavepanels", 0, 0, 0,
 }
 #undef FUNC_NAME
 
+XSCM_DEFINE(set_wtable_measure_x, "set-wtable-measure!", 2, 0, 0, 
+	   (SCM n, SCM func),
+ "Change the global measurement box numbered N (0 through 3)"
+"to display the result of the measurement function FUNC")
+#define FUNC_NAME s_set_wtable_measure_x
+{
+	int mno;
+	int mfunc;
+	VALIDATE_ARG_INT_RANGE_COPY(1, n, 0, N_WTABLE_MBTNS-1, mno);
+	VALIDATE_ARG_INT_RANGE_COPY(2, func, 0, MBF_MAX_FUNC, mfunc);
+
+	mbtn_set_func(wtable->cursor_mbtn[mno], mfunc);
+	mbtn_update(wtable->cursor_mbtn[mno], NULL);
+}
+#undef FUNC_NAME
 
 
 /*********************************************************************** 

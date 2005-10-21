@@ -116,6 +116,12 @@ mbtn_set_func(MeasureBtn *mbtn, int mfunc)
 		need_var = 1;
 		break;
 
+	case MBF_RECIPCURDIFF:
+		gtk_widget_set_name(mbtn->label, "cursorDcolor");
+		tip = "measure: 1/(cursor1 - cursor0)";
+		need_var = 0;
+		break;
+
 	default:
 		gtk_widget_set_name(mbtn->label, "cursor0color");
 		need_var = 0;
@@ -212,6 +218,13 @@ mbtn_update(MeasureBtn *mbtn, gpointer *d)
 		if(valid)
 			mvalue = wv_interp_value(mbtn->var, c2_val) - 
 				wv_interp_value(mbtn->var, csr_val);
+		break;
+
+	case MBF_RECIPCURDIFF:
+		valid = wtable->cursor[0]->shown
+			&& wtable->cursor[1]->shown;
+		if (valid)
+			mvalue = fabs((wtable->cursor[1]->xval != wtable->cursor[0]->xval) ? 1.0 / (wtable->cursor[1]->xval - wtable->cursor[0]->xval) : 0.0) ;
 		break;
 
 	default:
