@@ -65,6 +65,15 @@
 		       (display (wavefile-all-variables df))
 		       (newline)
 		     ))
+       (add-menuitem menu "List Sweeps" 
+		     (lambda () 
+		       (format #t "~s sweeps:\n" (wavefile-nsweeps df))
+		       (display (wavefile-sweeps df)) (newline)
+		       (for-each (lambda (s)
+				 (format #t " ~s = ~s\n" (car s) (cdr s)))
+				 (wavefile-sweeps df))
+		     ))
+
        (add-menuitem menu #f #f)
        )))
 

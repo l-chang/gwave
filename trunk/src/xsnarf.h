@@ -1,4 +1,4 @@
-/* $Id: xsnarf.h,v 1.2 2003-12-03 03:58:16 sgt Exp $
+/* $Id: xsnarf.h,v 1.3 2005-10-21 03:06:42 sgt Exp $
  * xsnarf.h
  * 
  * an init-function and document snarfing system for guile, but indepenendent
@@ -60,7 +60,7 @@ static const char s_ ## FNAME [] = PRIMNAME; \
 SCM FNAME ARGLIST\
 )\
 XSCM_SNARF_INIT(\
-scm_make_gsubr (s_ ## FNAME, REQ, OPT, VAR, \
+scm_c_define_gsubr (s_ ## FNAME, REQ, OPT, VAR, \
                 (SCM_FUNC_CAST_ARBITRARY_ARGS) FNAME); \
 )\
 XSCM_SNARF_DOCS(primitive, PRIMNAME, ARGLIST, REQ, OPT, VAR, DOCSTRING)
