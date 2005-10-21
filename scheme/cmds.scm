@@ -107,9 +107,9 @@
 ;
 
 ; instead of multiple lists, these should be a real data structure of some kind
-(define-public wavepanel-type-names    (list "Std"	"Jge"))
+(define-public wavepanel-type-names    (list "Full"	"Slim"))
 (define-public wavepanel-num-types (length wavepanel-type-names))
-(define            panel-type-heights  (list 100 	25))
+(define            panel-type-heights  (list 100 	20))
 (define            panel-type-showlabs (list #t  	#f))
 
 (define-public (set-wavepanel-type! wp type)

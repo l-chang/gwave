@@ -1,6 +1,13 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
 
+New in 20050928
+- ALPHA RELEASE: may crash.  do not rely on for production use.
+- handling of multi-sweep datafiles
+- vertical scrollbars on label/measure area in each wavepanel make handling
+large numbers of waveforms easier.
+
+
 New in 20031202
 - Got docstring extraction from C source to .txt files in doc directory working again
 - applied submitted patch that cleans up warnings from gcc3 about multiline text strings in C code
