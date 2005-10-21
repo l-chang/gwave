@@ -54,18 +54,19 @@ struct _VBCursor {
 	GdkGC *gdk_gc;
 };
 
+
+#define N_WTABLE_MBTNS 4
 /*
  * WaveTable - structure describing
  *  all of the waveform-display panels and related elements
  */
-
 struct _WaveTable {
 	int npanels;
 	WavePanel **panels;
 	GtkWidget *vbox;	/* GtkVBox containing most elements
 				   in main window. */
-	GtkWidget *xmeasure_hbox;  /* hbox with cursor measurements */
-	MeasureBtn *cursor_mbtn[3];
+	GtkWidget *xmeasure_hbox;  /* hbox with cursor measurement`s */
+	MeasureBtn *cursor_mbtn[N_WTABLE_MBTNS];  /* someday: make this dynamic */
 
 	GtkWidget *xlhbox;	/* GtkHBox containing x-axis labels */
 	GtkWidget *lab_xlogscale;

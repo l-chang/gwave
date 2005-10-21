@@ -727,7 +727,7 @@ XSCM_DEFINE(set_visiblewave_measure_x, "set-visiblewave-measure!", 3, 0, 0,
 	int mfunc;
 	VALIDATE_ARG_VisibleWave_COPY(1,vw,cvw);
 	VALIDATE_ARG_INT_RANGE_COPY(2, n, 0, 1, mno);
-	VALIDATE_ARG_INT_RANGE_COPY(3, func, 0, MBF_VARDIFF, mfunc);
+	VALIDATE_ARG_INT_RANGE_COPY(3, func, 0, MBF_MAX_FUNC, mfunc);
 
 	if(cvw->valid) {
 		mbtn_set_func(cvw->mbtn[mno], mfunc);
@@ -735,7 +735,6 @@ XSCM_DEFINE(set_visiblewave_measure_x, "set-visiblewave-measure!", 3, 0, 0,
 	}
 }
 #undef FUNC_NAME
-
 
 /* guile initialization */
 void init_cmd()

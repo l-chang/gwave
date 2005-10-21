@@ -46,6 +46,8 @@ struct _MeasureBtn {
 #define MBF_VARC0	4
 #define MBF_VARC1	5
 #define MBF_VARDIFF	6
+#define MBF_RECIPCURDIFF	7
+#define MBF_MAX_FUNC MBF_RECIPCURDIFF
 
 extern MeasureBtn *measure_button_new(WaveVar *wv, int mfunc);
 void mbtn_set_func(MeasureBtn *mbtn, int mfunc);
