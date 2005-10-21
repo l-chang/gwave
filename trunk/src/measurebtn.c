@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 #include <errno.h>
 #include <gtk/gtk.h>
 #include <guile-gtk.h>
@@ -224,13 +225,16 @@ mbtn_update(MeasureBtn *mbtn, gpointer *d)
 		valid = wtable->cursor[0]->shown
 			&& wtable->cursor[1]->shown;
 		if (valid)
-			mvalue = fabs((wtable->cursor[1]->xval != wtable->cursor[0]->xval) ? 1.0 / (wtable->cursor[1]->xval - wtable->cursor[0]->xval) : 0.0) ;
+			if(fabs(wtable->cursor[1]->xval - wtable->cursor[0]->xval) > DBL_EPSILON) {
+				mvalue = 1.0 / (wtable->cursor[1]->xval - wtable->cursor[0]->xval);
+			} else {
+				mvalue = 0.0;  /* should be NAN */
+			}
 		break;
 
 	default:
 		mvalue = 0.0;
 		break;
-		
 	}
 
 	/* automaticly hide/unhide as value becomes valid/invalid.
