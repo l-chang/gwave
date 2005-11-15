@@ -21,14 +21,15 @@ As waveform files are loaded from the command line or File->Read menu
 item, a window containing a scrolling list of variables in the file
 pops up.  Use the left mouse button to drag-and-drop variables into
 the WavePanels.  Double-clicking a variable in the the list adds it to
-panel that most recently had a variable dropped in it.  If you choose
-to close the variable list to neaten up your desktop, or lose the list
-under other windows, use the View->Variable List menu to display it
-again or bring it to the top.
+the currently selected panel.  If you choose to close the variable
+list to neaten up your desktop, or lose the list under other windows,
+use the View->Variable List menu to open it again or bring it to
+the top.
 
-To the left side of the WavePanels are buttons corresponding to each
-waveform shown in the panel.  A waveform shown in a panel is called a
-VisibleWave.   There are two GUI functions overloaded onto the button for a
+To the left side of the WavePanels are scrolling lists of buttons 
+corresponding to each waveform shown in the panel.  A waveform shown
+in a panel is called a VisibleWave.   
+There are two GUI functions overloaded onto the button for a
 VisibleWave:
 - Click with the left mousebutton to "select" one or more VisibleWaves.
 - Press and hold the right mousebutton to pop up a menu of operations
@@ -64,7 +65,8 @@ a tabular ascii format for postprocessing by external programs.
 Select "Export Data..." from the File menu of the waveform variable
 list window.
 
-In the current version of gwave, data from multiple files cannot be
+In the current version of gwave, data from multiple files, or from
+multiple independent variables within a single file, cannot be
 combined and exported to a single file.
 
 Plotting.
@@ -161,10 +163,10 @@ instances of gwave at a time on the same X server.
 Waveform Input files.
 
 Gwave understands CAzM transient output (.N/.B/.W) files, the binary
-and ascii outputs from HSPICE (.tr0, .sw0, and .ac0) files, and
-tabular ascii files with a header line.  Gwave tries to guess the type
-of the file based on filename, and then tries all file formats until
-one succedes.
+and ascii outputs from HSPICE (.tr0, .sw0, and .ac0) files, Ascii
+nanosim "out" format, and tabular ascii files with a header line.
+Gwave tries to guess the type of the file based on filename, and then
+tries all file formats until one succedes.
 
 Details on using Gwave with the output of various simulators:
 
@@ -183,7 +185,7 @@ and its newer, renamed decendant GnuCAP (http://www.gnu.org/software/gnucap):
 Gwave should identify and read ACS/GnuCAP output files, generated with
 the '>' option to a .tran statement.
 
-Avanti's HSPICE.
+Synopsys (formerly Avanti, formerl Meta Software) HSPICE.
 Gwave should work with both ascii and binary output in the form of
 .tr0/.sw0/.ac0 files.  If one form doesn't work for you, try the other form.
 Binary .tr0 files only work when gwave is run on a big-endian machines; if
@@ -195,11 +197,12 @@ in your input file if you have troubles.
 Tanner Research T-Spice.
 It has been a while since I tried tspice, but gwave should read the output,
 at least from transient analysis runs.  Tspice output is in a variant of the
-cazm format, not surprising since Tanner bought the rights to cazm from MCNC.
+CAzM format, not surprising since Tanner bought the rights to CAzM from MCNC.
 
 Silvaco SmartSpice
-Gwave works with the variant of berkeley spice rawfile format produced by
-SmartSpice.  Both ascii and binary files should work.
+Gwave works with the variant of berkeley spice rawfile format produced
+by SmartSpice.  Both ascii and binary files should work, although this
+hasn't been tested recently.
 
 Apache Design Automation NSPICE
 Nspice produces yet another variant of the berkeley spice3 rawfile format.
@@ -222,6 +225,19 @@ names in the file.  To gwave, the first line is not a comment but
 contains whitespace-seperated fields naming the variables.  The result
 is that gwave thinks the independent variable name is "#Time," but
 don't let that bother you.
+
+
+Bugs:
+
+An oft-reported problem in gwave is that the scrolling variable list
+window is unable to scroll and show more than one screen of variables
+when your simulation has a very large number of them.  This is
+actually a limitation in the Gtk+ toolkit; srolling windows can't be
+taller than the 32,768 pixel limitation of X11 ofscreen pixmaps.
+Workaround: probe fewer variables, or use sp2sp to select only the
+ones you need.
+
+
 
 ----------------------------------------------------------------------
 
@@ -259,8 +275,6 @@ This tool is far from complete. Partial contents of the To Do list:
 - Send feedback and error messages from loading of files to a popup window
   or status line instead of to stdout or stderr.
 - Drag-and-drop to move waveform from one panel to another
-- Speed up redraws and minimize flashing, especialy flashing 
-  of waveform name/value labels when moving cursors.
 - Generate a postscript representation for printing or documentation.
 	(partly done)
 - More guile methods to round out the interface, including:
@@ -273,8 +287,9 @@ This tool is far from complete. Partial contents of the To Do list:
 ----------------------------------------------------------------------
 Acknowledgements
 
-Thanks to my colleagues John Poulton, John Eyles and Fred Heaton for
-giving gwave heavy use over the last several months.
+Thanks to my colleagues at work including John Poulton, John Eyles,
+Fred Heaton, Trey Greer, and Teva Stone for giving gwave heavy use
+over the last several years.
 
 Thanks to Greg Badros and Maciej Stachowiak for the SCWM window
 manager, which inspired me to use guile as the extension language for
