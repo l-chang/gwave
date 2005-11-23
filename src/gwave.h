@@ -63,14 +63,26 @@ struct _VBCursor {
 struct _WaveTable {
 	int npanels;
 	WavePanel **panels;
+	GtkWidget *window; // formerly window_main
 	GtkWidget *vbox;	/* GtkVBox containing most elements
 				   in main window. */
-	GtkWidget *xmeasure_hbox;  /* hbox with cursor measurement`s */
+
+	GtkWidget *menubar;
+	GtkWidget *toolbar;
+	GtkWidget *xmeasure_hbox;  /* hbox with cursor measurements */
 	MeasureBtn *cursor_mbtn[N_WTABLE_MBTNS];  /* someday: make this dynamic */
+	GtkWidget *table;	/* the main table containing all panels */
 
 	GtkWidget *xlhbox;	/* GtkHBox containing x-axis labels */
+	GtkAdjustment *hsadj; // horizontal scrollbar
+	GtkWidget *hsbar;
+	GtkWidget *xlabel_left, *xlabel_right;
+	GtkWidget *var_list_submenu;
 	GtkWidget *lab_xlogscale;
-	GtkWidget *table;	/* the main table containing all panels */
+	GtkWidget *vsbar;
+	GtkWidget *vsadj;
+	GtkWidget *bot_vbox;
+
 	VBCursor *cursor[2];
 	SelRange *srange;
 	double min_xval;	/* minimum and maximum data x values, */
@@ -97,12 +109,6 @@ struct _GWDnDData {
 
 /* globals defined in gwave.c */
 extern char *prog_name;
-extern GtkAdjustment *win_hsadj;
-extern GtkWidget *win_main;
-extern GtkWidget *win_hsbar;
-extern GtkWidget *win_xlabel_left, *win_xlabel_right;
-extern GtkWidget *win_status_label;
-extern GtkWidget *var_list_submenu;
 extern WaveTable *wtable;
 extern const int NWColors;
 extern int colors_initialized;
@@ -118,6 +124,8 @@ extern GdkGC *hl_gdk_gc;
 extern GdkColormap *win_colormap; /* colormap for main waveform window */
 extern void create_about_window();
 extern int v_flag;
+extern SCM scm_gwave_debug;
+#define gwave_debug SCM_NFALSEP(SCM_CDR(scm_gwave_debug))
 
 /* defined in cmd.c */
 extern gint cmd_zoom_full(GtkWidget *widget);
@@ -136,7 +144,7 @@ extern void wavetable_update_data();
 extern void vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp);
 extern void draw_wavepanel(GtkWidget *widget, GdkEventExpose *event,
 			   WavePanel *wp);
-extern void draw_labels(void);
+extern void draw_labels(WaveTable *wt);
 extern double y2val(WavePanel *wp, int y);
 extern int val2y(WavePanel *wp, double val);
 extern double x2val(WavePanel *wp, int x, int log);
