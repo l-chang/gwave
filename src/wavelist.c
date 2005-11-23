@@ -20,6 +20,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.29  2005/11/23 02:38:06  sgt
+ * fix marking of WaveVar smobs
+ * code cleanup: move several widgets from globals into WaveTable structure
+ *
  * Revision 1.28  2005/10/08 05:48:58  sgt
  * get rid of most uses of the deprecated gh_ interfaces to guile
  *
@@ -339,7 +343,7 @@ reload_wave_file(GtkWidget *w, GWDataFile *wdata)
 	if(wdata->wlist_win && GTK_WIDGET_VISIBLE(wdata->wlist_win)) {
 		gtk_container_foreach(GTK_CONTAINER(wdata->wlist_box),
 				      (GtkCallback) gtk_widget_destroy, NULL);
-		wf_foreach_wavevar(wdata->wf, gwfile_add_wv_to_list, wdata);
+		wf_foreach_wavevar(wdata->wf, gwfile_add_wv_to_list, (gpointer)wdata);
 	}
 
 	wf_free(old_wf);
@@ -544,7 +548,7 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 		gtk_widget_show (wdata->wlist_box);
 
 		dnd_init(wdata->wlist_win);
-		wf_foreach_wavevar(wdata->wf, gwfile_add_wv_to_list, wdata);
+		wf_foreach_wavevar(wdata->wf, gwfile_add_wv_to_list, (gpointer)wdata);
 
 		call1_hooks(new_wavelist_hook, wdata->smob);
 
@@ -866,14 +870,16 @@ XSCM_DEFINE(variable_sweepindex, "variable-sweepindex", 1, 0, 0,
 XSCM_DEFINE(variable_wavefile, "variable-wavefile", 1, 0, 0,
 	   (SCM var),
 	   "Return the WaveFile that the variable VAR is contained in.")
+// Really, the GWDataFile smob.
 #define FUNC_NAME s_variable_wavefile
 {
-	WaveVarH *wvh;
-	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,var,wvh);
+	WaveVar *wv;
+	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(1,var,wv);
 	
-	if(wvh->wv) {
-		wvh->df->outstanding_smob = 1;
-		return wvh->df->smob;
+	if(wv) {
+		GWDataFile *df = wvar_gwdatafile(wv);
+		df->outstanding_smob = 1;
+		return df->smob;
 	} else
 		return SCM_BOOL_F;
 }

@@ -1,4 +1,4 @@
-/* $Id: validate.h,v 1.2 2000-08-11 06:40:47 sgt Exp $
+/* $Id: validate.h,v 1.3 2005-11-23 05:51:53 sgt Exp $
  * validate.h
  * Copyright (C) 1997-1999, Greg J. Badros and Maciej Stachowiak
  *
@@ -90,7 +90,7 @@ NOTE: Assignments to the cvar in the error handling
   if (!gh_number_p(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
   cvar = gh_scm2long(scm); \
   if (cvar < low || cvar > high) \
-     scm_misc_error(FUNC_NAME,"Argument %S must be in [%S,%S]", \
+     scm_misc_error(FUNC_NAME,"Argument ~s must be in [~s,~s]", \
                     gh_list(gh_int2scm(pos),gh_int2scm(low),gh_int2scm(high),SCM_UNDEFINED)); \
   } while (0)
 
@@ -98,7 +98,7 @@ NOTE: Assignments to the cvar in the error handling
   do { \
   if (!gh_number_p(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
   cvar = gh_scm2long(scm); \
-  if (cvar < low) scm_misc_error(FUNC_NAME,"Argument %S must be greater than %S", \
+  if (cvar < low) scm_misc_error(FUNC_NAME,"Argument ~s must be greater than ~s", \
                                  gh_list(gh_int2scm(pos),gh_int2scm(low),SCM_UNDEFINED)); \
   } while (0)
 
@@ -106,7 +106,7 @@ NOTE: Assignments to the cvar in the error handling
   do { \
   if (!gh_number_p(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
   cvar = gh_scm2long(scm); \
-  if (cvar > high) scm_misc_error(FUNC_NAME,"Argument %S must be less than %S", \
+  if (cvar > high) scm_misc_error(FUNC_NAME,"Argument ~s must be less than ~s", \
                                   gh_list(gh_int2scm(pos),gh_int2scm(high),SCM_UNDEFINED)); \
   } while (0)
 
@@ -144,7 +144,7 @@ NOTE: Assignments to the cvar in the error handling
   do { \
   if (gh_number_p(scm)) cvar = gh_scm2double(scm); \
   else scm_wrong_type_arg(FUNC_NAME,pos,scm); \
-  if (cvar < low) scm_misc_error(FUNC_NAME,"Argument %S must be greater than %S", \
+  if (cvar < low) scm_misc_error(FUNC_NAME,"Argument ~s must be greater than ~s", \
                                  gh_list(gh_int2scm(pos),gh_int2scm(low),SCM_UNDEFINED)); \
   } while (0)
 
@@ -232,7 +232,7 @@ NOTE: Assignments to the cvar in the error handling
 
 #define VALIDATE_ARG_GTK_COPY(pos,scm,gtktype,pch) \
   do { \
-  if (sgtk_is_a_gtkobj(gtktype, scm)) pch = sgtk_get_gtkobj(scm); \
+	  if (sgtk_is_a_gtkobj(gtktype, scm)) pch = sgtk_get_gtkobj(scm); \
   else { pch = NULL; scm_wrong_type_arg(FUNC_NAME,pos,scm); } \
   } while (0)
 

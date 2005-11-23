@@ -104,13 +104,14 @@
 ; Implement a simple notion of WavePanel "type" that changes
 ; several of the lower-level options together.   Earlier versions
 ; had this in C.
+; should also let user choose these parameters independently.
 ;
 
 ; instead of multiple lists, these should be a real data structure of some kind
-(define-public wavepanel-type-names    (list "Full"	"Slim"))
+(define-public wavepanel-type-names    (list "Full"  "Slim" "Jumbo"))
 (define-public wavepanel-num-types (length wavepanel-type-names))
-(define            panel-type-heights  (list 100 	20))
-(define            panel-type-showlabs (list #t  	#f))
+(define            panel-type-heights  (list 100     20      250))
+(define            panel-type-showlabs (list #t      #f      #t))
 
 (define-public (set-wavepanel-type! wp type)
   (set-object-property! wp 'wp-type type)
@@ -157,7 +158,7 @@
 		 (string-append "Gwave version " gwave-version-string))))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
-    (let ((llab (gtk-label-new "Copyright 2001-2003 Steve Tell")))
+    (let ((llab (gtk-label-new "Copyright 1997-2005 Steve Tell")))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
 

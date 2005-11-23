@@ -152,7 +152,7 @@ EXTERN long scm_tc16_scwm_VisibleWave;
   else cvar = VisibleWave(scm); \
   } while (0)
 
-
+// this one always gets the WaveVarH*
 #define VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(pos,scm,cvar) \
   do { \
   if (VisibleWave_P(scm)) cvar = VisibleWave(scm)->var; \
