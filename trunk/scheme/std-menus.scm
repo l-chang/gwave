@@ -138,16 +138,17 @@
 	     (group #f)
 	     (save-wp-type default-wavepanel-type)) ; GTK bug - first radio-menu-item gets immediate callback
 	 (gtk-widget-show ptmenu)
-	 (set! group (add-radio-menuitem 
-		      ptmenu group (list-ref wavepanel-type-names 0)
-		      (eqv? save-wp-type 0)
-		      (lambda () 
-			(set! default-wavepanel-type 0))))
-	 (set! group (add-radio-menuitem 
-		      ptmenu group (list-ref wavepanel-type-names 1)
-		      (eqv? save-wp-type 1)
-		      (lambda () 
-			(set! default-wavepanel-type 1))))
+
+	 (do ((ptno 0 (+ ptno 1)))
+	     ((< (- wavepanel-num-types 1) ptno) #t)
+	   (dbprint (format #f "~s ~s\n" ptno (list-ref wavepanel-type-names ptno)))
+	   (set! group (add-radio-menuitem 
+			ptmenu group (list-ref wavepanel-type-names ptno)
+			(eqv? save-wp-type ptno)
+			(lambda () 
+			  (set! default-wavepanel-type ptno))))
+	   )
+
 	 (gtk-menu-item-set-submenu 
 	  (add-menuitem menu "Default Panel Type" #f) ptmenu)
 	 (set! default-wavepanel-type save-wp-type))

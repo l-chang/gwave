@@ -147,7 +147,7 @@ static const gchar *gwave_base_gtkrc = ""
 int
 main(int argc, char **argv)
 {
-	void gwave_main(int argc, char **argv);
+	void gwave_main(void *p, int argc, char **argv);
 	/* disable the deprecated warnings in guile 1.6; we can't clean them
 	   up until we drop support for guile older than 1.6 */
 	if (getenv("GUILE_WARN_DEPRECATED") == NULL)

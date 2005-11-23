@@ -56,6 +56,12 @@ struct _VBCursor {
 
 
 #define N_WTABLE_MBTNS 4
+
+/* rows of the WaveTable's ftable */
+#define WTABLE_FTR_TOOLBAR 0
+#define WTABLE_FTR_XMHBOX  1
+#define WTABLE_FTR_PTABLE  2
+#define WTABLE_FTR_BHBOX  3
 /*
  * WaveTable - structure describing
  *  all of the waveform-display panels and related elements
@@ -64,24 +70,23 @@ struct _WaveTable {
 	int npanels;
 	WavePanel **panels;
 	GtkWidget *window; // formerly window_main
-	GtkWidget *vbox;	/* GtkVBox containing most elements
-				   in main window. */
-
 	GtkWidget *menubar;
+	GtkWidget *var_list_submenu;
+
+	GtkWidget *ftable;	/* outer table framing most of the rest */
+
 	GtkWidget *toolbar;
 	GtkWidget *xmeasure_hbox;  /* hbox with cursor measurements */
 	MeasureBtn *cursor_mbtn[N_WTABLE_MBTNS];  /* someday: make this dynamic */
-	GtkWidget *table;	/* the main table containing all panels */
+	GtkWidget *vswindow;	/* GtkSrolledWindow to hold panel table */
+	GtkWidget *table;	/* scrolled table containing all panels */
 
+	GtkWidget *bot_vbox;
 	GtkWidget *xlhbox;	/* GtkHBox containing x-axis labels */
 	GtkAdjustment *hsadj; // horizontal scrollbar
 	GtkWidget *hsbar;
 	GtkWidget *xlabel_left, *xlabel_right;
-	GtkWidget *var_list_submenu;
 	GtkWidget *lab_xlogscale;
-	GtkWidget *vsbar;
-	GtkWidget *vsadj;
-	GtkWidget *bot_vbox;
 
 	VBCursor *cursor[2];
 	SelRange *srange;

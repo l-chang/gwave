@@ -41,9 +41,9 @@
 #include <wavewin.h>
 #include <measurebtn.h>
 
-#define WAVEPANEL_MIN_WIDTH 400
+#define WAVEPANEL_MIN_WIDTH 300
 #define WAVEPANEL_MIN_HEIGHT 20
-#define WAVEPANEL_MAX_REQHEIGHT 400
+#define WAVEPANEL_MAX_REQHEIGHT 600
 
 XSCM_HOOK(new_wavepanel_hook,"new-wavepanel-hook", 1, (SCM wp),
 "This hook is invoked with one WavePanel argument, WP, when the"
@@ -630,7 +630,7 @@ XSCM_DEFINE(set_wavepanel_minheight_x, "set-wavepanel-minheight!", 2, 0, 0,
 	WavePanel *wp;
 	int min_height;
 	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
-	VALIDATE_ARG_INT_RANGE_COPY(2,height,WAVEPANEL_MIN_HEIGHT,400,min_height);
+	VALIDATE_ARG_INT_RANGE_COPY(2,height,WAVEPANEL_MIN_HEIGHT,WAVEPANEL_MAX_REQHEIGHT,min_height);
 	wp->req_height = min_height;
 	gtk_drawing_area_size(GTK_DRAWING_AREA(wp->drawing), 
 			      wp->width ? wp->width : WAVEPANEL_MIN_WIDTH,
