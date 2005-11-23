@@ -57,9 +57,6 @@ XSCM_HOOK(new_wavewin_hook,"new-wavewin-hook", 0, (),
 
 SCM wavepanel_mouse_binding[6];
 
-GtkWidget *win_main;
-GtkWidget *win_main_menubar;
-GtkWidget *win_main_toolbar;
 
 /* create horizontal button box for top of main window */
 GtkWidget *create_toolbar()
@@ -78,13 +75,13 @@ GtkWidget *create_xlabel_hbox(WaveTable *wt)
 {
 	GtkWidget *hbox;
 	hbox = gtk_hbox_new(FALSE, 0);
-	win_xlabel_left = gtk_label_new("0");
-	gtk_box_pack_start(GTK_BOX(hbox), win_xlabel_left, FALSE, FALSE, 0);
-	gtk_widget_show(win_xlabel_left);
+	wt->xlabel_left = gtk_label_new("0");
+	gtk_box_pack_start(GTK_BOX(hbox), wt->xlabel_left, FALSE, FALSE, 0);
+	gtk_widget_show(wt->xlabel_left);
 
-	win_xlabel_right = gtk_label_new("0");
-	gtk_box_pack_end(GTK_BOX(hbox), win_xlabel_right, FALSE, FALSE, 0);
-	gtk_widget_show(win_xlabel_right);
+	wt->xlabel_right = gtk_label_new("0");
+	gtk_box_pack_end(GTK_BOX(hbox), wt->xlabel_right, FALSE, FALSE, 0);
+	gtk_widget_show(wt->xlabel_right);
 
 	wt->lab_xlogscale = gtk_label_new("LogX");
 	gtk_box_pack_end(GTK_BOX(hbox), wt->lab_xlogscale, TRUE, FALSE, 0);
@@ -168,7 +165,7 @@ XSCM_DEFINE(set_wtable_vcursor_x, "set-wtable-vcursor!", 2, 0, 0,
  * side effect:
  *	creates wtable->table widget and adds the other widgets
  *	to it. 
- *	wtable->xlhbox, win_hsbar, and the panel widgets must already
+ *	wtable->xlhbox, wtable->hsbar, and the panel widgets must already
  *	be created.
  */
 void
@@ -197,7 +194,7 @@ wavewin_build_table()
 			 1, 2, wtable->npanels, wtable->npanels+1,
 			 GTK_EXPAND|GTK_FILL, GTK_FILL, 0, 0);
 
-	gtk_table_attach(GTK_TABLE(wtable->table), win_hsbar,
+	gtk_table_attach(GTK_TABLE(wtable->table), wtable->hsbar,
 			 1, 2, wtable->npanels+1, wtable->npanels+2,
 			 GTK_EXPAND|GTK_FILL, GTK_FILL, 0, 0);
 
@@ -235,8 +232,8 @@ wavewin_destroy_table()
 	}
 	gtk_widget_ref(wtable->xlhbox);
 	gtk_container_remove(GTK_CONTAINER(wtable->table), wtable->xlhbox);
-	gtk_widget_ref(win_hsbar);
-	gtk_container_remove(GTK_CONTAINER(wtable->table), win_hsbar);
+	gtk_widget_ref(wtable->hsbar);
+	gtk_container_remove(GTK_CONTAINER(wtable->table), wtable->hsbar);
 
 	gtk_widget_destroy(wtable->table);
 	wtable->table = NULL;
@@ -256,14 +253,14 @@ wavewin_finish_table_rebuild()
 		gtk_widget_unref(wp->drawing);
 	}
 	gtk_widget_unref(wtable->xlhbox);
-	gtk_widget_unref(win_hsbar);
+	gtk_widget_unref(wtable->hsbar);
 }
 
 XSCM_DEFINE(get_wavewin, "get-wavewin", 0, 0, 0, (),
 	   "Return the GtkWindow object for the main waveform window.")
 #define FUNC_NAME s_get_wavewin
 {
-	return sgtk_wrap_gtkobj(GTK_OBJECT(win_main));
+	return sgtk_wrap_gtkobj(GTK_OBJECT(wtable->window));
 }
 #undef FUNC_NAME
 
@@ -272,7 +269,7 @@ XSCM_DEFINE(get_wavewin_toolbar, "get-wavewin-toolbar", 0, 0, 0, (),
 "function buttons or icons in the main waveform window")
 #define FUNC_NAME s_get_wavewin_toolbar
 {
-	return sgtk_wrap_gtkobj(GTK_OBJECT(win_main_toolbar));
+	return sgtk_wrap_gtkobj(GTK_OBJECT(wtable->toolbar));
 }
 #undef FUNC_NAME
 
@@ -280,7 +277,7 @@ XSCM_DEFINE(get_wavewin_menubar, "get-wavewin-menubar", 0, 0, 0, (),
 	   "return the GtkMenuBar object for menubar in the main waveform window")
 #define FUNC_NAME s_get_wavewin_menubar
 {
-	return sgtk_wrap_gtkobj(GTK_OBJECT(win_main_menubar));
+	return sgtk_wrap_gtkobj(GTK_OBJECT(wtable->menubar));
 }
 #undef FUNC_NAME
 
@@ -296,31 +293,30 @@ void setup_waveform_window(void)
 
 	/* Create a top-level window. Set the title and establish delete and
 	   destroy event handlers. */
-	win_main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_widget_set_name(win_main, prog_name);
+	wtable->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_widget_set_name(wtable->window, prog_name);
 	gtk_signal_connect(
-		GTK_OBJECT(win_main), "destroy",
+		GTK_OBJECT(wtable->window), "destroy",
 		GTK_SIGNAL_FUNC(destroy_handler), NULL);
 	gtk_signal_connect(
-		GTK_OBJECT(win_main), "delete_event",
+		GTK_OBJECT(wtable->window), "delete_event",
 		GTK_SIGNAL_FUNC(destroy_handler), NULL);
 
 	/* create the vertical box, and add it to the window */
 	box0 = gtk_vbox_new(FALSE, 0);
-	gtk_container_add (GTK_CONTAINER (win_main), box0);
+	gtk_container_add(GTK_CONTAINER(wtable->window), box0);
 	gtk_widget_show(box0);
 
-	win_main_menubar = gtk_menu_bar_new();
-	gtk_widget_show(win_main_menubar);
-	/* create_gwave_menu(); */
-	gtk_box_pack_start(GTK_BOX(box0), win_main_menubar, FALSE, TRUE, 0);
+	wtable->menubar = gtk_menu_bar_new();
+	gtk_widget_show(wtable->menubar);
+	gtk_box_pack_start(GTK_BOX(box0), wtable->menubar, FALSE, TRUE, 0);
 
 	wtable->vbox = gtk_vbox_new(FALSE, 0);
 	gtk_container_border_width (GTK_CONTAINER (wtable->vbox), 5);
 	gtk_container_add (GTK_CONTAINER (box0), wtable->vbox);
-	win_main_toolbar = create_toolbar();
+	wtable->toolbar = create_toolbar();
 	gtk_box_pack_start(GTK_BOX(wtable->vbox),
-			   win_main_toolbar, FALSE, FALSE, 0);
+			   wtable->toolbar, FALSE, FALSE, 0);
 
 	/* label with cursor status, and the cursor measurebuttons */
 	wtable->xmeasure_hbox = gtk_hbox_new(FALSE, 0);
@@ -354,7 +350,7 @@ void setup_waveform_window(void)
 	wtable->xlhbox = create_xlabel_hbox(wtable);
 
 	/* scrollbar */
-	win_hsadj = (GtkAdjustment *)
+	wtable->hsadj = (GtkAdjustment *)
  		gtk_adjustment_new(0.0, /* value */
  				   0.0, /* lower */
  				   1.0, /* upper */
@@ -362,13 +358,13 @@ void setup_waveform_window(void)
  				   1.0/2., 	/* page increment = 50% */
  				   1.0		/* page_size */
 			);
-	win_hsbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(win_hsadj));
-	gtk_range_set_update_policy (GTK_RANGE (win_hsbar), 
+	wtable->hsbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(wtable->hsadj));
+	gtk_range_set_update_policy (GTK_RANGE (wtable->hsbar), 
 			       GTK_UPDATE_CONTINUOUS);
 	gtk_signal_connect(
-		GTK_OBJECT(win_hsadj), "value_changed", 
+		GTK_OBJECT(wtable->hsadj), "value_changed", 
 		(GtkSignalFunc)scroll_handler, (gpointer)wtable);
-	gtk_widget_show(win_hsbar);
+	gtk_widget_show(wtable->hsbar);
 
 	/* assemble wavepanels, label, and scrollbar into the table */
 	wavewin_build_table();
@@ -379,24 +375,11 @@ void setup_waveform_window(void)
 
 	/* Show the top-level window, set its minimum size */
 	gtk_widget_show(wtable->vbox);
-	gtk_widget_show(win_main);
-	gdk_window_set_hints(win_main->window, 0,0,  min_w, min_h, 0,0,
+	gtk_widget_show(wtable->window);
+	gdk_window_set_hints(wtable->window->window, 0,0,  min_w, min_h, 0,0,
 			     GDK_HINT_MIN_SIZE);
 	wtable->button_down = -1;
 
-}
-
-/*
- * Delete and rebuild the GtkTable for the waveform window.
- * prototype for adding/deleting panels
- */
-void
-wavewin_rebuild_table()
-{
-	wavewin_destroy_table();
-	/* change # of panels or just rearrange wtable->panels array here */
-	wavewin_build_table();
-	wavewin_finish_table_rebuild();
 }
 
 /*

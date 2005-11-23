@@ -78,16 +78,16 @@ gint cmd_zoom_absolute(double start, double end)
  		scroll_end   = log( wtable->end_xval   / wtable->min_xval ) 
 			/ log( wtable->max_xval / wtable->min_xval );
  	}
-  	win_hsadj->page_size = fabs( scroll_end - scroll_start );
+  	wtable->hsadj->page_size = fabs( scroll_end - scroll_start );
 
-	win_hsadj->page_increment = win_hsadj->page_size/2;
-	win_hsadj->step_increment = win_hsadj->page_size/100;
- 	win_hsadj->value = scroll_start;
- 	win_hsadj->lower = 0.0;
- 	win_hsadj->upper = 1.0;
+	wtable->hsadj->page_increment = wtable->hsadj->page_size/2;
+	wtable->hsadj->step_increment = wtable->hsadj->page_size/100;
+ 	wtable->hsadj->value = scroll_start;
+ 	wtable->hsadj->lower = 0.0;
+ 	wtable->hsadj->upper = 1.0;
 
-	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "changed");
-	gtk_signal_emit_by_name(GTK_OBJECT(win_hsadj), "value_changed");
+	gtk_signal_emit_by_name(GTK_OBJECT(wtable->hsadj), "changed");
+	gtk_signal_emit_by_name(GTK_OBJECT(wtable->hsadj), "value_changed");
 
 	return 0;
 }
@@ -500,12 +500,12 @@ wavetable_update_data()
 	if((fabs(wtable->end_xval - wtable->start_xval) < DBL_EPSILON
 	    || wtable->start_xval < wtable->min_xval
 	    || wtable->end_xval > wtable->max_xval)
-	   && win_hsadj != NULL) {
+	   && wtable->hsadj != NULL) {
 		wtable->suppress_redraw = 1;
 		cmd_zoom_full(NULL);
 		wtable->suppress_redraw = 0;
 	} else if((wtable->min_xval != old_min_x 
-		  || wtable->max_xval != old_max_x) && win_hsadj) {
+		  || wtable->max_xval != old_max_x) && wtable->hsadj) {
 
 		/* min/max changed, might have added first (or removed last)
 		 * wave from a file with different range.

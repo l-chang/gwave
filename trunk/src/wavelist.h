@@ -70,6 +70,7 @@ EXTERN long scm_tc16_scwm_GWDataFile;
 struct _WaveVarH { 
 	WaveVar *wv;
 	GWDataFile *df;
+	SCM smob;
 };
 typedef struct _WaveVarH WaveVarH;
 

@@ -67,15 +67,8 @@ GdkGC *hl_gdk_gc;
 
 GdkColormap *win_colormap; /* colormap for main waveform window */
 
-/* TODO: make these members of the global wtable structure instead of
- * globals in their own right */
-GtkAdjustment *win_hsadj;
-GtkWidget *win_hsbar;
-GtkWidget *win_xlabel_left, *win_xlabel_right;
-/* GtkTooltips *gwave_tooltips; */
 
-
-/* variables accessible from C and guile */
+/* variables accessible from both C and guile */
 
 XSCM_VCELL_INIT(scm_gwave_version, "gwave-version-string",  scm_makfrom0str(VERSION),
 "This variable is initialized to contain the version string for gwave, as"
@@ -94,7 +87,7 @@ XSCM_VCELL_INIT(scm_gwave_bingwave, "gwave-bin-gwave-path", scm_makfrom0str(BING
 "scripts so that when run from the command line command line, the scripts"
 "can use gwave as their interpreter.");
 
-XSCM_VCELL(scm_gwave_debug, "gwave-debug",
+XSCM_GLOBAL_VCELL(scm_gwave_debug, "gwave-debug",
 "This variable is set to #t very early in gwave's startup when the -x flag"
 "is passed on the command line.  It enables debugging output to stdout"
 "in the startup code and in various modules.");

@@ -21,6 +21,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.20  2005/10/08 05:48:58  sgt
+ * get rid of most uses of the deprecated gh_ interfaces to guile
+ *
  * Revision 1.19  2004/12/26 23:49:32  sgt
  * add notion of "selected" panels.  left-click in panel (including cursor0-move)
  * selects, shift-click selects without unselecting others.
@@ -517,7 +520,7 @@ gint scroll_handler(GtkWidget *widget)
  			hsadj->value + hsadj->page_size );
  	}
 
-	draw_labels();
+	draw_labels(wtable);
 
 	for(i = 0; i < wtable->npanels; i++) {
 		wp = wtable->panels[i];

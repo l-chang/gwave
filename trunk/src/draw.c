@@ -330,10 +330,10 @@ draw_wavepanel(GtkWidget *widget, GdkEventExpose *event, WavePanel *wp)
 /*
  * update text labeling the waveform graphs' X-axis
  */
-void draw_labels(void)
+void draw_labels(WaveTable *wt)
 {
-	gtk_label_set(GTK_LABEL(win_xlabel_left), val2txt(wtable->start_xval, 0));
-	gtk_label_set(GTK_LABEL(win_xlabel_right), val2txt(wtable->end_xval, 0));
+	gtk_label_set(GTK_LABEL(wt->xlabel_left), val2txt(wt->start_xval, 0));
+	gtk_label_set(GTK_LABEL(wt->xlabel_right), val2txt(wt->end_xval, 0));
 }
 
 /*

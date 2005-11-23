@@ -20,6 +20,9 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.28  2005/10/08 05:48:58  sgt
+ * get rid of most uses of the deprecated gh_ interfaces to guile
+ *
  * Revision 1.27  2005/10/08 04:55:33  sgt
  * fix wavefile-all-variables to work with all sweeps
  * create wavefile-sweeps to return list of sweep info
@@ -223,7 +226,7 @@ load_wave_file(char *fname, char *ftype)
 	SGT_NEWCELL_SMOB(wdata->smob, GWDataFile, wdata);
 	call1_hooks(new_wavefile_hook, wdata->smob);
 
-	if(win_main)
+	if(wtable->window)
 		cmd_show_wave_list(NULL, wdata);
 
 	return wdata;
@@ -484,8 +487,10 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 			int x, y;
 			x = 200+175;
 			y = 200;
-			if(win_main && win_main->window) {
-				gdk_window_get_position(win_main->window, &x, &y);
+			if(wtable 
+			   && wtable->window && wtable->window->window) {
+				gdk_window_get_position(wtable->window->window,
+							&x, &y);
 				y += diddle * 25;
 				x -= diddle * 20;
 				diddle = (diddle + 1) % 4;
@@ -759,10 +764,12 @@ XSCM_DEFINE(wavefile_all_variables, "wavefile-all-variables", 1, 0, 0, (SCM df),
                                 wvh->df = wdata;
                                 wv->udata = wvh;
                                 wdata->wvhl = g_slist_prepend(wdata->wvhl, wvh);
+				SGT_NEWCELL_SMOB(wvsmob, WaveVar, wvh);
+				wvh->smob = wvsmob;
 			} else {
 				wvh = (WaveVarH *)wv->udata;
+				wvsmob = wvh->smob;
 			}
-			SGT_NEWCELL_SMOB(wvsmob, WaveVar, wvh);
 			result = scm_cons(wvsmob, result);
 		}
 	}
@@ -795,10 +802,12 @@ XSCM_DEFINE(wavefile_variable, "wavefile-variable", 3, 0, 0,
 				wvh->df = wdata;
 				wv->udata = wvh;
 				wdata->wvhl = g_slist_prepend(wdata->wvhl, wvh);
+				SGT_NEWCELL_SMOB(result, WaveVar, wvh);
+				wvh->smob = result;
 			} else {
 				wvh = (WaveVarH *)wv->udata;
+				result = wvh->smob;
 			}
-			SGT_NEWCELL_SMOB(result, WaveVar, wvh);
 		}
 	}
 	g_free(s);
@@ -945,7 +954,8 @@ int wavefile_try_free(GWDataFile *wdata)
 	if(wdata->wvhl)  /* nonempty list means outstanding handles remain */
 		return 0;
 
-/*	fprintf(stderr, "free GWDataFile 0x%x during gc\n", wdata); */
+	if(gwave_debug)
+		printf("free GWDataFile 0x%x during gc\n", wdata);
 	n = wdata->ndv;
 	g_free(wdata);
 	return sizeof(GWDataFile);
@@ -960,9 +970,19 @@ free_GWDataFile(SCM obj)
 	return wavefile_try_free(wdata);
 }
 
+static void mark_GWDataFile_wvh(void *p, void *d)
+{
+	WaveVarH *wvh = (WaveVarH *)p;
+	if(wvh->wv)
+		scm_gc_mark(wvh->smob);
+}
+
 SCM
 mark_GWDataFile(SCM obj)
 {
+	GWDataFile *wdata = GWDataFile(obj);
+	g_slist_foreach(wdata->wvhl, mark_GWDataFile_wvh, NULL);
+
 	return SCM_BOOL_F;
 }
 
@@ -996,7 +1016,9 @@ free_WaveVar(SCM obj)
 	GWDataFile *df;
 	scm_sizet fsize;
 	df = wvh->df;
-
+	
+	if(gwave_debug)
+		printf("free_WaveVar(wvh=%lx wv=%lx)\n", wvh, wvh->wv);
 	df->wvhl = g_slist_remove(df->wvhl, wvh);
 	fsize = wavefile_try_free(wvh->df);
 	wvh->wv = NULL;
@@ -1026,6 +1048,8 @@ print_WaveVar(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
 		scm_puts(buf,port);
 		scm_puts(",", port);
 		scm_puts(wvh->wv->sv->name, port);
+		scm_puts(",", port);
+		scm_intprint((long)wvh->wv, 16, port);
 	} else
 		scm_puts("invalid", port);
 
