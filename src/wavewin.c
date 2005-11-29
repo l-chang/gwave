@@ -172,7 +172,7 @@ wavewin_ptable_size_handler(GtkWidget *w,
 	int pwidth, boxwidth;
 
 	pwidth = wt->panels[0]->drawing->allocation.width;
-	boxwidth = wt->bot_vbox->allocation.width;
+	boxwidth = wt->bot_vbox->requisition.width;
 
 	if(gwave_debug) 
 		printf("wavewin_ptable_size_handler: pwidth=%d boxwidth=%d\n",
@@ -180,6 +180,39 @@ wavewin_ptable_size_handler(GtkWidget *w,
 
 	if(pwidth > 20 && pwidth != boxwidth)
 		gtk_widget_set_usize(wt->bot_vbox, pwidth, -1);
+}
+
+/*
+ * Gtk+ signal handler called when main window's scrollbar changes size.
+ *	try to make the empty glue window the same size, to make everything line up.
+
+ */
+void
+wavewin_ptablevsbar_sh_handler(GtkWidget *w,
+			       gpointer d)
+{
+	WaveTable *wt = (WaveTable *)d;
+	int pwidth, boxwidth;
+	int vis;
+
+
+	pwidth = w->allocation.width + 3;
+	vis = GTK_WIDGET_VISIBLE(w);
+	boxwidth = wt->bot_hbox3->allocation.width;
+
+	if(gwave_debug) 
+		printf("wavewin_ptablevsbar_sh_handler: pwidth=%d vis=%d boxwidth=%d\n",
+		       pwidth, vis, boxwidth);
+
+	if(vis) {
+		if(!GTK_WIDGET_VISIBLE(wt->bot_hbox3))
+			gtk_widget_show(wt->bot_hbox3);
+		if(pwidth > 8 && pwidth != boxwidth)
+			   gtk_widget_set_usize(wt->bot_hbox3, pwidth, -1);
+	} else {
+		if(GTK_WIDGET_VISIBLE(wt->bot_hbox3))
+			gtk_widget_hide(wt->bot_hbox3);
+	}
 }
 
 /* build the GtkTable widget for the main window.
@@ -326,6 +359,7 @@ void setup_waveform_window(void)
 	int i;
 	GtkWidget *box0;
 	GtkWidget *hbox1, *hbox2;
+	GtkWidget *w;
 
 	/* some size information. */
 	const int min_w=450, min_h=220;
@@ -373,7 +407,7 @@ void setup_waveform_window(void)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(wtable->vswindow),
                                   GTK_POLICY_NEVER, 
                                   GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_set_placement(GTK_SCROLLED_WINDOW(wtable->vswindow), GTK_CORNER_TOP_RIGHT);
+	gtk_scrolled_window_set_placement(GTK_SCROLLED_WINDOW(wtable->vswindow), GTK_CORNER_TOP_LEFT);
 	GTK_WIDGET_UNSET_FLAGS (GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar, GTK_CAN_FOCUS);
 	gtk_widget_show(wtable->vswindow);
 //	gtk_widget_set_usize(wtable->ftable, -1, min_h);
@@ -400,13 +434,28 @@ void setup_waveform_window(void)
 
 	hbox2 = gtk_hbox_new(FALSE, 0);
 	gtk_widget_show(hbox2);
-	gtk_box_pack_start(GTK_BOX(hbox1), hbox2, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox1), hbox2, TRUE, TRUE, 0);
 
 	wtable->bot_vbox = gtk_vbox_new(FALSE, 0);
 	gtk_widget_show(wtable->bot_vbox);
-	gtk_box_pack_end(GTK_BOX(hbox1), wtable->bot_vbox, FALSE, FALSE, 0);
-//	gtk_widget_set_usize(wtable->bot_vbox, min_w, -1);
-	
+	gtk_box_pack_start(GTK_BOX(hbox1), wtable->bot_vbox, FALSE, FALSE, 0);
+
+	wtable->bot_hbox3 = gtk_hbox_new(FALSE, 0);
+	if(gwave_debug) {
+		w = gtk_label_new("@");
+		gtk_widget_show(w);
+		gtk_box_pack_start(GTK_BOX(wtable->bot_hbox3), w, FALSE, FALSE, 0);
+	}
+	gtk_widget_show(wtable->bot_hbox3);
+	gtk_box_pack_start(GTK_BOX(hbox1), wtable->bot_hbox3, FALSE, FALSE, 0);
+
+	gtk_signal_connect(GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar,
+			   "show", 
+			   wavewin_ptablevsbar_sh_handler, (gpointer)wtable);
+	gtk_signal_connect(GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar,
+			   "hide", 
+			   wavewin_ptablevsbar_sh_handler, (gpointer)wtable);
+
 		/* horizontal box for X-axis labels */
 	wtable->xlhbox = create_xlabel_hbox(wtable);
 	gtk_box_pack_start(GTK_BOX(wtable->bot_vbox), wtable->xlhbox,

@@ -82,6 +82,7 @@ struct _WaveTable {
 	GtkWidget *table;	/* scrolled table containing all panels */
 
 	GtkWidget *bot_vbox;
+	GtkWidget *bot_hbox3;
 	GtkWidget *xlhbox;	/* GtkHBox containing x-axis labels */
 	GtkAdjustment *hsadj; // horizontal scrollbar
 	GtkWidget *hsbar;
