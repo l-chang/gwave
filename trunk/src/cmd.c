@@ -32,6 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <assert.h>
 #include <sys/time.h>
 #include <gtk/gtk.h>
 #include <guile-gtk.h>
@@ -349,6 +350,7 @@ add_var_to_panel(WavePanel *wp, WaveVar *dv)
 	vw->var = dv;
 	vw->varname = g_strdup(dv->wv_name);
 	vw->gdf = wvar_gwdatafile(dv);
+	assert(vw->gdf);
 
 	vw->colorn = wp->nextcolor;
 	wp->nextcolor = (wp->nextcolor + 1)%NWColors;

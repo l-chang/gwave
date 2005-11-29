@@ -20,6 +20,11 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.30  2005/11/23 05:51:53  sgt
+ * do the full-window vertical scrollbar
+ * bump version to 20051123
+ * add "jumbo" panel type
+ *
  * Revision 1.29  2005/11/23 02:38:06  sgt
  * fix marking of WaveVar smobs
  * code cleanup: move several widgets from globals into WaveTable structure
@@ -334,6 +339,7 @@ reload_wave_file(GtkWidget *w, GWDataFile *wdata)
 	}
 	old_wf = wdata->wf;
 	wdata->wf = new_wf;
+	wdata->wf->udata = wdata;
 /*	printf("reload_wave_file(%s) old=%lx new=%lx\n",
 	       wdata->wf->wf_filename, old_wf, new_wf); */
 
