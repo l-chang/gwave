@@ -15,19 +15,24 @@
 (dbprint "std-args.scm running\n")
 
 ;
-; Note: so long as there is still a getopt(3) call in gwave.c, 
-; we have to be sure all options are listed both places.
-;
 ; TODO:  better checking of option arguments;
 ;  make sure numeric ones are numbers, and within valid range. 
 ;
-(define opts (getopt-long (program-arguments)
-             `((nobacktrace  (single-char #\n))
-               (panels       (single-char #\p) (value #t))
-               (script       (single-char #\s) (value #t))
-	       (verbose      (single-char #\v))
-	       (debug        (single-char #\x))
-	       )))
+(define opts 
+  (catch 'misc-error 
+	 (lambda () 
+	   (getopt-long (program-arguments)
+			`((nobacktrace  (single-char #\n))
+			  (panels       (single-char #\p) (value #t))
+			  (script       (single-char #\s) (value #t))
+			  (verbose      (single-char #\v))
+			  (debug        (single-char #\x))
+			  )))
+	 (lambda (key args . rest) 
+	   (apply display-error #f (current-error-port) args rest)
+					; todo: usage message
+	   (exit 1)
+	   )))
 
 (define verbose
   (let ((a (assq 'verbose opts)))

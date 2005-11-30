@@ -45,6 +45,7 @@ guile 1.6.4 and 1.6.7 with guile-gtk 1.2_0.31 and 0.41.
 
 Gwave definitely does not support versions of guile older than 1.3.4;
 and this version has only been tested with Guile 1.6.7.
+Guile 1.4 support is being phased out.
 
 Gwave does not yet support Gtk+ version 2.0.
 
