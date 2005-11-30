@@ -5,16 +5,13 @@ Gtk 2.0
 	then redo wavelist with better widget
 	better file selection widget (wildcard/regexp to help find files)
 
-Handle files with multiple sweeps
-	- and other files that we can't do now, like where indepdendent
-	variable goes backwards in time
+Handle files where indepdendent variable goes backwards in time
+	(coded some for this with sweep work, not tested)
 	
 Management of displays of many variables
-	- scrolling list for variable buttons within each WavePanel
-		on left side of button area
 	- way to set actual/min/max height of WavePanel? 
 	        just see what happens by default.
-	- vertical scrollbar for whole WaveWin, on right side
+		
 
 ability to get wave data from guile
 	(wavevar-value x) - return value at x-coord.
@@ -92,3 +89,12 @@ overhaul plotting	DONE
 move to top, move to bottom to alter drawing order for visiblewaves in panel
 	DONE
 
+Management of displays of many variables
+	- scrolling list for variable buttons within each WavePanel
+		on left side of button area
+		done in 20050928
+	- vertical scrollbar for whole WaveWin, on right side
+		done in 20051123
+
+Handle files with multiple sweeps	
+	- done in 20050928

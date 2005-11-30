@@ -189,8 +189,8 @@ void gwave_main(void *p, int argc, char **argv)
 	prog_name = argv[0];
 
 	/* simple pre-processing of debugging options that we need to set up
-	 * before we get into guile.  Most of the general user options
-	 * are handled in std-args.scm  */
+	 * before we get into guile.   These options cannot be bundled.
+	 * Most of the general user options are handled in std-args.scm  */
 	for(i = 1; i < argc; i++) {
 		if(strcmp(argv[i], "-n") == 0) {
 			nobacktrace = 1;
@@ -234,7 +234,7 @@ void gwave_main(void *p, int argc, char **argv)
 			scm_display(res, scm_cur_outp);
 			printf("\n"); fflush(stdout);
 		}
-                if(! scm_eq_p (res, SCM_BOOL_T)) {
+                if(!SCM_NFALSEP(res)) {
                         fprintf(stderr, "gwave: aborting due to errors.\n");
                         exit(1);
                 }
