@@ -12,6 +12,7 @@ Management of displays of many variables
 	- way to set actual/min/max height of WavePanel? 
 	        just see what happens by default.
 		
+add a usage message invoked by -h or invalid-option
 
 ability to get wave data from guile
 	(wavevar-value x) - return value at x-coord.

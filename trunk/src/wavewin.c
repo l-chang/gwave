@@ -215,6 +215,17 @@ wavewin_ptablevsbar_sh_handler(GtkWidget *w,
 	}
 }
 
+/* this should go away: try to rejigger the bottom of the window so things
+ * line up right. 
+ */
+void 
+wavewin_bot_fixup(WaveTable *wt)
+{
+	wavewin_ptable_size_handler(NULL, NULL, (gpointer)wt);
+	wavewin_ptablevsbar_sh_handler(GTK_SCROLLED_WINDOW(wt->vswindow)->vscrollbar,  (gpointer)wt);
+}
+
+
 /* build the GtkTable widget for the main window.
  * side effect:
  *	creates wtable->table widget and adds the other widgets
@@ -495,6 +506,10 @@ void setup_waveform_window(void)
 	gdk_window_set_hints(wtable->window->window, 0,0,  min_w, min_h, 0,0,
 			     GDK_HINT_MIN_SIZE);
 	wtable->button_down = -1;
+
+	gtk_signal_connect(
+		GTK_OBJECT(wtable->window), "configure-event", 
+		(GtkSignalFunc)wavewin_bot_fixup, (gpointer)wtable);
 }
 
 /*
@@ -688,9 +703,21 @@ XSCM_DEFINE(set_wtable_measure_x, "set-wtable-measure!", 2, 0, 0,
 
 	mbtn_set_func(wtable->cursor_mbtn[mno], mfunc);
 	mbtn_update(wtable->cursor_mbtn[mno], NULL);
+	return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
 
+
+XSCM_DEFINE(wtable_bottom_fixup, "wtable-bottom-fixup", 0, 0, 0,
+	   (),
+	   "Attempt to fix up sizing/positioning of bottom of window")
+#define FUNC_NAME s_wtable_bottom_fixup
+{
+	wavewin_bot_fixup(wtable);
+
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
 
 /*********************************************************************** 
  * guile initialization 
