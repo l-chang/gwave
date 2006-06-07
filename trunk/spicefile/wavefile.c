@@ -24,11 +24,7 @@
 #include <string.h>
 #include <errno.h>
 #include <config.h>
-#ifdef HAVE_GTK
 #include <glib.h>
-#else
-#include "glib_fake.h"
-#endif
 #include "wavefile.h"
 
 
