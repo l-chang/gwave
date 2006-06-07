@@ -32,11 +32,7 @@
 #include <float.h>
 
 #include <config.h>
-#ifdef HAVE_GTK
 #include <glib.h>
-#else
-#include "glib_fake.h"
-#endif
 #include "spice2.h"
 #include "spicestream.h"
 

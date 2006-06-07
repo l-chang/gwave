@@ -29,11 +29,7 @@
 #include <sys/stat.h>
 
 #include <config.h>
-#ifdef HAVE_GTK
 #include <glib.h>
-#else
-#include "glib_fake.h"
-#endif
 #include "spicestream.h"
 
 SpiceStream *sf_rdhdr_hspice(char *name, FILE *fp);
