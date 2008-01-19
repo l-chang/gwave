@@ -32,7 +32,7 @@ Red Hat Linux 9 has also been used, with these RPMs:
 
 Red Hat 8.0 and Red Hat 7 worked, but haven't been tested recently.
 
-Sun Solaris 2.8 should work but has not yet been tested with this release.
+Sun Solaris 2.8 is known to work.
 
 -------------
 
@@ -43,9 +43,9 @@ and guile definitely fails.
 The only combinations tested with this version of gwave are
 guile 1.6.4 and 1.6.7 with guile-gtk 1.2_0.31 and 0.41.
 
-Gwave definitely does not support versions of guile older than 1.3.4;
+Gwave definitely does not support versions of guile older than 1.6.0;
 and this version has only been tested with Guile 1.6.7.
-Guile 1.4 support is being phased out.
+
 
 Gwave does not yet support Gtk+ version 2.0.
 
@@ -55,11 +55,12 @@ guile-gtk both come with "test-gtk" programs in their respective
 examples directories which are ideal for this purpose.  
 ** Please try this before reporting guile-gtk related problems with gwave. **
 
-Under linux, I strongly recommend installing Guile and Guile-gtk the
-same way: either build both from source, installing both into /usr/local,
-or install both using your favorite packging system (RPM, DEB, or other).
-Mixing packages and local-installs can be made to work, but often requires a
-lot of additional fiddling.
+*** I strongly recommend installing Guile and Guile-gtk the same way
+*** with the same prefix: either build both from source, installing
+*** both into /usr/local, or install both using your favorite packging
+*** system (RPM, DEB, or other).  Mixing packages and local-installs
+*** can be made to work, but often requires a lot of additional
+*** fiddling.
 
 
 

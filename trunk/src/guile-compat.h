@@ -1,4 +1,4 @@
-/* $Id: guile-compat.h,v 1.5 2002-01-10 04:04:26 sgt Exp $ */
+/* $Id: guile-compat.h,v 1.6 2008-01-19 19:28:50 sgt Exp $ */
 /*
  * Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
  *
@@ -30,63 +30,14 @@
 extern "C" {
 #endif
 
-/* pair gh_free with gh_scm2newstr, etc. */
-#ifndef gh_free
-#define gh_free(x) free(x)
-#endif
-
-#ifndef HAVE_GH_LENGTH
-#define gh_length gh_list_length
-#endif /* HAVE_GH_LENGTH */
-
-#ifndef HAVE_SCM_INTERNAL_SELECT
-#define scm_internal_select select
-#endif
-
-#ifndef HAVE_SCM_INTERNAL_PARSE_PATH
-SCM scm_parse_path (char *path, SCM tail);
-#endif
-
-#ifndef HAVE_GH_VECTOR_SET_X
-#define gh_vector_set_x gh_vset
-#endif
-
-#ifndef HAVE_GH_VECTOR_REF
-#define gh_vector_ref gh_vref
-#endif
-
-#ifdef HAVE_SCM_THE_LAST_STACK_FLUID_VAR
 #define DEREF_LAST_STACK scm_fluid_ref(SCM_VARIABLE_REF (scm_the_last_stack_fluid_var))
-#else
-#ifdef HAVE_SCM_THE_LAST_STACK_FLUID
-  /* from libguile/fluids.h --07/01/98 gjb */
-SCM scm_fluid_ref (SCM fluid);
-SCM scm_fluid_set_x (SCM fluid, SCM value);
-#define DEREF_LAST_STACK scm_fluid_ref(gh_cdr(scm_the_last_stack_fluid))
-#define SET_LAST_STACK(X) scm_fluid_set_x (gh_cdr (scm_the_last_stack_fluid), (X))
-#else
-#define DEREF_LAST_STACK gh_cdr(scm_the_last_stack_var)
-#define SET_LAST_STACK(X) gh_set_cdr_x(scm_the_last_stack_var, (X))
-#endif
-#endif
-
-#ifndef SCM_EOF_OBJECT_P
-#define SCM_EOF_OBJECT_P(x) ((x) == SCM_EOF_VAL)
-#endif
 
 SCM 
 scm_internal_cwdr_no_unwind (scm_catch_body_t body, void *body_data,
 			     scm_catch_handler_t handler, void *handler_data,
 			     SCM_STACKITEM *stack_start);
 
-#ifndef gh_memq
-#define gh_memq scm_memq
-#endif
-
 SCM make_output_strport(char *fname);
-#ifndef HAVE_SCM_STRPORT_TO_STRING
-SCM scm_strport_to_string(SCM port);
-#endif
 
 #endif /* GUILE_COMPAT_H */
 

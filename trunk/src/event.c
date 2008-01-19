@@ -21,6 +21,10 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.21  2005/11/23 02:38:06  sgt
+ * fix marking of WaveVar smobs
+ * code cleanup: move several widgets from globals into WaveTable structure
+ *
  * Revision 1.20  2005/10/08 05:48:58  sgt
  * get rid of most uses of the deprecated gh_ interfaces to guile
  *
@@ -174,7 +178,7 @@ XSCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
 {
 	VALIDATE_ARG_PROC(1, proc);
 	
-	scm_protect_object(proc);
+	scm_gc_protect_object(proc);
 	wtable->srange->done_proc = proc;
 	wtable->srange->type = SR_X;
 
@@ -194,7 +198,7 @@ XSCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
 {
 	VALIDATE_ARG_PROC(1, proc);
 	
-	scm_protect_object(proc);
+	scm_gc_protect_object(proc);
 	wtable->srange->done_proc = proc;
 	wtable->srange->type = SR_Y;
 
@@ -214,7 +218,7 @@ XSCM_DEFINE(select_range_xy, "select-range-xy", 1, 0, 0,
 {
 	VALIDATE_ARG_PROC(1, proc);
 	
-	scm_protect_object(proc);
+	scm_gc_protect_object(proc);
 	wtable->srange->done_proc = proc;
 	wtable->srange->type = SR_XY;
 
@@ -253,7 +257,7 @@ callback_srange()
 				scm_long2num(wtable->srange->y2));
 			break;
 		}
-		scm_unprotect_object(wtable->srange->done_proc);
+		scm_gc_unprotect_object(wtable->srange->done_proc);
 	}
 }
 

@@ -318,7 +318,7 @@
 ; When file seleted, run procedure P, passing it the name of the file.
 ; Optionaly, a default suggested filename can be specified using
 ; keyword #:default.
-(define*-public (with-selected-filename s p #&key (default #f))
+(define*-public (with-selected-filename s p #:key (default #f))
   (let* ((window (gtk-file-selection-new s))
          (button #f))
     (gtk-signal-connect
