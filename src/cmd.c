@@ -185,7 +185,7 @@ remove_wave_from_panel(WavePanel *wp, VisibleWave *vw)
 	g_free(vw->varname);
 
 	vw->valid = 0;
-	scm_unprotect_object(vw->smob);
+	scm_gc_unprotect_object(vw->smob);
 	if(vw->outstanding_smob == 0)
 		g_free(vw);
 
@@ -361,7 +361,7 @@ add_var_to_panel(WavePanel *wp, WaveVar *dv)
 
 	vw->valid = 1;
 	SGT_NEWCELL_SMOB(vw->smob, VisibleWave, vw);
-	scm_protect_object(vw->smob);
+	scm_gc_protect_object(vw->smob);
 	vw->outstanding_smob = 1;
 
 	if(wp->lmtable)  /* add button to Y-label box */

@@ -23,11 +23,8 @@
 #define True (!False)
 #endif
 
-#ifdef HAVE_SCM_MAKE_HOOK
-#define SCWM_MAKE_HOOK(args) scm_permanent_object(scm_make_hook(gh_int2scm(args)))
-#else
-#define SCWM_MAKE_HOOK(args) SCM_EOL
-#endif
+
+#define SCWM_MAKE_HOOK(args) scm_permanent_object(scm_make_hook(scm_long2num(args)))
 
 SCM scwm_handle_error (void *handler_data, SCM tag, SCM throw_args);
 SCM scwm_safe_apply_message_only (SCM proc, SCM args);
@@ -60,23 +57,12 @@ SCM scwm_run_hook_message_only(SCM hook, SCM args);
 SCM scm_empty_hook_p(SCM hook);
 
 
-#ifdef HAVE_SCM_MAKE_SMOB_TYPE_MFPE
 /* new-style SMOBs -- this gives smobs names, too */
 #define MAKE_SMOBFUNS(T) /* nothing */
 #define REGISTER_SCWMSMOBFUNS(T) \
  do { \
     scm_tc16_scwm_ ## T = scm_make_smob_type_mfpe( #T, 0, &(mark_ ##T), &(free_ ## T), &(print_ ## T), NULL); \
   } while (0)
-#else
-/* old-style SMOBs */
-#define MAKE_SMOBFUNS(T) \
-static scm_smobfuns T ## _smobfuns = { \
-  &mark_ ## T, \
-  &free_ ## T, \
-  &print_ ## T,  0 }
-
-#define REGISTER_SCWMSMOBFUNS(T) do { scm_tc16_scwm_ ## T = scm_newsmob(& T ## _smobfuns); } while (0)
-#endif
 
 
 #ifndef SCWM_EXTRACT_COMMENTS

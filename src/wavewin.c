@@ -215,14 +215,28 @@ wavewin_ptablevsbar_sh_handler(GtkWidget *w,
 	}
 }
 
-/* this should go away: try to rejigger the bottom of the window so things
- * line up right. 
+/* this is a hack and should go away: try to rejigger the bottom of
+ * the window so things line up right.
+ * I don't fully understand the gtk size-management stuff, but experimentaly
+ * this seems to work.
  */
 void 
-wavewin_bot_fixup(WaveTable *wt)
+wavewin_bot_fixup()
 {
-	wavewin_ptable_size_handler(NULL, NULL, (gpointer)wt);
-	wavewin_ptablevsbar_sh_handler(GTK_SCROLLED_WINDOW(wt->vswindow)->vscrollbar,  (gpointer)wt);
+	WaveTable *wt = wtable;
+
+	if(gwave_debug) printf("wavewin_bot_fixup()\n");
+
+	if(wt) {
+		wavewin_ptable_size_handler(NULL, NULL, (gpointer)wt);
+		wavewin_ptablevsbar_sh_handler(GTK_SCROLLED_WINDOW(wt->vswindow)->vscrollbar,  (gpointer)wt);
+
+		/* I don't know why this works, but without the next three
+		   lines, things are still wrong after a window resize */
+		gtk_main_iteration_do(0);
+		wavewin_ptable_size_handler(NULL, NULL, (gpointer)wt);
+		wavewin_ptablevsbar_sh_handler(GTK_SCROLLED_WINDOW(wt->vswindow)->vscrollbar,  (gpointer)wt);
+	}
 }
 
 
@@ -508,7 +522,9 @@ void setup_waveform_window(void)
 	wtable->button_down = -1;
 
 	gtk_signal_connect(
-		GTK_OBJECT(wtable->window), "configure-event", 
+		GTK_OBJECT(wtable->window), 
+//		"configure-event", 
+		"size-allocate", 
 		(GtkSignalFunc)wavewin_bot_fixup, (gpointer)wtable);
 }
 

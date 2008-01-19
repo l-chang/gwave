@@ -1,4 +1,4 @@
-/* $Id: guile-compat.c,v 1.3 2002-03-28 06:35:21 sgt Exp $ */
+/* $Id: guile-compat.c,v 1.4 2008-01-19 19:28:50 sgt Exp $ */
 /*
  * Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
  *
@@ -61,22 +61,6 @@ SCM make_output_strport(char *fname)
 		       SCM_OPN | SCM_WRTNG,
 		       fname);
 }
-
-#ifndef HAVE_SCM_STRPORT_TO_STRING
-SCM scm_strport_to_string(SCM port)
-{
-  SCM answer;
-  { /* scope */
-    gh_defer_ints();
-    answer = scm_makfromstr (SCM_CHARS (gh_cdr (SCM_STREAM (port))),
-			     SCM_INUM (gh_car (SCM_STREAM (port))),
-			     0);
-    gh_allow_ints();
-  }
-  return answer;
-}
-#endif
-
 
 #ifdef __cplusplus
 }

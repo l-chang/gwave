@@ -32,7 +32,7 @@ dnl not every word.  This closes a longstanding sh security hole.
     fi
   done
   IFS="$ac_save_ifs"
-if test $ac_prog_rejected = yes; then
+if test "$ac_prog_rejected" = yes; then
   # We found a bogon in the path, so make sure we never use it.
   set dummy [$]ac_cv_prog_$1
   shift

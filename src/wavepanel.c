@@ -157,7 +157,7 @@ new_wave_panel()
 	wp->valid = 1;
 
 	SGT_NEWCELL_SMOB(wp->smob, WavePanel, wp);
-	scm_protect_object(wp->smob);
+	scm_gc_protect_object(wp->smob);
 	wp->outstanding_smob = 1;
 	call1_hooks(new_wavepanel_hook, wp->smob);
 
@@ -323,7 +323,7 @@ void destroy_wave_panel(WavePanel *wp)
 	gtk_widget_destroy(wp->drawing);
 	gdk_pixmap_unref(wp->pixmap);
 	wp->valid = 0;
-	scm_unprotect_object(wp->smob);
+	scm_gc_unprotect_object(wp->smob);
 	if(wp->outstanding_smob == 0)
 		g_free(wp);
 }
@@ -542,7 +542,7 @@ XSCM_DEFINE(wavepanel_bind_mouse, "wavepanel-bind-mouse", 2, 0, 0,
         }
 */
 	if (!UNSET_SCM(proc)) {
-		scm_protect_object(proc);
+		scm_gc_protect_object(proc);
 		wavepanel_mouse_binding[bnum] = proc;
 	}
 		

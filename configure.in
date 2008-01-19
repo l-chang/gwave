@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl ## Initialize autoconf ##
 
 AC_INIT(src/gwave.c)
-AM_INIT_AUTOMAKE(gwave, 20051128)
+AM_INIT_AUTOMAKE(gwave, 20060606)
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
 
@@ -90,18 +90,8 @@ dnl I was to lazy to write a real test macro so I just check for a function
 dnl that was added soon after.
 AC_CHECK_LIB(guile, scm_done_malloc, AC_DEFINE(HAVE_SAFE_SCM_EVAL_STRING),  ,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_c_read_string, AC_DEFINE(HAVE_SCM_C_READ_STRING),,$GUILE_LDFLAGS)
-
-dnl This checks if we have gh_vref or gh_vector_ref
-AC_CHECK_LIB(guile, gh_vector_ref, AC_DEFINE(HAVE_GH_VECTOR_REF), ,$GUILE_LDFLAGS)
-
-dnl This checks if we have gh_vset or gh_vector_set
-AC_CHECK_LIB(guile, gh_vector_set_x, AC_DEFINE(HAVE_GH_VECTOR_SET_X), ,$GUILE_LDFLAGS)
-
 dnl This checks if we have a guile with readline support
 AC_CHECK_LIB(guile, scm_readline, AC_DEFINE(HAVE_SCM_READLINE), ,$GUILE_LDFLAGS)
-
-AC_CHECK_LIB(guile, scm_internal_select, AC_DEFINE(HAVE_SCM_INTERNAL_SELECT), ,$GUILE_LDFLAGS)
 
 AC_CHECK_LIB(guile, scm_internal_cwdr, AC_DEFINE(HAVE_SCM_INTERNAL_CWDR),,$GUILE_LDFLAGS)
 
@@ -116,74 +106,10 @@ AC_CHECK_LIB(guile, scm_create_hook, AC_DEFINE(HAVE_SCM_CREATE_HOOK), ancient_gu
 AC_CHECK_LIB(guile, scm_load_startup_files, AC_DEFINE(HAVE_SCM_LOAD_STARTUP_FILES), ancient_guile=yes,$GUILE_LDFLAGS)
 
 AC_CHECK_LIB(guile, scm_make_smob_type_mfpe, AC_DEFINE(HAVE_SCM_MAKE_SMOB_TYPE_MFPE), ancient_guile=yes, $GUILE_LDFLAGS)
-
-AC_CHECK_LIB(guile, scm_strport_to_string, AC_DEFINE(HAVE_SCM_STRPORT_TO_STRING), ancient_guile=yes, $GUILE_LDFLAGS)
-
+ 
 if test "$ancient_guile" = "yes"; then
-	AC_ERROR(Your guile is too old; Guile-1.3.4 or later is required)
+	AC_ERROR(Your guile is too old; Guile-1.6 or later is required)
 fi
-
-dnl check for scm_the_last_fluid in place of scm_the_last_stack_var
-
-saved_LIBS="${LIBS}"
-LIBS="${LIBS} ${GUILE_LDFLAGS}"
-saved_CFLAGS="${CFLAGS}"
-CFLAGS="${CFLAGS} ${GUILE_CFLAGS}"
-
-AC_MSG_CHECKING(for scm_the_last_stack_fluid in -lguile)
-AC_TRY_LINK([
-#include <guile/gh.h>
-],[
-return scm_the_last_stack_fluid;
-], [
-AC_DEFINE(HAVE_SCM_THE_LAST_STACK_FLUID)
-AC_MSG_RESULT(yes)
-],[
-AC_MSG_RESULT(no)
-])
-
-AC_MSG_CHECKING(for scm_the_last_stack_fluid_var in -lguile)
-AC_TRY_LINK([
-#include <guile/gh.h>
-],[
-return scm_the_last_stack_fluid_var;
-], [
-AC_DEFINE(HAVE_SCM_THE_LAST_STACK_FLUID_VAR)
-AC_MSG_RESULT(yes)
-],[
-AC_MSG_RESULT(no)
-])
-
-# 1-argument SCM_SNARF_DOC macro (guile 1.3.4, 1.4) or many-arg (1.5.4 and later)
-AC_MSG_CHECKING(for 1-argument form of SCM_SNARF_DOC in libguile)
-AC_TRY_COMPILE([
-#include <guile/gh.h>
-#include <libguile/snarf.h>
-],[
-SCM_SNARF_DOCS("foo")
-],[
-AC_DEFINE(HAVE_1ARG_SCMSNARFDOC)
-AC_MSG_RESULT(yes)
-],[
-AC_MSG_RESULT(no)
-])
-
-# 1-argument scm_eval_x or 2-argument form
-AC_MSG_CHECKING(if scm_eval_x() takes a second module argument)
-AC_TRY_COMPILE([
-#include <libguile.h>
-],[
-SCM foo,bar;
-scm_eval_x(foo,bar);
-],[
-AC_DEFINE(HAVE_SCM_EVAL_X_MODULE)
-AC_MSG_RESULT(yes)
-],[
-AC_MSG_RESULT(no)
-])
-
-LIBS="${saved_LIBS}"
-CFLAGS="${saved_CFLAGS}"
 
 dnl check for guile-gtk
 
@@ -201,18 +127,6 @@ AC_MSG_CHECKING(for guile-gtk LIBS)
 GUILEGTK_LIBS=`$bggtk libs`
 AC_SUBST(GUILEGTK_LIBS)
 AC_MSG_RESULT($GUILEGTK_LIBS)
-
-dnl saved_LIBS="${LIBS}"
-dnl LIBS="${LIBS} ${GTK_LDFLAGS} ${GUILE_LDFLAGS}"
-dnl saved_CFLAGS="${CFLAGS}"
-dnl CFLAGS="${CFLAGS} ${GTK_CFLAGS} ${GUILE_CFLAGS}" 
-dnl AC_CHECK_HEADER(guile-gtk.h, , AC_MSG_ERROR(couldn't find guile-gtk.h))
-dnl AC_CHECK_LIB(guilegtk-1.2, sgtk_init_gtk_gtk_glue, GUILEGTK_LDFLAGS=-lguilegtk-1.2, AC_MSG_ERROR(couldn't find libguilegtk.a))
-
-dnl AC_SUBST(GUILEGTK_LDFLAGS)
-
-dnl LIBS="${saved_LIBS}"
-dnl CFLAGS="${saved_CFLAGS}"
 
 dnl Check to see if we are on a system with HP-UX's peculiar
 dnl guile-gtk dynamic linking problems.

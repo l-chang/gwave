@@ -283,11 +283,7 @@ static SCM
 scwm_body_eval_x (void *body_data)
 {
   SCM expr = *(SCM *) body_data;
-#ifdef HAVE_SCM_EVAL_X_MODULE
   return scm_eval_x (expr, scm_current_module() );
-#else
-  return scm_eval_x (expr);
-#endif
 }
 
 __inline__ static SCM 
@@ -348,11 +344,8 @@ scwm_handle_error (void *ARG_IGNORE(data), SCM tag, SCM throw_args)
   if (scm_ilength (throw_args) >= 3)
     {
       SCM fl;
-#ifdef HAVE_SCM_THE_LAST_STACK_FLUID_VAR
       fl = SCM_VARIABLE_REF (scm_the_last_stack_fluid_var);
-#else
-      fl = gh_cdr(scm_the_last_stack_fluid);
-#endif
+
       /* GJB:FIXME:MS: This is a horrible hack,
          but DEREF_LAST_STACK macro was throwing a wrong type 
          argument at weird times, and I'm trying to avoid

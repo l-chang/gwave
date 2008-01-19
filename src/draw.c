@@ -182,30 +182,32 @@ int val2x(WavePanel *wp, double val, int log)
 	return w * frac;
 }
 
+typedef void (*WaveDrawFunc) (VisibleWave *vw, WavePanel *wp);
+struct wavedraw_method {
+	WaveDrawFunc func;
+	char *desc;
+};
+
+void vw_wp_draw_ppixel(VisibleWave *vw, WavePanel *wp);
+void vw_wp_draw_lineclip(VisibleWave *vw, WavePanel *wp);
+
+struct wavedraw_method wavedraw_method_tab[] = {
+	vw_wp_draw_ppixel, "per-pixel",
+	vw_wp_draw_lineclip, "correct-line"
+};
+
+const int n_wavedraw_methods = sizeof(wavedraw_method_tab)/sizeof(struct wavedraw_method);
+
 
 /*
- * half-assed wave-drawing routine.
- * gets data value and draws a line for every pixel.
- * will exhibit aliasing if data has samples at higher frequency than
- * the screen has pixels.
  * We know how to do this right, but working on other things has taken
  * precedence.  Remarkably, this isn't particularly slow or ugly looking.
  *
- * ALSO TODO: smarter partial redraws on scrolling, expose, etc.
+ * TODO: smarter partial redraws on scrolling, expose, etc.
  */
-/* vw_wp_visit_draw(gpointer p, gpointer d) */
 void
 vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 {
-	int x0, x1;
-	int y0, y1;
-	int i;
-	double xstep;
-	double xval;
-	double yval;
-	int w = wp->drawing->allocation.width;
-	int h = wp->drawing->allocation.height;
-
 	if(!vw->gc) {
 		if(!vw->label) {
 			fprintf(stderr, "visit_draw(%s): label=NULL\n",
@@ -232,7 +234,31 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
                  gdk_gc_set_line_attributes(vw->gc,
                                             1, GDK_LINE_SOLID, GDK_CAP_BUTT,
                                             GDK_JOIN_ROUND);
+	
+	(wavedraw_method_tab[1].func)(vw, wp);
+}
 
+/* finish what we started in vw_wp_visit_draw(),
+ * using various different drawing algorithms
+ */
+
+/* half-assed pixel-steping wave-drawing routine.
+ * gets data value and draws a line for every pixel.
+ * will exhibit aliasing if data has samples at higher frequency than
+ * the screen has pixels.
+ * Fast but can alias badly. 
+ */
+void
+vw_wp_draw_ppixel(VisibleWave *vw, WavePanel *wp)
+{
+	int x0, x1;
+	int y0, y1;
+	int i;
+	double xstep;
+	double xval;
+	double yval;
+	int w = wp->drawing->allocation.width;
+	int h = wp->drawing->allocation.height;
 
 	xstep = (wp->end_xval - wp->start_xval)/w;  /* linear only */
 
@@ -255,6 +281,163 @@ vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp)
 		else
 			xval += xstep;
 	}
+
+}
+
+int point_code (double x, double y, 
+                double xmn, double ymn,
+                double xmx, double ymx);
+void swap_i (int *a, int *b);
+void swap_d (double *a, double *b);
+
+/*-----------------------------------------------------------------------
+  ROUTINE:  line_clip
+  PURPOSE:  To clip a line segment against a rectangular window.
+ 
+  INPUT:    x1, y1,    double endpoints of line segment to be clipped.
+            x2, y2
+            xmn, ymn   double corners of clipping window.
+            xmx, ymx
+            returns    int  TRUE if line segment inside window.
+                            FALSE if outside.
+  LOCAL:    i1, i2     int codes indicating location of points
+                       relative to viewport boundaries.  (see
+                       description in point_code()).
+ 
+  KEYWORD:  TWODIM * CLIP LINE VIEWPORT
+ 
+  REMARKS:  The direction of the line segment may be reversed.
+ 
+  DATE:     July '80  J.A.T, May 2002 C.D.
+ -----------------------------------------------------------------------*/
+ int line_clip (double *x1, double *y1, double *x2, double *y2,
+                double xmn, double ymn, double xmx, double ymx) {
+
+	int    i1, i2;
+
+/* Code each point.   */
+	i1 = point_code (*x1, *y1, xmn, ymn, xmx, ymx);
+	i2 = point_code (*x2, *y2, xmn, ymn, xmx, ymx);
+
+/* ARE BOTH ENDPOINTS IN VIEWING PORT? */
+	while(i1 != 0 || i2 != 0) {
+		if((i1 & i2) != 0)	/* Is segment outside viewport?   */
+			return FALSE;
+		if(i1 == 0) {		/* Is point 1 outside viewport?   */
+			swap_i(&i1, &i2);
+			swap_d(x1, x2);
+			swap_d(y1, y2);
+		}
+
+		if((i1 & 1) != 0) {			/* Move toward left edge.   */
+			*y1 = *y1 + (*y2 - *y1) * (xmn - *x1) / (*x2 - *x1);
+			*x1 = xmn;
+		} else
+			if((i1 & 2) != 0) {		/* Move toward right edge.   */
+				*y1 = *y1 + (*y2 - *y1) * (xmx - *x1) / (*x2 - *x1);
+				*x1 = xmx;
+			} else
+				if((i1 & 4) != 0) {	/* Move toward bottom.   */
+					*x1 = *x1 + (*x2 - *x1) * (ymn - *y1) / (*y2 - *y1);
+					*y1 = ymn;
+				} else {			/* Move toward top.   */
+					*x1 = *x1 + (*x2 - *x1) * (ymx - *y1) / (*y2 - *y1);
+					*y1 = ymx;
+				}
+		i1 = point_code(*x1, *y1, xmn, ymn, xmx, ymx);
+	}
+	return TRUE;
+}
+
+/*-----------------------------------------------------------------------
+  FUNCTION: point_code
+  PURPOSE:  To encode a point.
+  REMARKS:  This routine returns an integer code for
+            the point based on this mapping:
+ 
+                      *      *
+                 1001 * 1000 * 1010
+                      *      *
+                ********************
+                      *      *
+                 0001 * 0000 * 0010
+                      *      *
+                ********************
+                      *      *
+                 0101 * 0100 * 0110
+                      *      *
+ 
+  INPUT:    x,y        double coordinates of point.
+            xmn, ymn   double corners of window
+            xmx, ymx
+            returns    int code from above (0-10)
+ 
+  KEYWORD:  TWODIM * CODE POINT
+ 
+  DATE:     July '80  J.A.T. May 2002 C.D.
+ -----------------------------------------------------------------------*/
+int point_code(double x, double y, 
+               double xmn, double ymn,
+               double xmx, double ymx) {
+	int  ic;
+
+	ic = 0;       
+	if(x < xmn) ic = 1;
+	if(x > xmx) ic = 2;
+	if(y < ymn) ic+=4;
+	if(y > ymx) ic+=8;
+	return ic;
+}
+
+void swap_i(int *a, int *b) {
+	int temp;
+	temp = *a;
+	*a = *b;
+	*b = temp;
+	return;
+}
+
+void swap_d(double *a, double *b) {
+	double temp;
+	temp = *a;
+	*a = *b;
+	*b = temp;
+	return;
+}
+
+/* visit all data points, applying line-clipping algorithm */
+void
+vw_wp_draw_lineclip(VisibleWave *vw, WavePanel *wp)
+{
+	int x0, x1;
+	int y0, y1;
+	int i;
+	double xstep;
+	double xval;
+	double yval;
+        double xval0, yval0, xval1, yval1;
+        double xval0d, yval0d, xval1d, yval1d;
+
+        xval1 = wds_get_point(&vw->var->wv_iv->wds[0], 0);
+        yval1 = wds_get_point(&vw->var->wds[0], 0);
+
+        for(i = 1; i < vw->var->wtable->nvalues; i++) {
+                xval0d = xval1;
+                yval0d = yval1;
+                xval1d = xval1 = wds_get_point(&vw->var->wv_iv->wds[0], i);
+                yval1d = yval1 = wds_get_point(&vw->var->wds[0], i);
+
+                if(line_clip(&xval0d, &yval0d, &xval1d, &yval1d,
+                             wp->start_xval, wp->start_yval,
+                             wp->end_xval, wp->end_yval))  {
+                        x0 = val2x(wp, xval0d, wtable->logx);
+                        y0 = val2y(wp, yval0d);
+                        x1 = val2x(wp, xval1d, wtable->logx);
+                        y1 = val2y(wp, yval1d);
+                        if(x0 != x1 || y0 != y1)
+                                gdk_draw_line(wp->pixmap, vw->gc, x0,y0, x1,y1);
+                }
+        }
 }
 
 /*

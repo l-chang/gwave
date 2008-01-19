@@ -28,5 +28,6 @@ rcsq.sp			SPICE_ASCIIRAWFILE=1 ngspice -r rcsq.raw -b rcsq.sp
 diffpair.sp		ngspice -r diffpair.braw -b diffpair.sp
 lpf.sp			hspice lpf.sp
 
-
+rlc.sp	SPICE_ASCIIRAWFILE=1 ngspice -b -r rlc.raw rlc.sp
+	 ngspice -b -r rlc.braw rlc.sp
 
