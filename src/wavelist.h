@@ -43,8 +43,8 @@
 
 EXTERN long scm_tc16_scwm_GWDataFile;
 
-#define GWDataFile_P(X) (SCM_NIMP(X) && gh_car(X) == (SCM)scm_tc16_scwm_GWDataFile)
-#define GWDataFile(X)  ((GWDataFile *)gh_cdr(X))
+#define GWDataFile_P(X) (SCM_NIMP(X) && SCM_SMOB_PREDICATE(scm_tc16_scwm_GWDataFile, X))
+#define GWDataFile(X)  ((GWDataFile *)SCM_SMOB_DATA(X))
 #define SAFE_GWDataFile(X)  (GWDataFile_P((X))? GWDataFile((X)) : NULL)
 
 #define VALIDATE_ARG_GWDataFile(pos,scm) \
@@ -101,8 +101,8 @@ struct _GWDataFile {
 
 EXTERN long scm_tc16_scwm_WaveVar;
 
-#define WaveVarH_P(X) (SCM_NIMP(X) && gh_car(X) == (SCM)scm_tc16_scwm_WaveVar)
-#define WaveVarH(X)  ((WaveVarH *)gh_cdr(X))
+#define WaveVarH_P(X) (SCM_NIMP(X) && SCM_SMOB_PREDICATE(scm_tc16_scwm_WaveVar, X))
+#define WaveVarH(X)  ((WaveVarH *)SCM_SMOB_DATA(X))
 #define SAFE_WaveVarH(X)  (WaveVarH_P((X))? WaveVarH((X)) : NULL)
 #define SAFE_WaveVar(X)  (WaveVarH_P((X)) ? WaveVarH((X))->wv : NULL)
 

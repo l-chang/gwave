@@ -1,4 +1,4 @@
-/* $Id: guile-compat.c,v 1.4 2008-01-19 19:28:50 sgt Exp $ */
+/* $Id: guile-compat.c,v 1.3 2002/03/28 06:35:21 sgt Exp $ */
 /*
  * Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
  *
@@ -37,22 +37,6 @@ void  scwm_msg(int , const char *id, const char *msg,...);
 
 #undef USE_STACKJMPBUF
 
-struct cwdr_no_unwind_handler_data {
-  int run_handler;
-  SCM tag, args;
-};
-
-static SCM
-cwdr_no_unwind_handler (void *data, SCM tag, SCM args)
-{
-  struct cwdr_no_unwind_handler_data *c = 
-    (struct cwdr_no_unwind_handler_data *) data;
-
-  c->run_handler = 1;
-  c->tag = tag;
-  c->args = args;
-  return SCM_UNSPECIFIED;
-}
 
 SCM make_output_strport(char *fname)
 {

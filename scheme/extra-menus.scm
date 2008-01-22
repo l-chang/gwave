@@ -3,8 +3,8 @@
 ;
 
 (define-module (app gwave extra-menus)
-  :use-module (gtk gtk)
-  :use-module (gtk gdk)
+  :use-module (gnome-0)
+  :use-module (gnome gtk)
   :use-module (app gwave cmds)
   :use-module (app gwave std-menus)
 )

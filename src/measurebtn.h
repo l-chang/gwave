@@ -50,9 +50,10 @@ struct _MeasureBtn {
 #define MBF_MAX_FUNC MBF_RECIPCURDIFF
 
 extern MeasureBtn *measure_button_new(WaveVar *wv, int mfunc);
-void mbtn_set_func(MeasureBtn *mbtn, int mfunc);
-void mbtn_delete(MeasureBtn *mbtn);
-void mbtn_hide(MeasureBtn *mbtn);
-void mbtn_show(MeasureBtn *mbtn);
-void mbtn_update(MeasureBtn *mbtn, gpointer *d);
-void mbtn_update_all();
+extern void mbtn_set_func(MeasureBtn *mbtn, int mfunc);
+extern void mbtn_delete(MeasureBtn *mbtn);
+extern void mbtn_hide(MeasureBtn *mbtn);
+extern void mbtn_show(MeasureBtn *mbtn);
+extern void mbtn_update(MeasureBtn *mbtn, gpointer *d);
+extern void mbtn_update_var(MeasureBtn *mbtn, WaveVar *wv);
+extern void mbtn_update_all();

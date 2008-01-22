@@ -1,4 +1,4 @@
-/* $Id: validate.h,v 1.4 2008-01-19 19:28:50 sgt Exp $
+/* $Id: validate.h,v 1.3 2005/11/23 05:51:53 sgt Exp $
  * validate.h
  * Copyright (C) 1997-1999, Greg J. Badros and Maciej Stachowiak
  *

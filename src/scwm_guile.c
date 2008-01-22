@@ -78,9 +78,9 @@ scwm_body_apply (void *body_data)
 struct cwssdr_data
 {
   SCM tag;
-  scm_catch_body_t body;
+  scm_t_catch_body body;
   void *data;
-  scm_catch_handler_t handler;
+  scm_t_catch_handler handler;
 };
 
 static SCM
@@ -92,9 +92,9 @@ cwssdr_body (void *data)
 }
 
 SCM
-scm_internal_stack_cwdr (scm_catch_body_t body,
+scm_internal_stack_cwdr (scm_t_catch_body body,
 			 void *body_data,
-			 scm_catch_handler_t handler,
+			 scm_t_catch_handler handler,
 			 void *handler_data,
 			 SCM_STACKITEM *stack_item)
 {
@@ -200,22 +200,11 @@ scwm_safe_call7 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM
 }
 
 
-/* Hooks. */
-
-/* FIXDOC: We need a way to cross-reference concepts in docs. */
-
-XSCM_CONCEPT("Hooks",
-"Hooks are used throughout gwave to provide a convenient mechanism for"
-"user callbacks on particular events. Fundamentally, a hook is just a"
-"variable that contains a list of procedures that are called in order"
-"when the relevant event occurs. However, several convenience macros"
-"are provided for manipulating hooks; see `add-hook!', `remove-hook!',"
-"`reset-hook!', and `run-hook'.");
-
 static SCM run_hook_proc;
 
 __inline__ SCM scwm_run_hook(SCM hook, SCM args)
 {
+  
   return scwm_safe_apply(run_hook_proc, scm_cons(hook,args));
 }
 
@@ -336,7 +325,7 @@ scwm_handle_error (void *ARG_IGNORE(data), SCM tag, SCM throw_args)
 			   SCM_OPN | SCM_WRTNG,
 			   "error-handler");
 #else
-  SCM port = scm_def_errp;
+  SCM port =  scm_current_error_port();
 #endif
 
   /* GJB:FIXME:MS: is this a guile compatibility test that can be dropped
@@ -380,7 +369,7 @@ scwm_handle_error (void *ARG_IGNORE(data), SCM tag, SCM throw_args)
 }
 
 
-XSCM_DEFINE(safe_load, "safe-load", 1, 0, 0,
+SCM_DEFINE(safe_load, "safe-load", 1, 0, 0,
            (SCM fname),
 "Load file FNAME while trapping and displaying errors."
 "Each individual top-level-expression is evaluated separately and all"
@@ -414,7 +403,7 @@ void init_scwm_guile()
 {
   run_hook_proc = gh_lookup("run-hook");
 
-#ifndef XSCM_MAGIC_SNARF_INITS
+#ifndef SCM_MAGIC_SNARF_INITS
 #include "scwm_guile.x"
 #endif
 }

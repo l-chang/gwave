@@ -20,7 +20,7 @@
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Log: not supported by cvs2svn $
+ * $Log: event.c,v $
  * Revision 1.21  2005/11/23 02:38:06  sgt
  * fix marking of WaveVar smobs
  * code cleanup: move several widgets from globals into WaveTable structure
@@ -130,9 +130,8 @@
 #include <scwm_guile.h>
 #include <gwave.h>
 #include <wavewin.h>
-#include <guile-gtk.h>
-
-extern sgtk_boxed_info sgtk_gdk_event_info;
+#include <measurebtn.h>
+#include <guile-gnome-gobject/gobject.h>
 
 void destroy_handler(GtkWidget *widget, gpointer data)
 {
@@ -167,7 +166,7 @@ set_all_wp_cursors(int cnum)
  * selecting a subset of the visible part of the X axis by dragging
  * with button 1.
  */
-XSCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
+SCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
            (SCM proc),
 "Prompt the user to select a range of the visible X axis using"
 "button 1 of the mouse.  "
@@ -187,7 +186,7 @@ XSCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
+SCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
            (SCM proc),
 "Prompt the user to select a range of the visible Y axis using"
 "button 1 of the mouse. " 
@@ -207,7 +206,7 @@ XSCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(select_range_xy, "select-range-xy", 1, 0, 0,
+SCM_DEFINE(select_range_xy, "select-range-xy", 1, 0, 0,
            (SCM proc),
 "Prompt the user to select a region of the "
 "visible XY plane using button 1 of the mouse.  "
@@ -391,13 +390,18 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 {
 	WavePanel *wp = (WavePanel *)data;
 	GdkCursor *cursor;
+        SCM scm_event;
 
 	if(wtable->mstate == M_NONE) {
 		if(wavepanel_mouse_binding[event->button]) {
+                        scm_event = scm_c_make_gvalue (GDK_TYPE_EVENT);
+                        g_value_set_boxed((GValue *) SCM_SMOB_DATA(scm_event),
+                                          event);
+
 			scwm_safe_call2(
 				wavepanel_mouse_binding[event->button],
 				wp->smob,
-				sgtk_boxed2scm (event, &sgtk_gdk_event_info, 1));
+				scm_event);
 		} 
 	}
 
@@ -590,7 +594,7 @@ gint expose_handler(GtkWidget *widget, GdkEventExpose *event,
 void init_event()
 {
 
-#ifndef XSCM_MAGIC_SNARF_INITS
+#ifndef SCM_MAGIC_SNARF_INITS
 #include "event.x"
 #endif
 }

@@ -1,4 +1,4 @@
-/* $Id: guile-compat.h,v 1.6 2008-01-19 19:28:50 sgt Exp $ */
+/* $Id: guile-compat.h,v 1.5 2002/01/10 04:04:26 sgt Exp $ */
 /*
  * Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
  *
@@ -31,11 +31,6 @@ extern "C" {
 #endif
 
 #define DEREF_LAST_STACK scm_fluid_ref(SCM_VARIABLE_REF (scm_the_last_stack_fluid_var))
-
-SCM 
-scm_internal_cwdr_no_unwind (scm_catch_body_t body, void *body_data,
-			     scm_catch_handler_t handler, void *handler_data,
-			     SCM_STACKITEM *stack_start);
 
 SCM make_output_strport(char *fname);
 

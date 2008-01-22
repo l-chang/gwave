@@ -4,7 +4,8 @@
 ;
 
 (define-module (app gwave export-gnugraph)
-  :use-module (gtk gtk)
+  :use-module (gnome-0)
+  :use-module (gnome gtk)
   :use-module (ice-9 optargs)
   :use-module (ice-9 format)
   :use-module (app gwave cmds)
@@ -52,8 +53,8 @@
 			     '("Color" . #t) )))
 	 )
 						  
-    (gtk-container-border-width frame 10)
-    (gtk-widget-set-usize frame 200 150)
+    (gtk-container-set-border-width frame 10)
+;    (gtk-widget-set-usize frame 200 150)
     (gtk-widget-show frame)
     (gtk-container-add frame vbox)
     (gtk-box-pack-start vbox format-optmenu #f #f 0)

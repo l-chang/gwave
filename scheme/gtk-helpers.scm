@@ -4,10 +4,21 @@
 ;
 
 (define-module (app gwave gtk-helpers)
-  :use-module (gtk gtk)
+  :use-module (gnome-0)
+  :use-module (gnome gtk)
 )
 
 (read-set! keywords 'prefix)
+
+; guile-gnome-platform glue
+(define-public (gtk-menu? g)   		(is-a? g <gtk-menu>))
+(define-public (gtk-menu-bar? g)	(is-a? g <gtk-menu-bar>))
+
+(define-public (gtk-menu-append p i) (append p i))
+(define-public (gtk-menu-bar-append p i) (append p i))
+
+(define-public (gtk-signal-connect w sig p) 
+  (gtype-instance-signal-connect w (string->symbol sig) p))
 
 ;
 ; create a gtk-radio-button that calls proc when selected,
@@ -22,14 +33,14 @@
 		  (gtk-radio button-new group))))
     (gtk-widget-show item)
     (if proc
-	(gtk-signal-connect item "clicked" proc))
+	(gtk-signal-connect item "clicked" (lambda (x) (proc))))
 ;			    (lambda ()
 ;			      (if (gtk-toggle-button-active item)
 ;				  proc))))
     (if active
-	(gtk-toggle-button-set-state item active))
+	(gtk-toggle-button-set-active item #t))
     (gtk-container-add parent item) 
-    item
+    (gtk-radio-button-get-group item)
     ))
 
 
@@ -48,13 +59,11 @@
       (let ((item (gtk-radio-button-new-with-label group (car (car optlist)))))
 	(if proc
 	    (gtk-signal-connect item "clicked"
-				(lambda () 
+				(lambda (x) 
 				  (proc (cdr (car optlist))))))
-;	(if active
-;	    (gtk-toggle-button-set-state item active))
 	(gtk-widget-show item)
 	(gtk-container-add container item) 
-	(set! group item)
+	(set! group (get-group item))
 	(if (not (null? (cdr optlist)))
 	    (begin
 	      (add-radiobuttons-to-box container proc (cdr optlist))))))
@@ -64,54 +73,20 @@
     container))
 
 ; build and return an option-menu button
-; this is an optionmenu that drops down when a button is pressed;
-; we return the button.
+; this is a combobox, that drops down a menu when a button is pressed;
+; we return the top-level widget.
 ; args: 
-; 	proc - called with new value on menu selection.
+; 	proc - called with new value on each change selection.
 ;	optlist - list of pairs    ( (label1 . value1) (label2 . value2) ... )
 (define-public (build-option-menu proc optlist)
-  (let ((menu (gtk-menu-new))
-	(group #f)
-	(optionmenu (gtk-option-menu-new))
-	(vbox (gtk-vbox-new #f 0))
-	(fixed (gtk-fixed-new)))
-
-    (define (add-optlist-to-menu menu proc optlist)
-      (let* ((label (gtk-label-new ""))
-	     (menuitem (gtk-radio-menu-item-new group))
-	     (eventbox (gtk-event-box-new)))
-
-        (if (not (null? optlist))
-	    (begin
-	      (gtk-label-set-text label (car (car optlist)))
-	      (gtk-container-add menuitem label)
-	      (gtk-widget-show label)
-	      (set! group menuitem)
-	      (gtk-menu-append menu menuitem)
-	      (gtk-widget-show menuitem)
-	      (gtk-signal-connect menuitem "toggled"
-				  (lambda () 
-				    (begin
-				      (proc (cdr (car optlist))))))
-	      (add-optlist-to-menu menu proc (cdr optlist))))
-	))
-
-    (add-optlist-to-menu menu proc optlist)
-    (gtk-widget-show menu)
-    (gtk-option-menu-set-menu optionmenu menu)
-;    (gtk-option-menu-set-history optionmenu )
-    (gtk-box-pack-start vbox optionmenu #f #f 0)
-    (gtk-widget-show optionmenu)
-
-    (gtk-widget-set-usize fixed 30 10)
-    (gtk-signal-connect fixed "button_press_event"
-                      (lambda (e)
-                        (if (= (gdk-event-button e) 1)
-                            (gtk-menu-popup menu #f #f
-                                            (gdk-event-button e)
-                                            (gdk-event-time e)))))
-    (gtk-box-pack-start vbox fixed #t #t 0)
-    (gtk-widget-show fixed)
-    (gtk-widget-show vbox)
-    vbox))
-
+  (let ((combobox (gtk-combo-box-new-text)))
+    (for-each (lambda (opt)
+		(append-text combobox (car opt)))
+	      optlist)
+    (if (procedure? proc)
+	(connect combobox 'changed 
+		 (lambda (x)
+		   (proc (cdr (list-ref optlist (get-active combobox) ))))))
+    (set-active combobox 0)
+    (show combobox)
+    combobox))

@@ -1,9 +1,8 @@
 
-Gtk 2.0
-	use guile-gnome-platform
-	first, just get it working, maybe with compile-time back compatibility
-	then redo wavelist with better widget
-	better file selection widget (wildcard/regexp to help find files)
+Gtk 2.0, using guile-gnome-platform
+	first, just get it working
+	then redo wavelist with better widget, to fix the max-height problem
+	better use of file-chooser widget (wildcard/regexp to help find files)
 
 Handle files where indepdendent variable goes backwards in time
 	(coded some for this with sweep work, not tested)

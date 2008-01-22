@@ -32,7 +32,7 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <gtk/gtk.h>
-#include <guile-gtk.h>
+#include <guile-gnome-gobject/gobject.h>
 
 #include <config.h>
 #include <scwm_guile.h>
@@ -90,7 +90,7 @@ GtkWidget *create_xlabel_hbox(WaveTable *wt)
 
 /* global wtable: GtkTable widget for the main window. */
 
-XSCM_DEFINE(wtable_start_xval, "wtable-start-xval", 0, 0, 0, (),
+SCM_DEFINE(wtable_start_xval, "wtable-start-xval", 0, 0, 0, (),
 "Return the X coordinate represented by the left edge of the"
 "displayed portion of the waveforms")
 #define FUNC_NAME s_wtable_start_xval
@@ -99,7 +99,7 @@ XSCM_DEFINE(wtable_start_xval, "wtable-start-xval", 0, 0, 0, (),
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wtable_end_xval, "wtable-end-xval", 0, 0, 0, (),
+SCM_DEFINE(wtable_end_xval, "wtable-end-xval", 0, 0, 0, (),
 "Return the X coordinate represented by the right edge of the"
 "displayed portion of the waveforms")
 #define FUNC_NAME s_wtable_end_xval
@@ -108,7 +108,7 @@ XSCM_DEFINE(wtable_end_xval, "wtable-end-xval", 0, 0, 0, (),
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wtable_min_xval, "wtable-min-xval", 0, 0, 0, (),
+SCM_DEFINE(wtable_min_xval, "wtable-min-xval", 0, 0, 0, (),
 	   "return the minimum X coordinate of any displayed waveform")
 #define FUNC_NAME s_wtable_min_xval
 {
@@ -116,7 +116,7 @@ XSCM_DEFINE(wtable_min_xval, "wtable-min-xval", 0, 0, 0, (),
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wtable_max_xval, "wtable-max-xval", 0, 0, 0, (),
+SCM_DEFINE(wtable_max_xval, "wtable-max-xval", 0, 0, 0, (),
 	   "return the maximum X coordinate of any displayed waveform")
 #define FUNC_NAME s_wtable_max_xval
 {
@@ -124,7 +124,7 @@ XSCM_DEFINE(wtable_max_xval, "wtable-max-xval", 0, 0, 0, (),
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wtable_vcursor, "wtable-vcursor", 1, 0, 0, (SCM cur),
+SCM_DEFINE(wtable_vcursor, "wtable-vcursor", 1, 0, 0, (SCM cur),
 	   "return the x coordinate where vertical bar cursor CUR is located")
 #define FUNC_NAME s_wtable_vcursor
 {
@@ -136,7 +136,7 @@ XSCM_DEFINE(wtable_vcursor, "wtable-vcursor", 1, 0, 0, (SCM cur),
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(set_wtable_vcursor_x, "set-wtable-vcursor!", 2, 0, 0, 
+SCM_DEFINE(set_wtable_vcursor_x, "set-wtable-vcursor!", 2, 0, 0, 
 	   (SCM cur, SCM x),
 	   "Position vertical bar cursor number CUR at X")
 #define FUNC_NAME s_set_wtable_vcursor_x
@@ -273,20 +273,6 @@ wavewin_build_table(WaveTable *wt)
 		GTK_CONTAINER (wt->table),
 		gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(wt->vswindow)));
 
-
-#ifndef GTK_V12
-	/* can't set up dnd_drop on wavepanel drawing areas until it
-	 * is connected to a window and realized so that it has
-	 * an X-window.  At least I think that's the deal. */
-	for(i = 0; i < wt->npanels; i++) {
-		WavePanel *wp = wt->panels[i];
-		gtk_widget_dnd_drop_set (wp->lvbox, TRUE,
-					 accepted_drop_types, 1, FALSE);
-	
-		gtk_widget_dnd_drop_set (wp->drawing, TRUE,
-					 accepted_drop_types, 1, FALSE);
-	}
-#endif
 }
 
 /*
@@ -325,28 +311,28 @@ wavewin_finish_table_rebuild()
 	}
 }
 
-XSCM_DEFINE(get_wavewin, "get-wavewin", 0, 0, 0, (),
+SCM_DEFINE(get_wavewin, "get-wavewin", 0, 0, 0, (),
 	   "Return the GtkWindow object for the main waveform window.")
 #define FUNC_NAME s_get_wavewin
 {
-	return sgtk_wrap_gtkobj(GTK_OBJECT(wtable->window));
+	return scm_c_gtype_instance_to_scm(GTK_OBJECT(wtable->window));
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(get_wavewin_toolbar, "get-wavewin-toolbar", 0, 0, 0, (),
+SCM_DEFINE(get_wavewin_toolbar, "get-wavewin-toolbar", 0, 0, 0, (),
 "Return the GtkHBox object for horizontal box to contain"
 "function buttons or icons in the main waveform window")
 #define FUNC_NAME s_get_wavewin_toolbar
 {
-	return sgtk_wrap_gtkobj(GTK_OBJECT(wtable->toolbar));
+	return scm_c_gtype_instance_to_scm(GTK_OBJECT(wtable->toolbar));
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(get_wavewin_menubar, "get-wavewin-menubar", 0, 0, 0, (),
+SCM_DEFINE(get_wavewin_menubar, "get-wavewin-menubar", 0, 0, 0, (),
 	   "return the GtkMenuBar object for menubar in the main waveform window")
 #define FUNC_NAME s_get_wavewin_menubar
 {
-	return sgtk_wrap_gtkobj(GTK_OBJECT(wtable->menubar));
+	return scm_c_gtype_instance_to_scm(GTK_OBJECT(wtable->menubar));
 }
 #undef FUNC_NAME
 
@@ -438,7 +424,8 @@ void setup_waveform_window(void)
 //	gtk_widget_set_usize(wtable->ftable, -1, min_h);
 
 	gtk_signal_connect(GTK_OBJECT(wtable->vswindow), "size-allocate", 
-			   wavewin_ptable_size_handler, (gpointer)wtable);
+			   GTK_SIGNAL_FUNC(wavewin_ptable_size_handler),
+			   (gpointer)wtable);
 
 	gtk_table_attach(GTK_TABLE(wtable->ftable), wtable->vswindow,
 			 0, 1, WTABLE_FTR_PTABLE, WTABLE_FTR_PTABLE+1,
@@ -474,12 +461,12 @@ void setup_waveform_window(void)
 	gtk_widget_show(wtable->bot_hbox3);
 	gtk_box_pack_start(GTK_BOX(hbox1), wtable->bot_hbox3, FALSE, FALSE, 0);
 
-	gtk_signal_connect(GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar,
+	gtk_signal_connect(GTK_OBJECT(GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar),
 			   "show", 
-			   wavewin_ptablevsbar_sh_handler, (gpointer)wtable);
-	gtk_signal_connect(GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar,
+			   GTK_SIGNAL_FUNC(wavewin_ptablevsbar_sh_handler), (gpointer)wtable);
+	gtk_signal_connect(GTK_OBJECT(GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar),
 			   "hide", 
-			   wavewin_ptablevsbar_sh_handler, (gpointer)wtable);
+			   GTK_SIGNAL_FUNC(wavewin_ptablevsbar_sh_handler), (gpointer)wtable);
 
 		/* horizontal box for X-axis labels */
 	wtable->xlhbox = create_xlabel_hbox(wtable);
@@ -621,7 +608,7 @@ first_selected_wavepanel()
 	return NULL;
 }
 
-XSCM_DEFINE(wtable_insert_panel_x, "wtable-insert-panel!", 2, 1, 0, 
+SCM_DEFINE(wtable_insert_panel_x, "wtable-insert-panel!", 2, 1, 0, 
 	   (SCM wp, SCM minheight, SCM showlabels),
 "Add a new panel after the existing panel WP, or"
 "at the end if WP is #f."
@@ -643,7 +630,7 @@ XSCM_DEFINE(wtable_insert_panel_x, "wtable-insert-panel!", 2, 1, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wtable_delete_panel_x, "wtable-delete-panel!", 1, 0, 0, (SCM wp),
+SCM_DEFINE(wtable_delete_panel_x, "wtable-delete-panel!", 1, 0, 0, (SCM wp),
 "Delete panel WP from the waveform display")
 #define FUNC_NAME s_wtable_delete_panel_x
 {
@@ -656,7 +643,7 @@ XSCM_DEFINE(wtable_delete_panel_x, "wtable-delete-panel!", 1, 0, 0, (SCM wp),
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wtable_set_xlogscale_x, "wtable-set-xlogscale!", 1, 0, 0,
+SCM_DEFINE(wtable_set_xlogscale_x, "wtable-set-xlogscale!", 1, 0, 0,
 	   (SCM xlogscale),
 	   "Set scaling for all X axes; logarithmic if XLOGSCALE is #t, else linear")
 #define FUNC_NAME s_wtable_set_xlogscale_x
@@ -678,7 +665,7 @@ XSCM_DEFINE(wtable_set_xlogscale_x, "wtable-set-xlogscale!", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wtable_xlogscale_p, "wtable-xlogscale?", 0, 0, 0, (),
+SCM_DEFINE(wtable_xlogscale_p, "wtable-xlogscale?", 0, 0, 0, (),
 	   "If the X axis is set to Logarithmic scaling, return #t.")
 #define FUNC_NAME s_wtable_xlogscale_p
 {
@@ -690,7 +677,7 @@ XSCM_DEFINE(wtable_xlogscale_p, "wtable-xlogscale?", 0, 0, 0, (),
 #undef FUNC_NAME
 
 
-XSCM_DEFINE(wtable_wavepanels, "wtable-wavepanels", 0, 0, 0,
+SCM_DEFINE(wtable_wavepanels, "wtable-wavepanels", 0, 0, 0,
 	   (),
 	   "Return list of WavePanels that are currently displayed")
 #define FUNC_NAME s_wtable_wavepanels
@@ -706,7 +693,7 @@ XSCM_DEFINE(wtable_wavepanels, "wtable-wavepanels", 0, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(set_wtable_measure_x, "set-wtable-measure!", 2, 0, 0, 
+SCM_DEFINE(set_wtable_measure_x, "set-wtable-measure!", 2, 0, 0, 
 	   (SCM n, SCM func),
  "Change the global measurement box numbered N (0 through 3)"
 "to display the result of the measurement function FUNC")
@@ -724,7 +711,7 @@ XSCM_DEFINE(set_wtable_measure_x, "set-wtable-measure!", 2, 0, 0,
 #undef FUNC_NAME
 
 
-XSCM_DEFINE(wtable_bottom_fixup, "wtable-bottom-fixup", 0, 0, 0,
+SCM_DEFINE(wtable_bottom_fixup, "wtable-bottom-fixup", 0, 0, 0,
 	   (),
 	   "Attempt to fix up sizing/positioning of bottom of window")
 #define FUNC_NAME s_wtable_bottom_fixup
@@ -741,7 +728,7 @@ XSCM_DEFINE(wtable_bottom_fixup, "wtable-bottom-fixup", 0, 0, 0,
 
 void init_wavewin()
 {
-#ifndef XSCM_MAGIC_SNARF_INITS
+#ifndef SCM_MAGIC_SNARF_INITS
 #include "wavewin.x"
 #endif
 }
