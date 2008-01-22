@@ -1,5 +1,13 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20070514
+
+a "gwave2" version that uses Gtk+-2.0 by way of guile-gnome-platform.
+Feature-wise, about the same as the previous release.
+I think I've fixed most of the crashes.  Known defects:
+  Several dialogs that should have defaults don't.
+  The change-waveform-color menu doesn't show the colors, just numbers.
+
 New in 20051222
 - full-height vertical scrollbar appears if the total height of all
 panels becomes larger than the window.
