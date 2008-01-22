@@ -1,11 +1,13 @@
 
-Some installation notes for gwave. 
-Updated November 2005.
+Some installation notes for gwave2.
+Updated May 2007
 
 Prerequesites:
-	Gtk-1.2		(http://www.gtk.org/)
 	Guile		(http://www.gnu.org/software/guile/guile.html)
-	Guile-Gtk	(http://www.gnu.org/software/guile-gtk/)
+	gtk+ 2.x
+	guile-gnome-platform 
+	
+
 	GNU Plotutils-2.4.1 or later with patches
 			(optional, only used for ploting/exporting)
 	GNUPlot		(optional, only used for ploting/exporting)
@@ -13,47 +15,25 @@ Prerequesites:
 -------------
 tested configurations:
 
-Fedora Core 2 is my primary development platform. I use these rpms:
-	gtk+-1.2.10-29.1.1		(Standard With FC2)
-	gtk+-devel-1.2.10-29.1.1	(Standard With FC2)
-	glib-1.2.10-12.1.1		(Standard With FC2)
-	glib-devel-1.2.10-12.1.1	(Standard With FC2)
-	guile-1.6.7-1sgt 	(http://www.telltronics.org/pub/guile/guile-1.6.7-1sgt.i386.rpm and guile-devel-1.6.7-1sgt.i386.rpm)	
-	guile-gtk-0.41-1sgt	(http://www.telltronics.org/pub/guile/guile-gtk-0.41-1sgt.i386.rpm)
+Fedora core 6
+	guile-1.8.0-8.20060831cvs	(Standard with FC6+updates)
+	gtk2-2.10.8-3.fc6		(Standard with FC6+updates)
+	g-wrap-1.9.7-1sgt		 (my own rpm)
+	guile-gnome-platform-2.15.90-2sgt  (my own rpm)
 
-
-Red Hat Linux 9 has also been used, with these RPMs:
-	gtk+-1.2.10-25		(Standard With RH9)
-	gtk+-devel-1.2.10-25	(Standard With RH9)
-	glib-1.2.10-10		(Standard With RH9)
-	glib-devel-1.2.10-10	(Standard With RH9)
-	guile-1.6.4-7.1		(ftp://ftp.redhat.com/pub/redhat/linux/rawhide/i386)
-	guile-gtk-1.2_0.31-1sgt	 (http://www.telltronics.org/pub/guile/guile-gtk-1.2_0.31-1sgt.i386.rpm)
-
-Red Hat 8.0 and Red Hat 7 worked, but haven't been tested recently.
-
-Sun Solaris 2.8 is known to work.
 
 -------------
 
-CAUTION: Use only the version of guile-gtk known to work with whatever
-version of guile you have. Mixing incompatibile versions of guile-gtk
-and guile definitely fails.
-
-The only combinations tested with this version of gwave are
-guile 1.6.4 and 1.6.7 with guile-gtk 1.2_0.31 and 0.41.
-
-Gwave definitely does not support versions of guile older than 1.6.0;
-and this version has only been tested with Guile 1.6.7.
+CAUTION: Use only the version of guile-gnome-platform and g-wrap known
+to work with whatever version of guile you have. Mixing incompatibile
+versions of guile-gnome-platorm, g-wrap, and guile definitely fails.
 
 
-Gwave does not yet support Gtk+ version 2.0.
-
-I recommend verifying that guile, gtk, and guile-gtk all work
-individualy before trying to build gwave using them.  Gtk and
-guile-gtk both come with "test-gtk" programs in their respective
-examples directories which are ideal for this purpose.  
-** Please try this before reporting guile-gtk related problems with gwave. **
+I recommend verifying that guile, gtk+-2.0, and guile-gnome-platofrm
+all work individualy before trying to build gwave using them.  Gtk
+and guile-gtk both come with "test-gtk" programs in their respective
+examples directories which are ideal for this purpose.  ** Please try
+this before reporting guile-gtk related problems with gwave. **
 
 *** I strongly recommend installing Guile and Guile-gtk the same way
 *** with the same prefix: either build both from source, installing
@@ -101,8 +81,8 @@ The GWAVE_GUILE_DIR environment variable can be used to make gwave
 look in an alternate directory for these guile files.  Set
 GWAVE_GUILE_DIR to the full pathname of the src directory in this
 distribution, for example if this file is called 
-/home/tell/build/gwave-20000301/INSTALL, set 
-GWAVE_GUILE_DIR=/home/tell/build/gwave-20000301/src
+/home/tell/build/gwave2-20070301/INSTALL, set 
+GWAVE_GUILE_DIR=/home/tell/build/gwave2-20070301/src
 
 
 
