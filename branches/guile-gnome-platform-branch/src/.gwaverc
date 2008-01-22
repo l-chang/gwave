@@ -1,0 +1,33 @@
+;-*- mode: scheme -*-
+
+(dbprint "in my experimental .gwaverc\n")
+
+(debug-enable 'debug)
+(read-enable 'positions)
+
+; example of loading additional modules of guile code.
+; this particular one creates another menu item.
+(use-modules 
+ (app gwave extra-menus)
+ (app gwave utils)
+)
+
+; Uncomment this to turn off tooltips (popup hints on buttons).
+;(gtk-tooltips-disable gwave-tooltips)
+
+; Number of initial wave panels to create.
+(set! initial-panels 2)
+
+; wavepanel type 0=original, tall, with min/max labels.  Good for analog.
+;                1=short, no extra labels. Fit more panels for digital.
+; 0 is the default.
+(set! default-wavepanel-type 0)
+
+(add-hook! 
+ new-wavefile-hook
+ (lambda (df)
+   (let ((du (find-dotupper (wavefile-file-name df))))
+     (if du
+	 (wavefile-set-tag! df du)))))
+
+(dbprint "experimental .gwaverc done\n")

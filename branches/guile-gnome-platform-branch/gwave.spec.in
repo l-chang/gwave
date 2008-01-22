@@ -1,0 +1,78 @@
+# Note that this is NOT a relocatable package
+%define ver @VERSION@
+%define rel 1
+%define prefix /usr
+
+Name: gwave
+Summary: GPLed Analog Waveform Viewing Environment
+Version: %ver
+Release: %rel
+Source: http://geda.seul.org/dist/gwave-%ver.tar.gz
+Group: Applications/Engineering
+BuildRoot: /tmp/gwave-%ver-build
+Copyright: GPL
+Packager: Steve Tell <steve@telltronics.org>
+URL: http://www.geda.seul.org/tools/gwave/index.html
+Distribution: gwave
+Requires: gtk+ >= 1.2.3
+Requires: glib >= 1.2.3
+Requires: guile >= 1.6
+Requires: guile-gtk >= 1.2
+Docdir: %{prefix}/share/doc
+
+%description
+
+Gwave is a waveform viewer, intended originaly for displaying the output 
+of analog simulators such as spice, but also useful for other purposes.
+Gwave can read tabluar ascii files in additionto the specialized output
+files from Spice3, NGSpice, and Hspice.  It displays the data as 2-D plots,
+and allows for scrolling, zooming, and measuring the waveforms.
+
+Install gwave if you need 2-D interactive display of analog waveforms or
+other tabluar data.
+
+%changelog
+* Mon Dec  19 2003 Steve Tell <steve@telltronics.org>
+- updates for Redhat 9, gwave-20031224
+
+* Mon Aug  4 2003 Steve Tell <steve@telltronics.org>
+- updates for Redhat 9, gwave-20030804
+
+* Thu Nov 23 2000 Steve Tell <steve@telltronics.org>
+- Created spec file for first RPM.
+
+%prep
+%setup -n gwave-%ver
+
+%build
+./configure --prefix=%{prefix}
+make 
+
+%install
+make prefix=$RPM_BUILD_ROOT/%{prefix} mandir=$RPM_BUILD_ROOT/%{prefix}/share/man/ install
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%post
+
+%postun
+
+%files
+%defattr(-, root, root)
+
+%{prefix}/bin/gwave
+%{prefix}/bin/gwave-exec
+%{prefix}/bin/gwaverepl
+%{prefix}/bin/sp2sp
+%{prefix}/share/guile/app/gwave
+%{prefix}/share/man/man1/*
+# %config %{prefix}/share/guile/app/gwave/system.gwaverc
+
+%doc AUTHORS COPYING ChangeLog
+%doc INSTALL NEWS README FAQ
+%doc doc/sp2sp.sgml doc/spice3.txt
+%doc doc/hspice.txt doc/hspice-output.txt
+%doc doc/gwave-concepts.txt  doc/gwave-procedures.txt
+%doc doc/gwave-hooks.txt     doc/gwave-variables.txt
+

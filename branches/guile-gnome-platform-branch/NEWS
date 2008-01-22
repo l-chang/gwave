@@ -1,0 +1,136 @@
+Gwave NEWS --- history of user-visible changes.  -*- text -*-
+
+New in 20051222
+- full-height vertical scrollbar appears if the total height of all
+panels becomes larger than the window.
+- new panel type "jumbo" stays larger even when things get crowded
+- most deprecated guile calls removed.  Guile 1.6 or later is now required.
+
+New in 20050928
+- ALPHA RELEASE: may crash.  do not rely on for production use.
+- handling of multi-sweep datafiles
+- vertical scrollbars on label/measure area in each wavepanel make handling
+large numbers of waveforms easier.
+
+New in 20031202
+- Got docstring extraction from C source to .txt files in doc directory working again
+- applied submitted patch that cleans up warnings from gcc3 about multiline text strings in C code
+
+New in 20030917
+- bugfixes to make the new print/plot stuff work better
+- path to working gnu graph found by configure is passed to scheme code
+
+New in 20030804
+- major new work on print/plot output, gnugraph and gnuplot backends
+- simple data-export function 
+
+New in 20021113
+- tiniest bugfix to accconfig.h: left some CVS-conflict junk behind
+- missing files src/xsnarf.h, src/xguile-snarf added
+- Now a useful snapshot, while 20020419 didn't quite work.
+
+New in 20020419:
+- minor bugfixes
+- better handling of really huge hspice files
+
+New in 20020122:
+- fix RPM building and other minor build issues
+
+New in 20020114:
+- restore ability to compile with guile-1.3.4
+
+New in 20020109:
+- interactive Y-zoom and XY-area zoom added (see Readme)
+- zoom-to-exact-size dialog box added
+
+New in 20011021:
+- better measurement: value at both cursors or difference in values at cursors
+- enhanced handling of log scales
+- yet more file-reading improvements and general bug fixes
+
+New in 20001123:
+- Saving wave and panel configuration as guile scripts.
+- Executing guile scripts from menu or command line (-s <script> option)
+- Remote control using the gwave-exec and gwaverepl utilities
+
+New in 20001004:
+- Spice3/Ngspice rawfile improvements: binary files now work!
+- Other minor file-reading improvements.
+- spice source code to examples for which I could still find it.
+
+New in 20001004:
+- Major improvements to handling of binary files produced by HSPICE.
+- Overhaul of input of spice3/ngspice raw files; more robust and tolerant
+  of complex numbers.
+- User interface improvements: tooltips added.  User's .gwaverc no longer
+  required to do lots of standard setup.  system.gwaverc can be copied
+  to $HOME/.gwaverc and edited to taste.
+- sp2sp utility included for converting any spice file readable by gwave into
+  a convenient tabular ascii format.
+
+New in 20000518:
+- Logarithmic scales working on both X and Y axis.
+
+New in 20000509:
+- First public guile/guile-gtk release.
+- Popup menu on visible-wave button can activate per-waveform dialog box
+- Logarithmic scale on Y axis working; on X axis it isn't quite there yet.
+
+New in 20000108:
+- Merged in guile and guile-gtk; the GUI is mostly written in guile now.
+- Some additional improvements to reading of HSPICE input.  Reading partial
+files from simulations still in progress works for ascii .tr0 files.
+
+New in 1990716:
+Improved handling of HSPICE ascii format in libspicefile - tested on files
+from 98.4 on HP-UX and Solaris.
+
+New in 19990601:
+- Changed version naming scheme to one based on the date, rather than a number
+that suggests some sort of progress on the scale from 0.0 to 1.0.
+- Deleting and reloading waveform files
+- Detects Gtk 1.0 vs Gtk 1.2, builds on either.  
+(assumes that Gtk+-1.1.x is like 1.2, which may even be correct somtimes)
+- New structure for file-reading code uses a library libspicefile.a, which I
+also use in some other tools.
+- Should handle HSPICE AC analysis files without ".options probe" better.
+
+known bugs and limitations in 19990601:
+- panel setup after adding waveforms may not always be right, in particular
+after adding first waveform to a panel.  If the horizontal scale looks bogus,
+try "zoom all."
+- Although it can read HSPICE AC analysis files that have complex variables,
+it doesn't display those variables correctly yet.  Can't read spice3 or spice2
+AC analysis rawfiles containing complex variables.
+- I've had some trouble with my adaptation of the spice2 file reader.
+- Doesn't always redraw after reloading a waveform file, do zoom all to fix.
+
+New in 0.0.6:
+- Inserting/deleting waveform panels.
+- added right-button popup menu to waveform panels
+- The compile/install process now uses automake and autoconf to generate
+  the familiar "configure" script
+- An attempt at placing the variable list windows in a more convenient position
+in relation to the main window.  Getting this perfect under all window managers
+is a losing proposition.
+
+New in 0.0.5:
+- Fixed bug in reading hspice files with lots of columns
+- displays signal name list window for files read from the command line.
+  (note: it will probably be behind the main window)
+- incorporated code contributed by Jeff Dionne for reading spice2 rawfiles
+
+New in 0.0.4:
+- Fixed bug and/or warning when first waveform is added to display
+- Ability to drag vertical bar cursors around, in addition to click-to-place
+- Added zoom-to-cursor function; if both cursors have been placed,
+	zooms so that the time between the cursors fills the display.
+- Added zoom-to-window function.  Select this menu option, then
+	press/drag/release mouse button 1 to indicate a region of the X
+	axis that then zooms to fill the display.
+
+New in 0.0.3:
+- Load multiple files at once, either from the command line or 
+interactively.
+- Some operations are moved to pulldown menus.
+

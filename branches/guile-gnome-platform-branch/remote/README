@@ -1,0 +1,20 @@
+
+gwave-exec sends a single guile-scheme expression to a running
+gwave process, where it is evaluated and the result returned.
+
+gwaverepl is an interactive read-evaluate-print loop, sending multiple
+expressions can be sent to gwave for evaluation.  It can be compiled
+with readline.
+
+Comunication with the running gwave is through the X server.  The
+protocol used is borrowed from the scwm window manager.  It could
+probably use to be extended a bit.  Multiple gwave processes on the
+same X server are not supported well.  (ok, not supported at all.)
+
+Using the X server for interprocess communication may not be as
+familiar as using TCP/IP, nor as trendy as things like CORBA, but it
+does exactly what we need as far as security: if you can connect to
+the X server, you can control gwave and cause it to execute arbitrary
+scheme code.  Otherwise, not.
+
+

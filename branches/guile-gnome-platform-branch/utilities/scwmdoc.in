@@ -1,0 +1,1298 @@
+#!@PERL@ -w
+# $Id: scwmdoc.in,v 1.1 2000-05-19 06:51:06 sgt Exp $ -*- perl -*-
+# scwmdoc
+# Copyright (C) 1998-1999 Greg J. Badros
+#
+# scwmdoc pulls out the SCWM_PROC declarations and comments
+# from a SCWM .c source file and processes them to create
+# documentation
+#
+# Usage: perl scwmdoc <filenames-to-extract-from>
+#
+# e.g.,
+#
+# perl scwmdoc *.c
+#
+# Purpose:
+# Extract documentation from comments in C source files
+# and generate a plaintext listing of the procedures, and
+# DocBook SGML output to create parts of the Scwm manual.
+#
+# Note that this script does lots of important error checking, and
+# produces error and warning messages that look like grep, so emacs'
+# compile-mode (and probably grep-mode) can be used to find problems
+# with the documentation using M-x compile (C-x c) scwmdoc *.c >
+# /dev/null then M-x next-error (C-x `)
+#
+# Usage:
+#  from ~lgjb/scwm
+# ./utilities/dev/scwmdoc -o doc/scwm scwm/*.c > doc/scwm-procedures.txt
+# or from Emacs, for warnings only
+# ./utilities/dev/scwmdoc scwm/*.c > /dev/null
+#
+# See also extract.scm, an implementation in guile-scheme instead of perl
+# written by Harvey Stein
+# Main differences:  that code is ~7x slower
+#                    perhaps not as well tested
+#                    more and better abstractions in the scheme version
+#                    It uses guile (easier acceptance by guile-devs, perhaps)
+#                    and it's pretty out of date now --03/24/99 gjb
+#
+# TODO: make concept section id-s use a prefix (e.g., shadow-factor user-option
+# variable's doc id conflicts with the shadow-factor getter primitive)
+
+require 5.004;  # uses "for my $var"
+use strict;
+use constant TRUE => (1==1);
+use constant FALSE => (1==0);
+use File::Basename;
+
+my $getopts_option_letters = 'hqQDo:sCd:V:O:H:N:nP:SF';
+use vars qw($opt_h $opt_q $opt_Q $opt_D $opt_o $opt_s $opt_C $opt_F
+	    $opt_d $opt_V $opt_O $opt_H $opt_N $opt_n $opt_P $opt_S);
+
+my $scwm_version = "pre-1.0";
+
+sub script_usage ( ) {
+  print "@_\nUsage: $0 [-$getopts_option_letters]
+-q       Be reasonably quiet-- do not warn about spacing or purpose strings
+-Q       Be completely QUIET-- no warnings (still prints errors)
+-D       Debugging output on
+-V file  Output user-options scheme module to file [obsoleted] -- skip if not given
+-O file  Output user-options documentation to file -- skip if not given
+-H file  Output user hooks documentation to file -- skip if not given
+-N file  Output concepts documentation to file -- skip if not given
+-o file  Send sgml output to file -- no sgml output unless this is given
+-s       Run ispell on the comments and reports warnings for its responses
+-C       Only output concepts chapters
+-n       No warning for problems with comments
+-d URL  Set scwmdir source code base to path (e.g., file:///usr/local/src/scwm)
+-P prefix Set package prefix (e.g., -PCL to use CL_* instead of SCWM_*)
+-S       Skip the procedures chapters-- makes it much faster to convert to HTML
+-F       Skip all procedures except those starting with \"F\" for fast check on output
+";
+  exit 0;
+}
+
+
+my $prefix = "SCWM";
+my $pkg_name = basename($ENV{PWD});
+my $fDebug = FALSE;
+my $fQuiet = FALSE;
+my $fReallyQuiet = FALSE;
+my $fWarnIfNoComment = TRUE;
+
+# Text from sgml files making up the book
+my $ref_header_sgml;
+my $ref_concepts_intro_sgml;
+my $ref_hooks_intro_sgml;
+my $ref_vars_intro_sgml;
+my $ref_proc_bygroup_intro_sgml;
+
+my $fAddedStyleHeader = FALSE;
+
+use Getopt::Std;
+getopts($getopts_option_letters);
+
+script_usage() if ($opt_h);
+
+#print STDERR "opt_D = $opt_D, ", TRUE, "\n";
+
+$fDebug = TRUE if $opt_D;
+$fQuiet = TRUE if $opt_q || $opt_Q;
+$fReallyQuiet = TRUE if $opt_Q;
+$fWarnIfNoComment = FALSE if $opt_n;
+$prefix = $opt_P if $opt_P;
+
+# link directly to the cvsweb checkout of the file;
+# I could even make this go to the version that the docs were generated
+# from, but I think it's better to look at the latest version for now
+# (at least until 1.0)
+my $scwmdir = $opt_d || "http://scwm.mit.edu/cgi-bin/cvsweb.new/~checkout~";
+
+# maps from a procedure name to a hash
+# containing "usage", "purpose", "comment",  "markup", "file", "line"
+my %procedure = ();
+
+# maps from a filename to a list reference containing the names of 
+# primitives defined in that file
+my %file_funcs = ();
+
+# Maps from concepts/hooks/vars to a hash containing
+# "comment", "markup", "file", "line"
+my %concepts = ();
+my %hooks = ();
+my %vars = ();
+
+# list of the argument names in the current C function
+my @argnames = ();
+
+# Current scheme environment
+# i.e., the last define-module seen, reset at new files
+my $current_module = "";
+
+# The last public scheme variable definition
+# Useful for ";;;**VAR"  w/o explicit name in .scm files
+my $last_public_scheme_definition = "";
+
+use FileHandle;
+use IPC::Open2;
+
+# dictionary of scwm-specific words, in the same directory as this script
+(my $dictionary = $0)=~s#[^/]*$#dictionary#;
+
+my $pid = open2( \*ISPELL_RESPONSE,
+		 \*ISPELL, "ispell -a -p $dictionary") or die "Could not open \'ispell -a\' pipe: $!";
+ISPELL->autoflush();
+
+MAINLOOP:
+while (<>) {
+  if (eof) {
+    close(ARGV);
+    $current_module = "";
+    next;
+  }
+  my $fScheme = ($ARGV =~ /.scm$/);
+  if (m/^${prefix}_[IW]?PROC/o) {
+    my $header = $_;
+    my $filename = $ARGV;
+    my $line = $.;
+    while (defined($_ = <>) && $_ !~ m/^\s*\{/) {
+      if (eof) {
+	close(ARGV);
+	$current_module = "";
+	redo MAINLOOP;
+      }
+      $header .= $_;
+    }
+    $header .= $_;
+    ProcessHeader($filename, $line, $header);
+  } elsif (m%/\*\*?\s*SCWM[_-]?VALIDATE\s*:\s*(.*)\s*\*/%) {
+    my $argslist = $1;
+    $argslist =~ s/\n/ /g;
+    $argslist =~ s/[ \t]+//g;
+    @argnames = split(/,/, $argslist);  # this array is for comparison w/ C code
+  } elsif (m/^\s*scm_wrong_type_arg\s*\(\s*FUNC_NAME\s*,\s*(\d+)\s*,\s*(\w+)\s*\)/) {
+    my $argnum = $1; # 1-based
+    my $argname = $2;
+    check_arg_name_number_match("scm_wrong_type_arg",$1,$2,\@argnames);
+  } elsif (m/^\s*SCWM_WRONG_TYPE_ARG\s*\(\s*(\d+)\s*,\s*(\w+)\s*\)/) {
+    my $argnum = $1; # 1-based
+    my $argname = $2;
+    check_arg_name_number_match("SCWM_WRONG_TYPE_ARG",$1,$2,\@argnames);
+  } elsif (m/^\s*(VALIDATE_[^\(]*)\s*\(\s*(\d+)\s*,\s*(\w+)\s*/) {
+    my $validate_fn = $1;
+    my $argnum = $2; # 1-based
+    my $argname = $3;
+    check_arg_name_number_match($1,$2,$3,\@argnames);
+#  } elsif (m/${prefix}_HOOK\s*\(\s*([^,]+)\s*,\s*\"([^\"]+)\"\s*,\s*(\d+)\s*,\s*(\".*?[^\\]\")\s*\)\s*;/o) {
+  } elsif (m/${prefix}_HOOK\s*\(\s*([^,]+)\s*,\s*\"([^\"]+)\"\s*,\s*(\d+)\s*,\s*$/o) {
+    my $c_hookname = $1;
+    my $scheme_hookname = $2;
+    my $num_args = $3;
+    my $filename = $ARGV;
+    my $line = $.;
+    my $body = <>;
+#    print STDERR "Got hook body = $body\n";
+    if (!CNameMatchesSchemeName($c_hookname,$scheme_hookname) &&
+        ($c_hookname !~ m/^x_\S+_hook/ || 
+	 !CNameMatchesSchemeNameIgnoreCase($c_hookname,$scheme_hookname))) {
+      # We permit the X-foo-hook's to mismatch as long as only the case is different
+      print STDERR "$ARGV:$.:**** Scheme hook name `$scheme_hookname' does not match `$c_hookname'\n";
+    }
+    if ($body !~ m%^\s*\"(.*)$%) {
+      $_ = $body;
+      print STDERR "$ARGV:$.:**** Hook $scheme_hookname is missing docstring\n";
+      redo MAINLOOP;
+    }
+#    $body = ReadRestOfComment($1);
+    if (!($body =~ s%\"\s*\)\s*;\s*$%%m)) {
+      $body = ReadRestOfDocstring($filename,$line,"$1\n");
+    } else { 
+      # Handle single-line docstrings
+      $body =~ s%^\s*\"%%;
+    }
+    if ($fDebug) {
+      print STDERR "GOT hook $c_hookname,$scheme_hookname at ",
+          " $filename:$line body:\n$body\n";
+    }
+    ProcessHookComment($filename, $line, $scheme_hookname, $num_args, $body);
+  } elsif (m/${prefix}_VAR(?:_READ_ONLY|_INIT(?:_PERMANENT)?)\s*\(\s*([^,]+)\s*,\s*\"([^"]+)"/o) {
+    #FIXGJB: not ideal, since macro needs to end on same line
+    # or else the comment will not get found --02/11/99 gjb
+    my $c_varname = $1;
+    my $scheme_varname = $2;
+    my $filename = $ARGV;
+    my $line = $.;
+    my $body = <>;
+#    print STDERR "Found var $c_varname\n";
+    if ($c_varname ne "NULL" && 
+	!CNameMatchesSchemeName($c_varname,$scheme_varname)) {
+      print STDERR "$ARGV:$.:**** Scheme variable name `$scheme_varname' does not match `$c_varname'\n";
+    }
+    if ($body !~ m%/\*\*\s*(.*)%) {
+      $_ = $body;
+      print STDERR "$ARGV:$.:**** Variable $scheme_varname is missing /** description comment\n";
+      redo MAINLOOP;
+    }
+    $body = ReadRestOfComment($1);
+    if ($fDebug) {
+      print STDERR "GOT variable $c_varname,$scheme_varname at ",
+          " $filename:$line body:\n$body\n";
+    }
+    ProcessVarComment($filename, $line, $scheme_varname, $body);
+  } elsif ($fScheme && m%^\(define-module\s+(\([^\)]*\))%) {
+    $current_module = $1;
+  } elsif ($fScheme && m%^\(define\*?-public\s+\(([^\s\)]+)%) {
+    my $scheme_header = $_;
+    my $proc_name = $1;
+    my $filename = $ARGV;
+    my $line = $.;
+    # Keep reading lines until eof or a paren in leftmost column
+    while (defined($_ = <>) && $_ !~ m/^\(/) {
+      $scheme_header .= $_;
+      if (eof) {
+	close(ARGV);
+	$current_module = "";
+      }
+    }
+    ProcessSchemeHeader($filename, $current_module, $proc_name, $line, $scheme_header);
+    redo if (defined($_)); # start loop over w/o reading next line
+  } elsif ($fScheme && m%^\(define-string-matcher\s+(\S+)%) {
+    my $scheme_header = $_;
+    my $proc_name = $1;
+    my $filename = $ARGV;
+    my $line = $.;
+    # Keep reading lines until eof or a paren in leftmost column
+    while (defined($_ = <>) && $_ !~ m/^\(/) {
+      $scheme_header .= $_;
+      if (eof) {
+	close(ARGV);
+	$current_module = "";
+      }
+    }
+    ProcessSchemeExtension($filename, $current_module, $proc_name, $line, $scheme_header);
+    redo if (defined($_)); # start loop over w/o reading next line
+  } elsif ($fScheme && m%^\(add-(boolean-style|window-style|window-hint)-option\s+\#:(\S+)%) {
+    my $filename = $ARGV;
+    my $line = $.;
+    ProcessWindowStyleOption($filename,$line,$1,$2);
+  } elsif ($fScheme && m%^\(define-public\s+([^\s\)]+)%) {
+    # this is for variables, so we don't need the optional * above
+    $last_public_scheme_definition = $1;
+  } elsif (m%(?:/|^;;;\s*)\*\*\s*(\w[^:\n\s]*)(?::\s*(.*?))?\s*$%) {
+    # matches a /** CHAPTER: DESCRIPTION (e.g., CONCEPT) comment
+    my $type = $1;
+    my $description = $2;
+    if (!defined($description) || $description eq "") {
+      if ($type eq "VAR" &&
+	  $last_public_scheme_definition ne "") {
+	$description = $last_public_scheme_definition;
+      } else {
+	print STDERR "$ARGV:$.:**** Missing \": section\" in /**$type marker\n";
+	next;
+      }
+    }
+    if ($fDebug) {
+      print STDERR "GOT $type, $description\n";
+    }
+    if ($type eq "" || $description eq "") {
+      print STDERR "$ARGV:$.:**** Improper /**-style comment: got type = \`$type\', description = \`$description\'.\n";
+      next;
+    }
+    if (uc($type) eq "HOOK") {
+      my $filename = $ARGV;
+      my $line = $.;
+      my $body = ReadRestOfComment("",$fScheme);
+      print STDERR "**** $filename:$line: warning -- old-style HOOK documentation\n";
+      ProcessHookComment($filename, $line, $description,-1,$body);
+    } elsif (uc($type) eq "CONCEPT") {
+      my $filename = $ARGV;
+      my $line = $.;
+      my $body = ReadRestOfComment("",$fScheme);
+      ProcessConceptComment($filename, $line, $description,$body);
+    } elsif (uc($type) eq "VAR") {
+      my $filename = $ARGV;
+      my $line = $.;
+      my $body = ReadRestOfComment("",$fScheme);
+      ProcessVarComment($filename, $line, $description, $body);
+    } else {
+      print STDERR "$ARGV:$.:**** Unrecognized type for /**-style comment = \`$type\'\n";
+      next;
+    }
+  } elsif (m%^\s*$%) {
+    $last_public_scheme_definition = "";
+  }
+}
+
+my $sgml_name = ""; # "$pkg_name.sgml";
+if ($opt_o) {
+  $sgml_name = $opt_o;
+  $sgml_name .= ".sgml" if ($sgml_name !~ /\..+ml$/);
+  my $dir = dirname $sgml_name;
+
+  open (MARKUP_OUT,">$sgml_name") or die "Could not write to $sgml_name: $!";
+  chop (my $date = `date +"%d %B %Y"`);
+  chop (my $year = `date +"%Y"`);
+
+  $ref_header_sgml = ReadSgml("$dir/src/ref-header.sgml");
+  $ref_concepts_intro_sgml = ReadSgml("$dir/src/ref-concepts-intro.sgml");
+  $ref_hooks_intro_sgml = ReadSgml("$dir/src/ref-hooks-intro.sgml");
+  $ref_vars_intro_sgml = ReadSgml("$dir/src/ref-vars-intro.sgml");
+  $ref_proc_bygroup_intro_sgml = ReadSgml("$dir/src/ref-proc-bygroup-intro.sgml");
+
+  $ref_header_sgml =~ s/\@DATE\@/$date/g;
+  $ref_header_sgml =~ s/\@YEAR\@/$year/g;
+  $ref_header_sgml =~ s/\@VERSION\@/$scwm_version/g;
+  
+  print MARKUP_OUT "$ref_header_sgml";
+}
+
+
+CONCEPTS_CHAPTER:
+
+# Now output concepts chapter
+if ($opt_o) {
+  DoneWindowStyleOptions(); # close the markup for window styles
+
+  print MARKUP_OUT <<START_CONCEPTS_CHAPTER
+  <chapter>
+    <title>Concepts</title>
+      <sect1 id="Concepts-Introduction"><title>Introduction</title>
+	$ref_concepts_intro_sgml
+      </sect1>
+START_CONCEPTS_CHAPTER
+   ;
+  foreach my $concept (sort { lc($a) cmp lc($b) } keys %concepts ) {
+    my $markup = $concepts{$concept}{markup};
+    my $concept_id = ScmIdToSgmlId($concept);
+    $concept_id =~ tr/ _/--/;
+    print MARKUP_OUT "    <sect1 id=\"$concept_id\"><title>$concept</title><para>\n$markup
+    </para></sect1>\n";
+  }
+
+  print MARKUP_OUT "  </chapter>\n";
+}
+
+if ($opt_C) {
+  goto SGML_TRAILER;
+}
+
+# Now output hooks chapter
+if ($opt_o) {
+  print MARKUP_OUT <<START_HOOKS_CHAPTER
+  <chapter>
+    <title>Hooks</title>
+      <sect1 id="Hooks-Introduction"><title>Introduction</title>
+	$ref_hooks_intro_sgml
+      </sect1>
+START_HOOKS_CHAPTER
+  ;
+  foreach my $hook (sort { lc($a) cmp lc($b) } keys %hooks ) {
+    my $markup = $hooks{$hook}{markup};
+    my $numargs = $hooks{$hook}{numargs};
+    my $args_text = "$numargs args";
+    if ($numargs == 0) {
+      $args_text = "thunk";
+    } elsif ($numargs == 1) {
+      $args_text = "1 arg";
+    }
+    print MARKUP_OUT "    <sect1 id=\"$hook\"><title>$hook ($args_text)</title><para>\n$markup
+    </para></sect1>\n";
+  }
+  print MARKUP_OUT "  </chapter>\n";
+}
+
+
+# Now output vars chapter
+if ($opt_o) {
+  print MARKUP_OUT <<START_VARS_CHAPTER
+  <chapter>
+    <title>User variables</title>
+      <sect1 id="Vars-Introduction"><title>Introduction</title>
+	$ref_vars_intro_sgml
+      </sect1>
+START_VARS_CHAPTER
+  ;
+  foreach my $var (sort { lc($a) cmp lc($b) } keys %vars ) {
+    my $markup = $vars{$var}{markup};
+    my $sgmlid = ScmIdToSgmlId($var);
+    print MARKUP_OUT "    <sect1 id=\"$sgmlid\"><title>$var</title><para>\n$markup
+    </para></sect1>\n";
+  }
+  print MARKUP_OUT "  </chapter>\n";
+}
+
+if ($opt_S) {
+  goto SGML_TRAILER;
+}
+
+PROCEDURES_BY_GROUP:
+
+# Now output primitives by defined-in file
+if ($opt_o) {
+  print MARKUP_OUT <<START_PROC_BY_FILE
+  <chapter>
+    <title>Procedure Synopses by Group</title>
+      <sect1 id="Procs-ByGroup-Introduction"><title>Introduction</title>
+	$ref_proc_bygroup_intro_sgml
+      </sect1>
+START_PROC_BY_FILE
+  ;
+  
+  foreach my $file (sort { lc($a) cmp lc($b) } keys %file_funcs) {
+    my @prims = @{$file_funcs{$file}};
+    if ($opt_F) {
+      # keep only primitives that start with "F"
+      @prims = grep(m/^f/i, @prims);
+    }
+    if (scalar(@prims) > 0) {
+      print MARKUP_OUT "    <sect1><title>$file</title> <itemizedlist>\n";
+      foreach my $proc (sort { $procedure{$a}{line} <=> $procedure{$b}{line} } @prims ) {
+	my $markup = $procedure{$proc}{markup};
+	my $target = $procedure{$proc}{sgml_id};
+	my $primname = $procedure{$proc}{primname};
+	my $purpose = $procedure{$proc}{purpose};
+	my $markup_purpose = $procedure{$proc}{markup_purpose};
+	print MARKUP_OUT "      <listitem><para><link linkend=\"$target\"><function>$proc</function></link> -- $markup_purpose</para></listitem>\n";
+      }
+      print MARKUP_OUT "    </itemizedlist> </sect1>\n";
+    }
+  }
+  print MARKUP_OUT "  </chapter>\n";
+}
+
+PROCEDURES_CHAPTER:
+
+if ($opt_o) {
+  print MARKUP_OUT <<END_CHAP_HEAD
+  <chapter>
+    <title>Procedures in Alphabetical Order</title>
+END_CHAP_HEAD
+  ;
+}
+
+# This outputs the scwm-procedures.txt file to stdout
+foreach my $proc (sort { lc($a) cmp lc($b) } keys %procedure) {
+  my $usage = $procedure{$proc}{usage};
+  my $comment = $procedure{$proc}{comment};
+  my $file = $procedure{$proc}{file};
+  my $line = $procedure{$proc}{line};
+  my $markup = $procedure{$proc}{markup};
+  my $module = $procedure{$proc}{module};
+  print <<EOC
+$usage
+- $module
+$comment
+[From $file:$line]
+
+EOC
+  ;
+  if ($opt_o) {
+    next if $opt_F && $proc !~ m/^f/i;
+    print MARKUP_OUT $markup, "\n";
+  }
+}
+
+# End the procedures chapter
+if ($opt_o) {
+  print MARKUP_OUT "  </chapter>\n";
+}
+
+
+
+SGML_TRAILER:
+
+# Now output sgml trailer
+if ($opt_o) {
+  print MARKUP_OUT <<END_TRAILER
+</book>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+fill-column: 10000
+sgml-omittag:nil
+sgml-shorttag:t
+End:
+-->
+END_TRAILER
+  ;
+}
+
+if ($opt_V || $opt_O) {
+  my $file;
+  if ($opt_V) {
+    $file = $opt_V;
+    open(VAR_OUT,">$file") or
+      die "Could not open $file";
+    print STDERR "outputting user-options to $file\n";
+  }
+
+  if ($opt_O) {
+    $file = $opt_O;
+    open(VAR_DOC_OUT,">$file") or
+      die "Could not open $file";
+    print STDERR "outputting vars documentation to $file\n";
+  }
+  
+  if ($opt_V) {
+    print VAR_OUT <<EOC
+;;; AUTOMATICALLY-GENERATED BY extract-docs; DO NOT EDIT!
+(define-module (app scwm user-options))
+
+;; Each element of the list is \'(var-name comment setter getter)
+\(define-public user-options \(list
+EOC
+  ;
+  }
+  foreach my $var (sort { lc($a) cmp lc($b) } keys %vars ) {
+    my $comment = $vars{$var}{comment};
+    my $file = $vars{$var}{file};
+    my $line = $vars{$var}{line};
+    my $module = $vars{$var}{module};
+    # Output information for a user-option variable
+    print VAR_OUT "\'($var)\n" if $opt_V;
+
+    if ($opt_O) {
+      print VAR_DOC_OUT <<EOC
+$var
+- $module
+$comment
+[From $file:$line]
+
+
+EOC
+    ;
+    }
+  }
+  if ($opt_V) {
+    print VAR_OUT "))\n";
+    close VAR_OUT;
+  }
+  if ($opt_O) {
+    close VAR_DOC_OUT;
+  }
+}
+
+if ($opt_H) {
+  my $file = $opt_H;
+  open (HOOKS_OUT,">$file") or
+    die "Could not open $file";
+  print STDERR "outputting hooks to $file\n";
+
+  foreach my $hook (sort { lc($a) cmp lc($b) } keys %hooks ) {
+    my $comment = $hooks{$hook}{comment};
+    my $numargs = $hooks{$hook}{numargs};
+    my $file = $hooks{$hook}{file};
+    my $line = $hooks{$hook}{line};
+    my $module = $hooks{$hook}{module};
+
+    print HOOKS_OUT <<EOC;
+$hook ($numargs args)
+- $module
+$comment
+[From $file:$line]
+
+
+EOC
+  }
+
+  close HOOKS_OUT;
+}
+  
+
+if ($opt_N) {
+  my $file = $opt_N;
+  open (CONCEPTS_OUT,">$file") or
+    die "Could not open $file";
+  print STDERR "outputting concepts to $file\n";
+
+  foreach my $concept (sort { lc($a) cmp lc($b) } keys %concepts ) {
+    my $comment = $concepts{$concept}{comment};
+    my $file = $concepts{$concept}{file};
+    my $line = $concepts{$concept}{line};
+
+    print CONCEPTS_OUT <<EOC;
+$concept
+-
+$comment
+[From $file:$line]
+
+
+EOC
+  }
+
+  close CONCEPTS_OUT;
+}
+  
+
+use Text::Balanced;
+
+sub ProcessSchemeHeader( $$$$$ ) {
+  my ($filename, $module, $proc_name, $line, $header) = @_;
+  my @arglist;
+  my ($type,$rest) = ($header =~ m%^\((define\*?-public)\s+(.*)%s);
+  #  print STDERR "HEAD: $header\n";
+#  print STDERR "TYPE: $type\n";
+  #  print STDERR "REST: $rest\n";
+  my ($name_and_args,$after_formals) = Text::Balanced::extract_bracketed($rest,'(');
+#  print STDERR "NAA: $name_and_args\n";
+  #  print STDERR "AF: $after_formals\n";
+  my ($match) = ($name_and_args =~ m%\(\s*([^\s\)]+)%s);
+  my $comment = Text::Balanced::extract_delimited($after_formals,'"');
+#  print STDERR "COMMENT: $comment\n";
+#  print STDERR "---------------\n";
+
+  if ($fDebug) {
+    print STDERR "Handling $proc_name from $filename:$line\n";
+  }
+
+  if ($match ne $proc_name) {
+    print STDERR "$filename:$line:**** $match not same as $proc_name\n";
+    $proc_name = $match;
+    undef $comment;
+  }
+  if ($match =~ m%^\(%) {
+    $proc_name = substr($match,1);
+    # print STDERR "$filename:$line:**** $proc_name is not an ordinary define -- returns a lambda?\n";
+  }
+  if (!defined($comment)) {
+    if ($fWarnIfNoComment) {
+      print STDERR "$filename:$line:**** $proc_name: could not find comment\n";
+    }
+    $comment = "No documentation supplied.";
+  }
+#  my $usage = sprintf "(%s%s%s)", $proc_name, ($#arglist >= 0? " ":""),
+ #        join(" ",@arglist);
+  my $usage = $name_and_args;
+  # Remove leading and trailing quote
+  $comment =~ s/^\"(.*)\"$/$1/ms;
+  # Unquote quoted quotes (CRW:FIXME:GJB: are there other things we
+  # may need to unquote here?)
+  $comment =~ s/\\"/"/g;
+#  print STDERR "Scheme Proc: $proc_name\nArgs: @arglist\n$header\n";
+#  print STDERR "$usage\n\n$comment\n\n\n";
+
+  my $purpose = PurposeFromComment($comment,$filename,$line,$proc_name);
+
+  my $sgml_id = ScmIdToSgmlId($proc_name);
+
+  my $markup_purpose = MarkupComment($purpose);
+  my $markup_usage = MarkupUsage($usage);
+  my $markup_comment = MarkupComment($comment);
+  my $markup = CreateMarkupBody($proc_name, $sgml_id, $module,
+				$markup_usage, $markup_purpose, $markup_comment,
+				$filename, $line);
+
+  $procedure{$proc_name} = { usage => $usage,
+			     comment => $comment,
+			     purpose => $purpose,
+			     sgml_id => $sgml_id,
+			     module => $module,
+			     markup_purpose => $markup_purpose,
+			     markup_usage => $markup_usage,
+			     markup => $markup,
+			     file => $filename,
+			     line => $line,
+			   };
+
+  push @{$file_funcs{$filename}}, $proc_name;
+
+}
+
+
+# Currently only `define-string-matcher' is handled
+sub ProcessSchemeExtension( $$$$$ ) {
+  my ($filename, $module, $ext_name, $line, $header) = @_;
+  my @arglist;
+  my ($type,$rest) = ($header =~ m%^\(define-(string-matcher)\s+\S+\s+(.*)%s);
+  #  print STDERR "Rest = $rest\n";
+  my $comment = Text::Balanced::extract_delimited($rest,'"');
+
+  if ($fDebug) {
+    print STDERR "Handling extension $ext_name from $filename:$line\n";
+  }
+
+  if (!defined($comment)) {
+    if ($fWarnIfNoComment) {
+      print STDERR "$filename:$line:**** $ext_name: could not find comment\n";
+    }
+    $comment = "No documentation supplied.";
+  }
+
+  my $usage = "($ext_name)";
+
+  if ($type eq "string-matcher") {
+    $usage = "($ext_name STRING TYPE CASE-SENSITIVE?)";
+  }
+
+  # Remove leading and trailing quote
+  $comment =~ s/^\"(.*)\"$/$1/ms;
+  # Unquote quoted quotes (CRW:FIXME:GJB: are there other things we
+  # may need to unquote here?)
+  $comment =~ s/\\"/"/g;
+
+  my $purpose = PurposeFromComment($comment,$filename,$line,$ext_name);
+
+  my $sgml_id = ScmIdToSgmlId($ext_name);
+
+  my $markup_purpose = MarkupComment($purpose);
+  my $markup_usage = MarkupUsage($usage);
+  my $markup_comment = MarkupComment($comment);
+  my $markup = CreateMarkupBody($ext_name, $sgml_id, $module,
+				$markup_usage, $markup_purpose, $markup_comment,
+				$filename, $line);
+
+  $procedure{$ext_name} = { usage => $usage,
+			    comment => $comment,
+			    purpose => $purpose,
+			    sgml_id => $sgml_id,
+			    module => $module,
+			    markup_purpose => $markup_purpose,
+			    markup_usage => $markup_usage,
+			    markup => $markup,
+			    file => $filename,
+			    line => $line,
+			  };
+
+  push @{$file_funcs{$filename}}, $ext_name;
+
+}
+
+
+
+sub ProcessHeader( $$$ ) {
+  my ($filename, $line, $header) = @_;
+#  print STDERR "header = $header\n";
+#  print STDERR "filename = $filename\n";
+  my ($cprimname, $primname, $req, $opt, $var, $argslist,$space,$intspec,$comment_maybe) =
+    $header =~ m%^${prefix}_[IW]?PROC\s*\(\s*([^, \t]*),\s*\"([^\"]*)\"\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*\(([\d\s\w,()\n]*)\)(\s*),(?:[ \t]*([^\n]*?),\s*)?\s*(.*)$%so;
+
+#  print STDERR "argslist = $argslist\n";
+  if (!defined($comment_maybe)) { 
+    $comment_maybe = $intspec;
+  }
+#  print STDERR "comment_maybe = $comment_maybe\n";
+  if (defined($space)) {
+#    print STDERR "$filename:$line:****WARNING: better to use )) to close arg list\n";
+  }
+
+  if ($fDebug) {
+    print STDERR "Handing $primname from $filename:$line\n";
+  }
+
+  if (!defined($cprimname)) {
+    print STDERR "$filename:$line:****ERROR:could not parse argument list\n";
+    return FALSE;
+  }
+  my ($comment) = $comment_maybe =~ m%^\"(.*[^\\])\"\s*\)\s*\#define%s;
+  my ($fname_define) = $header =~ m%^\s*\#\s*define\s+FUNC_NAME\s+(.*?)\s*$%m;
+
+
+  if (defined($comment)) {
+    if ($comment =~ m/[^\\]\"/) {
+      print STDERR "$filename:$line:****ERROR:comment includes an un-escaped double-quote\n";
+    }
+    # Unquote quoted quotes (CRW:FIXME:GJB: are there other things we
+    # may need to unquote here?)
+    $comment =~ s/\\"/"/g;
+#    print STDERR "comment = $comment\n";
+  }
+  
+  my $clean_argslist = $argslist;
+  $clean_argslist =~ s/\bARG_UNUSED\s*\(\s*([^\)]*)\s*\)/$1/g;
+  $clean_argslist =~ s/\bARG_IGNORE\s*\(\s*([^\)]*)\s*\)/$1/g;
+#  print STDERR "clean arglist = $clean_argslist\n";
+  my $cremovals = ($clean_argslist =~ s/\bSCM\b//g);
+  $clean_argslist =~ s/\n/ /g;
+  $clean_argslist =~ s/[ \t]+//g;
+  @argnames = split(/,/, $clean_argslist);  # this array is for comparison w/ C code
+  $clean_argslist =~ s/_[pP]\b/?/g;
+  $clean_argslist =~ s/_[xX]\b/!/g;
+  $clean_argslist =~ s/_/-/g;
+  my @args = split(/,/, $clean_argslist);
+
+  # now create a hash of the names for testing words in the comment
+  # whether they are referring to formal parameters
+  my %argnames = map { uc($_) => 1} @args;
+
+  if (!CNameMatchesSchemeName($cprimname, $primname)) {
+    if (!$fReallyQuiet) {
+      print STDERR "$filename:$line:**** $cprimname: scheme primitive name `$primname' does not match `$cprimname'\n";
+    }
+  }
+
+  if ($cremovals != scalar(@args) ) {
+    print STDERR "$filename:$line:**** $cprimname: types inconsistency (all args should be type SCM)\n";
+  }
+
+  if (($req + $opt + $var) != scalar(@args)  ) {
+    print STDERR "$filename:$line:**** $cprimname: argument inconsistency -- check #s of arguments\n";
+  }
+
+  if ($var != 0 && $var != 1) {
+    print STDERR "$filename:$line:**** $cprimname: number of variable arguments == $var -- why?\n";
+  }
+
+  my $fAlreadyWarnedAboutNoComment = FALSE;
+
+  if (!defined($comment) || $comment eq "") {
+    if (!$fReallyQuiet && $fWarnIfNoComment) {
+      $fAlreadyWarnedAboutNoComment = TRUE;
+      print STDERR "$filename:$line:**** $cprimname: comment missing\n";
+#      print STDERR "comment_maybe = $comment_maybe\n";
+    }
+    $comment = "";
+  }
+
+  if (!defined($fname_define)) {
+    print STDERR "$filename:$line:**** $cprimname: \`#define FUNC_NAME s_$cprimname\' is missing\n";
+  } elsif ($fname_define ne "s_".$cprimname) {
+    print STDERR "$filename:$line:**** $cprimname: \`#define FUNC_NAME s_$cprimname\' does not match function name \`$fname_define\'\n";
+  }
+
+  my @required_args = @args[0..($req-1)];
+  my @optional_args = @args[$req..($req + $opt - 1)];
+  my @var_args = @args[($req+$opt)..($req+$opt+$var-1)];
+
+  my $arg_listing = "";
+  if ($#args >= 0) {
+    $arg_listing .= "@required_args";
+    if ($#optional_args >= 0) {
+      $arg_listing .= " #&optional @optional_args";
+    }
+    if ($#var_args >= 0) {
+      $arg_listing .= " . @var_args";
+    }
+  }
+
+  my $usage = sprintf "(%s%s%s)", $primname, ($arg_listing ne ""? " ":""),
+  $arg_listing;
+
+  my %upcase_words = ();
+
+  # check to make sure all all-uppercase words in the comment
+  # refer to formals
+  foreach my $word (split /[^-+%?\$!\w_\"]+/, $comment) {
+    if ($word =~ /^[A-Z][-%A-Z0-9_+?!]+$/) {
+      if (!defined($argnames{$word})) {
+	next if $word eq "X11";  # do not require this word to be an argumet
+	if (!$fReallyQuiet) {
+	  print STDERR "$filename:$line:**** $cprimname: all-uppercase word \`$word\' does not match an argument\n";
+	}
+      }
+    }
+  }
+
+  # check to make sure all formals are referred to in the comment
+  foreach my $formal (keys %argnames) {
+    if ($comment !~ /\Q$formal\E/) {
+      if (!$fReallyQuiet && $fWarnIfNoComment && !$fAlreadyWarnedAboutNoComment) {
+	print STDERR "$filename:$line:**** $cprimname: formal $formal not mentioned in comment\n";
+      }
+    }
+  }
+
+  my $purpose = PurposeFromComment($comment,$filename,$line,$cprimname);
+
+  # Clean up spacing in $comment -- use \n instead of $ since
+  # the latter matches before the new line
+  $comment =~ s/^\s*\n//mg;
+  # delete whitespace-only lines in old-comment, so we don't get a warning
+  # on them -- they're useful to avoid Emacs's reindent-paragraph
+  # from causing the synopsis sentence to have extra words tacked onto the end
+
+  my $old_comment = $comment;
+
+  $comment =~ s/^\s+//mg;
+  if ($comment ne $old_comment) {
+    if (!$fQuiet) {
+      print STDERR "$filename:$line:**** $cprimname: leading spaces (indentation) is being omitted\n";
+    }
+  }
+
+  # Clean up trailing space, but don't warn about it
+  $comment =~ s/\s+$//mg;
+
+  IspellText($filename,$line,$comment) if $opt_s;
+
+  my $sgml_id = $cprimname;
+  $sgml_id =~ s/_/-/g;
+
+  # Now want to do the markup of $comment, and set $markup_comment
+  # FIXGJB: fold into testing, above
+  my $markup_comment = MarkupComment($comment);
+
+  # Mark formals within comment with <parameter> tag
+  # must sort by length so longer formals get replaced first
+  # note that it is essential to convert to lowercase as we
+  # go, otherwise shorter substitutions will be made inside
+  # an already-substitued <param> </param> pair
+  foreach my $formal (sort { length($b) <=> length($a) } keys %argnames) {
+    $markup_comment =~ s%(\Q$formal\E)%<parameter>\L$1\E</parameter>%g;
+  }
+
+  # Just do simple markup of the usage
+  my $markup_usage = MarkupUsage($usage);
+
+  my $markup_purpose = MarkupComment($purpose);
+
+  my $module = "Built-in Primitive";
+  if ($filename =~ m%^modules/([^/]*)%) {
+    $module = "Primitive from (app scwm $1)";
+  }
+
+  my $markup = CreateMarkupBody($primname, $sgml_id, $module,
+				$markup_usage, $markup_purpose, $markup_comment,
+				$filename, $line);
+
+  if ($fDebug) {
+    print STDERR <<EOC
+scheme-primitive-name:	$primname
+C-primitive-name:	$cprimname
+arg kinds:		$req, $opt, $var
+args:			@{[join(",",@args)]}
+arg listing:		$arg_listing
+fname define:           $fname_define
+EOC
+;
+  }
+  $procedure{$primname} = { usage => $usage,
+			    comment => $comment,
+			    purpose => $purpose,
+			    sgml_id => $sgml_id,
+			    module => $module,
+			    markup_purpose => $markup_purpose,
+			    markup_usage => $markup_usage,
+			    markup => $markup,
+			    file => $filename,
+			    line => $line,
+			  };
+  push @{$file_funcs{$filename}}, $primname;
+
+  return TRUE;
+}
+
+# remember, no underscores in sgml ids
+sub ScmIdToSgmlId ( $ ) {
+  my ($id) = @_;
+  $id =~ s/\?$/-p/g;
+  $id =~ s/!$/-x/g;
+  $id =~ s/\/$/-d/g;
+  $id =~ s/:/--/g;
+  $id =~ s/%/pct/g;
+  $id =~ s/[\?\!\_\$\^\&\/]/-/g;
+  $id =~ s/->/-to-/g;
+  return $id;
+}
+
+sub PurposeFromComment ( $$$$ ) {
+  my ($comment,$filename,$line,$primname) = @_;
+
+  my ($purpose) = $comment =~ m%(.*?[\.;\n])%;
+
+  if (!defined $purpose) {
+    # did not match, so must have been a one-liner w/o a newline
+    $purpose = $comment;
+  }
+  chomp ($purpose); # in case it matched the newline
+  if (!defined($purpose) || $purpose !~ /\.\s*$/) {
+    if (!$fQuiet && $fWarnIfNoComment && $purpose !~/^\s*$/) {
+      print STDERR "$filename:$line:**** $primname: first line of comment should be a purpose sentence\n";
+    }
+  }
+  return $purpose;
+}
+
+# $comment is the part of the comment we've already read
+sub ReadRestOfComment ( $$ ) {
+  my ($comment, $fScheme) = @_;
+  if ($fScheme) {
+    while (defined($_ = <>) && m%^;;;\s*(.*)$%) {
+      $comment .= "$1\n";
+      if (eof) {
+	close(ARGV);
+	# FIXGJB: this might be wrong-- resetting too early?
+	$current_module = "";
+      }
+    }
+  } else {
+    # read rest of C comment
+    $comment .= "\n";
+    if ($comment !~ m%\*/%) {
+      while (defined($_ = <>) && $_ !~ m%\*/%) {
+	$comment .= $_;
+	if (eof) {
+	  close(ARGV);
+	  # FIXGJB: this might be wrong-- resetting too early?
+	  $current_module = "";
+	}
+      }
+      $comment .= $_;
+    }
+    $comment =~ s%\*/\s*$%%s;
+  }
+  return $comment;
+}
+
+sub ReadRestOfDocstring ( $ ) {
+  my ($filename,$line,$docstring) = @_;
+  while (defined($_ = <>) && $_ !~ m%[^\\]\"\s*\)\s*;\s*$%) {
+    $docstring .= $_;
+    if (eof) {
+      close(ARGV);
+      $current_module = "";
+    }
+  }
+  $docstring .= $_;
+  $docstring =~ s%\"\s*\)\s*;\s*$%%m;
+  if ($docstring =~ m/[^\\]\"/) {
+    print STDERR "$filename:$line:****ERROR:docstring includes an un-escaped double-quote\n";
+  }
+  # Unquote quoted quotes (CRW:FIXME:GJB: are there other things we
+  # may need to unquote here?)
+  $docstring =~ s/\\"/"/g;
+  return $docstring;
+}
+
+sub ProcessConceptComment ( $$$$ ) {
+  my ($filename,$line,$description,$comment) = @_;
+  $comment =~ s%\*/\s*$%%m;
+  if ($fDebug) {
+    print STDERR "Concept \`$description\' with body = \n$comment\n";
+  }
+
+  IspellText($filename,$line,$comment) if $opt_s;
+
+  my $markup = MarkupComment($comment);
+
+  $concepts{$description} = { comment => $comment,
+			      markup => $markup,
+			      file => $filename,
+			      line => $line,
+			    };
+}
+
+sub ProcessHookComment ( $$$$$ ) {
+  my ($filename,$line,$description,$num_args,$comment) = @_;
+  $comment =~ s%\*/\s*$%%m;
+  if ($fDebug) {
+    print STDERR "Hook \`$description\' with body = \n$comment\n";
+  }
+
+  IspellText($filename,$line,$comment) if $opt_s;
+
+  my $markup = MarkupComment($comment);
+  $hooks{$description} = { comment => $comment,
+			   markup => $markup,
+			   numargs => $num_args,
+			   module => $current_module,
+			   file => $filename,
+			   line => $line,
+			 };
+}
+
+sub ProcessVarComment ( $$$$ ) {
+  my ($filename,$line,$description,$comment) = @_;
+  $comment =~ s%\*/\s*$%%m;
+  if ($fDebug) {
+    print STDERR "Var \`$description\' with body = \n$comment\n";
+  }
+
+  IspellText($filename,$line,$comment) if $opt_s;
+
+  my $markup = MarkupComment($comment);
+  $vars{$description} = { comment => $comment,
+			  markup => $markup,
+			  module => $current_module,
+			  file => $filename,
+			  line => $line,
+			};
+}
+
+
+
+sub CreateMarkupBody ( $$$$$$$ ) {
+  my ($primname, $sgml_id, $module, $markup_usage, $markup_purpose, $markup_comment,
+      $filename, $line) = @_;
+  # Use <refentry>, <refname>, <refpurpose>, <synopsis>
+  
+  # Filename url links rely on environment variable SCWMDIR being
+  # set to the base of the scwm distribution
+  # i.e. $SCWMDIR/scwm/scwm.c should contain main()
+  my $cvs_url_link = "$scwmdir/$filename";
+  $cvs_url_link =~ s%/~checkout~%%;
+  my $markup = 
+"<refentry id=\"$sgml_id\">
+  <refnamediv>
+    <refname>$primname</refname>
+    <refpurpose>$markup_purpose</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <synopsis>$markup_usage</synopsis>
+  </refsynopsisdiv>
+  <refsect1>
+  <title>Description</title>
+  <para>
+  $markup_comment
+  </para>
+  <refsect2>
+  <title>Implementation Notes</title>
+  <para> Module: $module</para>
+  <para> Defined in <ulink url=\"$scwmdir/$filename\"><filename>$filename</filename></ulink>
+  at line $line (<ulink url=\"$cvs_url_link\">CVS log</ulink>)</para> </refsect2>
+  </refsect1>
+</refentry>
+";
+  return $markup;
+}
+
+
+
+sub MarkupUsage( $ ) {
+  my ($markup_usage) = @_;
+  $markup_usage =~ s%&(optional|key|allow-other-keys|rest)%&amp;$1%g;
+  $markup_usage =~ s%(\s+)&(\s+)%$1&amp;$2%g;
+  $markup_usage =~ s%(\s+)<(\s+)%$1&lt;$2%g;
+  $markup_usage =~ s%(\s+)>(\s+)%$1&gt;$2%g;
+  return $markup_usage;
+}
+
+
+# FIXGJB
+sub MarkupComment( $ ) {
+  my ($body) = @_;
+
+  # convert & into &amp; space-delimited <, > into &lt; and &gt;
+  $body =~ s%&%&amp;%g;
+  $body =~ s%(\s+)<(\s+)%$1&lt;$2%g;
+  $body =~ s%(\s+)>(\s+)%$1&gt;$2%g;
+
+  # Mark #t and #f within comment with <literal> tag
+  $body =~ s%(\#[tf])%<literal>$1</literal>%g;
+
+  # Replace `procedure' with <function>procedure</function>
+  $body =~ s%\`([-A-Za-z0-9_?!+\%&\$]+?)\'%
+    "<link linkend=\"" . ScmIdToSgmlId($1) . "\"><function>$1</function></link>"%eg;
+
+  return $body;
+}
+
+sub IspellText( $$$ ) {
+  my ($filename,$line,$text,$response) = @_;
+  foreach my $word (split /[\d\W]+/, $text) {
+    # ispell is picky about lots of stuff, so ignore them
+    next if $word =~ /^[-\#]/;
+    next if $word !~ /^\w\w+/;
+    next if $word eq uc($word);
+    print STDERR "ispell trying $word -> " if $fDebug;
+    my $junk = <ISPELL_RESPONSE>; # read the blank
+    print ISPELL $word, "\n";
+    chomp (my $response = <ISPELL_RESPONSE>);
+    print STDERR "response = \`$response\'\n" if $fDebug;
+    if ($response eq "") {
+      print STDERR "$filename:$line:**** ISPELL is out of sync (last word \`$word\') -- aborting its use!\n";
+      $opt_s = FALSE;
+      last;
+    }
+    if ($response !~ m/^[+\*]/) {
+      print STDERR "$filename:$line:**** ispell reported possible misspelling: $word -> $response\n";
+      print STDERR "Should I add `$word' to my list of known correct words? ";
+      $response=<STDIN>;
+      if ($response=~/^y(es)?$/i) {
+	print ISPELL "*",lc($word),"\n";
+      }
+    }
+  }
+}
+
+sub CNameMatchesSchemeNameIgnoreCase( $$ ) {
+  my ($a, $b) = @_;
+  $a =~ s/($a)/\L$1/;
+  $b =~ s/($b)/\L$1/;
+  CNameMatchesSchemeName($a,$b);
+}
+
+sub CNameMatchesSchemeName( $$ ) {
+  my ($cprimname, $primname) = @_;
+
+  # now convert the c function name into the expected (preferred) primitive name:
+  my $expected_primname = $cprimname;
+  $expected_primname =~ s/_[pP]\b/?/g;
+  $expected_primname =~ s/_[xX]\b/!/g;
+  $expected_primname =~ s/\bpct_/%/g;
+  $expected_primname =~ s/_/-/g;
+  # alternative possibility (ignoring chance of multiple to's in string)
+  my $expected_primname2 = $expected_primname;
+  $expected_primname2 =~ s/-to-/->/g;
+
+  return ($primname eq $expected_primname || $primname eq $expected_primname2);
+}
+
+sub ReadSgml( $ ) {
+  my ($filename) = @_;
+
+  open(IN,"<$filename") || die "Could not open $filename: $!";
+  undef $/;
+  my $answer = <IN>;
+  close IN;
+  return $answer;
+}
+
+sub ProcessWindowStyleOption( $$ ) {
+  my ($file,$line,$kind,$option) = (@_);
+  if ($fDebug) {
+    print STDERR "Got window style option for $kind named $option\n";
+  }
+
+  my $winstyle = "Window Style"; # from face.c's embedded CONCEPT comment
+
+  my $comment = $concepts{$winstyle}{comment};
+  my $markup = $concepts{$winstyle}{markup};
+
+  if (!$fAddedStyleHeader) {
+$markup .= '
+<table>
+<title>window style options</title>
+<tgroup align="char" cols="3">
+<thead><row>
+ <entry>Option</entry>  <entry>Type</entry>  <entry>Implementation</entry>
+</row></thead>
+<tbody>
+';
+    $fAddedStyleHeader = TRUE;
+  }
+
+  $comment .= "$option ($kind) from $file:$line\n";
+  $markup .=
+    "<row>" .
+      "<entry/" . MarkupComment($option) . "/ " .
+	"<entry/" . MarkupComment($kind) . "/ " .
+	  "<entry>$file:$line</entry> " .
+	  " </row>\n";
+  
+  $concepts{$winstyle}{comment} = $comment;
+  $concepts{$winstyle}{markup} = $markup;
+}
+
+sub DoneWindowStyleOptions() {
+  my $winstyle = "Window Style"; # from face.c's embedded CONCEPT comment
+
+  $concepts{$winstyle}{markup} .= "</tbody></tgroup></table>\n";
+}
+
+sub check_arg_name_number_match ( $$\@ ) {
+  my $validate_fn = shift;
+  my $argnum = shift;
+  my $argname = shift;
+  my $aref_argnames = shift;
+
+  if ($fDebug) {
+    print STDERR "Checking ", $argname, " (arg ", $argnum, ") against list: ", join(" ",@$aref_argnames), "\n"
+  }
+  if ($argnum > scalar(@$aref_argnames) || 
+      $argnames[$argnum-1] ne $argname) {
+    print STDERR "$ARGV:$.:**** Argument name/number mismatch in $validate_fn line\n";
+  }
+}
+

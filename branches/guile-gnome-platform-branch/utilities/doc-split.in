@@ -1,0 +1,119 @@
+#!@GUILE@ \
+-e main -s
+!#
+; 
+; doc-split - split snarfed documentation into seperate files for
+;	primitives, hooks, concepts, and variables.
+;
+(use-modules (ice-9 getopt-long)
+	     (ice-9 common-list)
+	     (ice-9 format)
+	     (ice-9 regex)
+	     (srfi srfi-13))
+
+;(display "doc-split running\n")
+(debug-enable 'debug 'backtrace)
+(read-enable 'positions)
+
+; globals. not very schemy. but I don't care.
+(define opt-debug #f)
+(define opt-verbose #f)
+
+(define concept-fp #f)
+(define hook-fp #f)
+(define var-fp #f)
+(define proc-fp #f)
+
+;-----------------------------------------------------------------------------
+
+(define (main a)
+  (let* ((opts  (getopt-long (program-arguments)
+			    `((verbose      (single-char #\v))
+			      (debug        (single-char #\x))
+			      (basename	(value #t))
+			      )))
+	 (fprefix "X"))
+
+;    (format #t "opts=~a\n" opts)
+
+    (set! opt-verbose
+	  (let ((a (assq 'verbose opts)))
+	    (if a
+		(cdr a)
+		#f)))
+    (set! opt-debug
+	  (let ((a (assq 'debug opts)))
+	    (if a
+		(cdr a)
+		#f)))
+    (if (assq 'basename opts)
+	(set! fprefix (cdr (assq 'basename opts))))
+
+    (set! concept-fp (open-file (string-append fprefix "-concepts.txt") "w"))
+    (set! hook-fp (open-file (string-append fprefix "-hooks.txt") "w"))
+    (set! var-fp (open-file (string-append fprefix "-variables.txt") "w"))
+    (set! proc-fp (open-file (string-append fprefix "-procedures.txt") "w"))
+    
+    (for-each 
+     (lambda (f)
+       (if opt-debug (format #t "~a:\n" f))
+       (let ((fp (open-file f "r")))
+	 (with-input-from-port fp
+	   (lambda ()
+	     (process-file-by-lines f)))
+	 (close fp)))
+     (pick string? (assq '() opts)))
+    
+    (close concept-fp)
+    (close hook-fp)
+    (close var-fp)
+    (close proc-fp)
+))
+
+; Use the read-hash-extend facility to add a syntax for constant
+; regular expressions that are to be compiled once when read in,
+; instead of during the normal flow of execution.   This can let loops
+; that repeatedly use a constant regexp be optimized without moving the
+; expression's definition far away from its use.
+;
+; With this hash-extension, these two expressions behave identicaly:
+;
+; (regexp-exec (make-regexp "de+") "abcdeeef"))
+; (regexp-exec #+"de+" "abcdeeef")
+;
+(read-hash-extend #\+ (lambda (c port)
+		  (let ((s (read port)))
+		    (if (string? s)
+			(make-regexp s)
+			(error "bad #+ value; string expected")))))
+
+
+(define (process-file-by-lines fname)
+  (let ((fp #f))
+    (do ((line (read-line) 
+	       (read-line)))
+	((eof-object? line) #f)
+
+      (if (string-index line #\np )
+	  (let ((line (read-line)))
+	    (if (not (eof-object? line))
+		(begin
+		  (cond 
+		   ((regexp-exec #+"^Concept: " line)
+		    (set! fp concept-fp))
+		   ((regexp-exec #+"^Hook: " line)
+		    (set! fp hook-fp))
+		   ((regexp-exec #+"^Variable: " line)
+		    (set! fp var-fp))
+		   ((regexp-exec #+"^Procedure: " line)
+		    (set! fp proc-fp))
+		   (else
+		    (set! fp #f)))
+		  (if fp
+		      (format fp "\f\n~a\n" line)))))
+	  (if fp
+	      (format fp "~a\n" line))
+	  ))))
+
+    
+

@@ -1,0 +1,55 @@
+How to build RPMs of Scwm
+-------------------------
+By: Harvey Stein
+    Todd Larason
+    Greg J. Badros <gjb@cs.washington.edu>
+
+If you want to build binary RPMs from the source RPMs, it should be as
+simple as:
+1. Get the source rpms, say foo.src.rpm
+2. rpm --rebuild foo.src.rpm
+
+Please report errors in this process.  More importantly, please report
+successes and contribute your binary RPMs to our web site.
+
+If you want to build RPMs from the CVS archive of the source, keep
+reading.
+
+Building the RPMs is pretty trivial, but here's what I did:
+
+1. cvs update -dP
+2. ./autogen.sh
+3. ./configure --enable-maintainer-mode
+4. make
+5. make dist
+
+This creates scwm-VERSION.tar.gz
+
+Next, the RPM packaging itself is just a matter of using the scwm.spec
+file from the top level directory.  Since the scwm.spec file is included
+in the tar file, you can just do (as root):
+
+rpm -ta scwm-VERSION.tar.gz
+
+Once it finishes running you'll have:
+
+   /usr/src/redhat/SRPMS/scwm-VERSION-RELEASE.src.rpm
+
+and
+
+   /usr/src/redhat/RPMS/i386/scwm-VERSION-RELEASE.i386.rpm
+
+(assuming you're building on intel).
+
+If you install the src rpm, you get the tar.gz again in
+/usr/src/redhat/SOURCES, and the scwm.spec in /usr/src/redhat/SPECS.
+
+If you install the i386 rpm, you get scwm.
+
+Note 1. The rpm build cmd (rpm -ba) doesn't just run make - it runs
+configure first, so it should really build properly on other
+systems...
+
+Note 2. You should set the release version to include your initials
+(e.g., 1hjs) to distinguish btw RPMs I packaged and "official" ones.
+

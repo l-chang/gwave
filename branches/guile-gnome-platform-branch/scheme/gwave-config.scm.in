@@ -1,0 +1,7 @@
+
+(define-module (app gwave gwave-config)
+)
+
+(define-public gnugraph-pathname "@GRAPH@")
+
+
