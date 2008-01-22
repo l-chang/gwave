@@ -1,7 +1,8 @@
 # -*- mode: Makefile -*-
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS=spicefile utilities src scheme doc remote
+#SUBDIRS=spicefile utilities src scheme doc remote
+SUBDIRS=spicefile utilities src scheme remote
 
 EXTRA_DIST=autogen.sh gwave.spec TODO FAQ plotutils-2.4.1.patch
 
