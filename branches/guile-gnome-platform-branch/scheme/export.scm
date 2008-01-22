@@ -3,7 +3,8 @@
 ;
 
 (define-module (app gwave export)
-  :use-module (gtk gtk)
+  :use-module (gnome-0)
+  :use-module (gnome gtk)
   :use-module (ice-9 optargs)
   :use-module (app gwave cmds)
   :use-module (app gwave gtk-helpers)
@@ -48,7 +49,7 @@
 	 (vbox (gtk-vbox-new #f 0))
 	 (hbox1 (gtk-hbox-new #f 10))
 	 (outf-label (gtk-label-new "Output File:"))
-	 (filename-entry (gtk-entry-new))
+	 (filename-entry (make <gtk-entry>))
 	 (browse-btn (gtk-button-new-with-label "Browse"))
 	 
 	 (hbox2 (gtk-hbox-new #f 10))
@@ -64,11 +65,11 @@
 	 )
     
     (gtk-window-set-title window "Export Data")
-    (gtk-container-border-width window 0)
+    (gtk-container-set-border-width window 0)
     (gtk-container-add window vbox)
     (gtk-widget-show vbox)
 
-    (gtk-container-border-width hbox1 10)
+    (gtk-container-set-border-width hbox1 10)
     (gtk-box-pack-start vbox hbox1 #f #t 0)
     (gtk-widget-show hbox1)
 
@@ -81,7 +82,7 @@
 
     (gtk-box-pack-start hbox1 browse-btn #f #t 0)
     (gtk-signal-connect browse-btn "clicked"
-			(lambda ()
+			(lambda (b) ; TODO: use filechooserbutton
 			  (with-selected-filename 
 			   "Export to file"
 			   (lambda (f)
@@ -90,7 +91,7 @@
     (gtk-widget-show browse-btn)
 
     ; row of buttons for x-extents to export
-    (gtk-container-border-width hbox2 10)
+    (gtk-container-set-border-width hbox2 10)
     (gtk-box-pack-start vbox hbox2 #f #t 0)
     (gtk-widget-show hbox2)
 
@@ -115,12 +116,12 @@
 			(set! maxx (wtable-vcursor 1)))))
 
     ; row of action buttons
-    (gtk-container-border-width action-hbox 10)
+    (gtk-container-set-border-width action-hbox 10)
     (gtk-box-pack-start vbox action-hbox #f #t 0)
     (gtk-widget-show action-hbox)
 
     (gtk-signal-connect cancel-btn "clicked" 
-			(lambda () 
+			(lambda (b) 
 			  (gtk-widget-destroy window)))
     (gtk-box-pack-start action-hbox cancel-btn #t #t 0)
     (gtk-widget-show cancel-btn)
@@ -129,7 +130,7 @@
 
     (gtk-box-pack-start action-hbox export-btn #t #t 0)
     (gtk-signal-connect export-btn "clicked" 
-			(lambda ()
+			(lambda (b)
 			  (if (and use-extents (number? minx) (number? maxx))
 			      (export-variables-to-file 
 			       (gtk-entry-get-text filename-entry)
@@ -141,7 +142,7 @@
     (gtk-tooltips-set-tip gwave-tooltips export-btn
 			  "Export data" "")
     
-    (gtk-widget-set-flags export-btn '(can-default))
+;    (gtk-widget-set-flags export-btn '(can-default))
     (gtk-widget-grab-default export-btn)
     (gtk-widget-show window)
 ))
@@ -152,7 +153,7 @@
 	 (vbox (gtk-vbox-new #f 0))
 	 (hbox1 (gtk-hbox-new #f 10))
 	 (outf-label (gtk-label-new "Output File:"))
-	 (filename-entry (gtk-entry-new))
+	 (filename-entry (make <gtk-entry>))
 	 (browse-btn (gtk-button-new-with-label "Browse"))
 
 	 (hbox2 (gtk-hbox-new #f 10))
@@ -164,16 +165,17 @@
 	 (action-hbox (gtk-hbox-new #f 10))
 	 (separator (gtk-hseparator-new))
 	 (cancel-btn (gtk-button-new-with-label "Cancel"))
-	 (export-btn (gtk-button-new-with-label "Plot"))
+	 (export-btn (gtk-button-new-with-label "Plot"
+						:flags 'can-default ))
 	 (oproc-assoc '())
 	 )
     
     (gtk-window-set-title window "Plot Data")
-    (gtk-container-border-width window 0)
+    (gtk-container-set-border-width window 0)
     (gtk-container-add window vbox)
     (gtk-widget-show vbox)
 
-    (gtk-container-border-width hbox1 10)
+    (gtk-container-set-border-width hbox1 10)
     (gtk-box-pack-start vbox hbox1 #f #t 0)
     (gtk-widget-show hbox1)
 
@@ -186,7 +188,7 @@
 
     (gtk-box-pack-start hbox1 browse-btn #f #t 0)
     (gtk-signal-connect browse-btn "clicked"
-			(lambda ()
+			(lambda (x)
 			  (with-selected-filename 
 			   "Plot to file"
 			   (lambda (f)
@@ -239,12 +241,12 @@
     (gtk-box-pack-start vbox hbox2 #t #t 0)
 
     ; row of action buttons
-    (gtk-container-border-width action-hbox 10)
+    (gtk-container-set-border-width action-hbox 10)
     (gtk-box-pack-start vbox action-hbox #f #t 0)
     (gtk-widget-show action-hbox)
 
     (gtk-signal-connect cancel-btn "clicked" 
-			(lambda () 
+			(lambda (x) 
 			  (gtk-widget-destroy window)))
     (gtk-box-pack-start action-hbox cancel-btn #t #t 0)
     (gtk-tooltips-set-tip gwave-tooltips cancel-btn
@@ -254,7 +256,7 @@
     (gtk-box-pack-start action-hbox export-btn #t #t 0)
     (gtk-tooltips-set-tip gwave-tooltips export-btn "Plot data" "")
     (gtk-signal-connect export-btn "clicked" 
-			(lambda ()
+			(lambda (x)
 			  (let* ((n (gtk-notebook-get-current-page notebook))
 				 (pp (if (>= n 0)
 					 (caddr (list-ref plot-list n))
@@ -267,13 +269,14 @@
 				(pp
 				 (gtk-entry-get-text filename-entry) 
 				 plist optlist
-				(gtk-toggle-button-active tmpfcheck))))
+				(gtk-toggle-button-get-active tmpfcheck))))
 			  (gtk-widget-destroy window)))
     (if (= 0 (length plot-list))
 	(gtk-widget-set-sensitive export-btn #f))
     (gtk-widget-show export-btn)
     
-    (gtk-widget-set-flags export-btn '(can-default))
+;    (gtk-widget-set-flags export-btn '(can-default))
+;    (set-flags export-btn '(can-default))
     (gtk-widget-grab-default export-btn)
     (gtk-widget-show window)
 ))

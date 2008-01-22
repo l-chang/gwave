@@ -3,9 +3,12 @@
 ;
 
 (define-module (app gwave std-toolbar)
-  :use-module (gtk gtk)
+  :use-module (gnome-0)
+  :use-module (gnome gtk)
   :use-module (app gwave cmds)
-  :use-module (app gwave globals))
+  :use-module (app gwave globals)
+  :use-module (app gwave gtk-helpers)
+)
 
 (dbprint "std-toolbar.scm running\n")
 (set! gwave-std-toolbar-loaded #t)
@@ -14,7 +17,8 @@
   (let ((item (gtk-button-new-with-label label)))
     (gtk-widget-show item)
     (if proc
-	(gtk-signal-connect item "clicked" proc))
+	(gtk-signal-connect item "clicked" 
+			    (lambda (b) (proc))))
     (if tip
 	(gtk-tooltips-set-tip gwave-tooltips item tip ""))
     item))

@@ -1,0 +1,13 @@
+
+Most of the utilities here are related to document and init-string
+extraction from C source code.
+
+gwave-doc-snarf.scm - 
+extract embedded documentation from the output of
+the C preprocessor run on C code that uses the xsnarf.h macros
+(a rewrite of guile-snarf.awk in guile)
+
+doc-split.scm - split a file of mixed documentation fragments into
+four files, one each for procedures, concepts, hooks, and variables.
+(a rewrite of the perl doc-split)
+

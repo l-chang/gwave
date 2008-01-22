@@ -1,4 +1,4 @@
-/* $Id: arg_unused.h,v 1.1 2000-01-07 06:33:43 tell Exp $
+/* $Id: arg_unused.h,v 1.1 2000/01/07 06:33:43 tell Exp $
  * (C) 1999, Greg J. Badros
  */
 

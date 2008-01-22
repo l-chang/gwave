@@ -8,8 +8,10 @@
 
 (define-module (app gwave visiblewave-ops)
   :use-module (ice-9 format)
-  :use-module (gtk gtk)
-  :use-module (gtk gdk)
+  :use-module (gnome-0)
+  :use-module (gnome gtk)
+  :use-module (gnome gtk gdk-event)
+  :use-module (app gwave gtk-helpers)
   :use-module (app gwave std-menus)
   :use-module (app gwave export)
   :use-module (app gwave cmds)
@@ -37,22 +39,26 @@
    (set-wavepanel-selected! (visiblewave-panel vw) #t)
 
    (gtk-signal-connect (visiblewave-button vw) "clicked" 
-			(lambda ()
+			(lambda (b)
 			  ;(format #t "clicked ~s ~s\n" vw (gtk-toggle-button-active (visiblewave-button vw)))
 			  ; TODO: redraw only the one panel affected
 			  (wtable-redraw!) ))
    (gtk-signal-connect (visiblewave-button vw) "button-press-event" 
-			(lambda (event) 
+			(lambda (b event) 
 ;			  (display "press-signal") 
 ;			  (display event)
-;			  (display (gdk-event-type event))
-;			  (display " ")
-;			  (display (gdk-event-button event))
+;			  (display (gdk-event:type event))
+;			  (display "\n ")
+;			  (display (gdk-event-button:button event))
 ;			  (newline)
-			  (if (= (gdk-event-button event) 3)
-			      (gtk-menu-popup (make-vwb3-menu vw) #f #f
-					      (gdk-event-button event)
-					      (gdk-event-time event)))))
+			  (if (= (gdk-event-button:button event) 3)
+			      (begin
+				(gtk-menu-popup (make-vwb3-menu vw) #f #f #f #f 
+						(gdk-event-button:button event)
+						(gdk-event-button:time event))
+				#t)
+			      #f)))
+			      
    (gtk-tooltips-set-tip gwave-tooltips (visiblewave-button vw)
 			 (string-append (visiblewave-varname vw)
 			 "\nVisibleWave Button:\nClick button 1 to select wave.\nPress button 3 for options menu.") "")
@@ -61,10 +67,10 @@
 
 (wavepanel-bind-mouse 1
  (lambda (wp event)
-; (format #t "wavepanel ~s event=~s state=~s\n" wp event 
-;	 (gdk-event-state event))
+ (format #t "wavepanel ~s event=~s modifiers=~s\n" wp event 
+	 (gdk-event-button:modifiers event))
  
- (if (not (member 'shift-mask (gdk-event-state event)))
+ (if (not (member 'shift-mask (gdk-event-button:modifiers event)))
      (unselect-all-wavepanels!))
  (set-wavepanel-selected! wp #t)
 ))
@@ -88,55 +94,33 @@
 ; build and return wave-color color menu.
 ; this is an optionmenu on a button; we return the button.
 ; call proc with new value on menu selection.
+;
+; TODO: redo using general GtkOptionMenu and a ListStore
+; 	so we can hold labels or buttons whose color matches the color-numbers
+;
 (define (build-wavecolor-menu vw proc)
-  (let ((menu (gtk-menu-new))
-	(group #f)
-	(vbox (gtk-vbox-new #f 0))
-	(optionmenu (gtk-option-menu-new))
-	(fixed (gtk-fixed-new)))
+  (let ((combobox (gtk-combo-box-new-text)))
 
     (do ((i 0 (1+ i))
 	 (j 0 (1+ j)))
 	((= i 6))
-      (let* ((label (gtk-label-new 
-		     (string-append "color " (number->string j))))
-	     (menuitem (gtk-radio-menu-item-new group))
-	     (eventbox (gtk-event-box-new)))
-	(gtk-widget-set-name label 
-			     (string-append "wavecolor" (number->string j)))
-	(gtk-container-add menuitem eventbox)
-	(gtk-container-add eventbox label)
-	(gtk-widget-show label)
-	(gtk-widget-set-name eventbox "wavebutton")
-	(gtk-widget-show eventbox)
-	(set! group menuitem)
-	(gtk-menu-append menu menuitem)
-	(gtk-widget-show menuitem)
-	(gtk-signal-connect menuitem "toggled"
-			    (lambda () 
-			      ; (if (menuitem is active) ;how to find this?
-				  (begin
-				    (proc j))))
-	))
-	
-    (gtk-widget-show menu)
 
-    (gtk-option-menu-set-menu optionmenu menu)
-    (gtk-option-menu-set-history optionmenu (visiblewave-color vw))
-    (gtk-box-pack-start vbox optionmenu #f #f 0)
-    (gtk-widget-show optionmenu)
+;       (let* ((label (gtk-label-new 
+; 		     (string-append "color " (number->string j))))
+; 	(gtk-widget-set-name label 
+; 			     (string-append "wavecolor" (number->string j)))
+; 	(gtk-container-add menuitem eventbox)
+; 	(gtk-container-add eventbox label))
 
-    (gtk-widget-set-usize fixed 30 10)
-    (gtk-signal-connect fixed "button_press_event"
-                      (lambda (e)
-                        (if (= (gdk-event-button e) 1)
-                            (gtk-menu-popup menu #f #f
-                                            (gdk-event-button e)
-                                            (gdk-event-time e)))))
-    (gtk-box-pack-start vbox fixed #t #t 0)
-    (gtk-widget-show fixed)
-    (gtk-widget-show vbox)
-    vbox))
+      (append-text combobox (string-append "color " (number->string j))))
+
+    (if (procedure? proc)
+	(connect combobox 'changed 
+		 (lambda (x)
+		   (proc (get-active combobox)))))
+    (set-active combobox  (visiblewave-color vw))
+    (show combobox)
+    combobox))
 
 ; build and attach frame for Style page of the VisibleWave options notebook
 ; style items include color, drawing algorithm, and drawing-alg parameters
@@ -151,8 +135,8 @@
 	   (wcmenu-box (build-wavecolor-menu vw 
 					     (lambda (col)
 					       (set! stcolor col)))))
-	 (gtk-container-border-width frame 10)
-	 (gtk-widget-set-usize frame 200 150)
+	 (gtk-container-set-border-width frame 10)
+;	 (gtk-widget-set-usize frame 200 150)
 	 (gtk-widget-show frame)
 	 (gtk-container-add frame hbox)
 	 (gtk-box-pack-start hbox wcmenu-box #f #f 0)
@@ -178,8 +162,8 @@
 			(string-append "minimum: " (number->string (wavevar-min vw)))))
 	   (max-label (gtk-label-new 
 			(string-append "maximum: " (number->string (wavevar-max vw))))))
-      (gtk-container-border-width frame 10)
-      (gtk-widget-set-usize frame 200 150)
+      (gtk-container-set-border-width frame 10)
+;      (gtk-widget-set-usize frame 200 150)
       (gtk-widget-show frame)
       (gtk-container-add frame vbox)
       (gtk-box-pack-start vbox file-label #f #f 0)
@@ -210,12 +194,12 @@
 			   (string-append 
 			    (wavefile-tag (visiblewave-file vw)) ":"
 			    (visiblewave-varname vw) " Options"))
-     (gtk-container-border-width window 0)
+     (gtk-container-set-border-width window 0)
      (gtk-container-add window vbox)
      (gtk-widget-show vbox)
 
      (gtk-box-pack-start vbox vboxi #t #t 0)
-     (gtk-container-border-width vboxi 10)
+     (gtk-container-set-border-width vboxi 10)
      (gtk-widget-show vboxi)
 
      (gtk-notebook-set-tab-pos notebook 'top)
@@ -226,12 +210,12 @@
  
      (gtk-box-pack-start vbox separator #f #t 0)
      (gtk-widget-show separator)
-     (gtk-container-border-width hbox 10)
+     (gtk-container-set-border-width hbox 10)
      (gtk-box-pack-start vbox hbox #f #t 0)
      (gtk-widget-show hbox)
 
      (gtk-signal-connect close "clicked" 
-			 (lambda () 
+			 (lambda (x) 
 			   (styleproc) 
 			   (gtk-widget-destroy window)))
      (gtk-box-pack-start hbox close #t #t 0)
@@ -241,21 +225,21 @@
 
      (gtk-box-pack-start hbox apply #t #t 0)
      (gtk-signal-connect apply "clicked" 
-			 (lambda () (styleproc)))
+			 (lambda (x) (styleproc)))
      (gtk-widget-show apply)
      (gtk-tooltips-set-tip gwave-tooltips apply
 			   "Apply changes to VisibleWave" "")
 
      (gtk-box-pack-start hbox cancel #t #t 0)
      (gtk-signal-connect cancel "clicked" 
-			 (lambda () 
+			 (lambda (x) 
 			   (gtk-widget-destroy window)))
      (gtk-widget-show cancel)
      (gtk-tooltips-set-tip gwave-tooltips cancel
 			   "Close options window, discarding changes" "")
      
-     (gtk-widget-set-flags close '(can-default))
-     (gtk-widget-grab-default close)
+;     (gtk-widget-set-flags close '(can-default))
+;     (gtk-widget-grab-default close)
      (gtk-widget-show window)
 ))
 

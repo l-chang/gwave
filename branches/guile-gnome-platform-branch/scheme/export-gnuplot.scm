@@ -4,7 +4,8 @@
 ;
 
 (define-module (app gwave export-gnuplot)
-  :use-module (gtk gtk)
+  :use-module (gnome-0)
+  :use-module (gnome gtk)
   :use-module (ice-9 optargs)
   :use-module (ice-9 format)
   :use-module (app gwave cmds)
@@ -36,12 +37,12 @@
 				'("GPIC" . "gpic")
 				'("HPGL" . "hpgl")
 				'("LaTeX" . "latex")
-				'("LaTeX Picture \Specials" . "pslatex")
+				'("LaTeX Picture \\Specials" . "pslatex")
 				'("LaTeX Picture PSTricks" . "pstricks")
-				'("LaTeX TPic \Specials" . "tpic")
+				'("LaTeX TPic \\Specials" . "tpic")
 				'("Maker Interchange Format" . "mif")
 				'("Metafont" . "mf")
-				'("Plain TeX Picture \Specials" . "pstex")
+				'("Plain TeX Picture \\Specials" . "pstex")
 				'("Portable Anymap" . "pbm")
 				'("Portable Network Graphics" . "png")
 				'("Postscript EPS" . "postscript eps")
@@ -67,7 +68,7 @@
 	 (multiplot-check (gtk-check-button-new-with-label "Multiplot"))
 	 )
 						  
-    (gtk-container-border-width frame 10)
+    (gtk-container-set-border-width frame 10)
 ;    (gtk-widget-set-usize frame 200 150)
     (gtk-widget-show frame)
     (gtk-container-add frame vbox)
@@ -79,7 +80,7 @@
     (gtk-widget-show color-rbtns)
     (gtk-box-pack-start vbox multiplot-check #f #f 0)
     (gtk-widget-show multiplot-check)
-    (gtk-toggle-button-set-state multiplot-check #t)
+    (gtk-toggle-button-set-active multiplot-check #t)
     (gtk-widget-show vbox)
 
     ; return list containing top-level frame and procedure
@@ -89,7 +90,7 @@
 	  ; the preamble for the gnuplot script
 	  (lambda ()
 	    (append (list 
-		     (gtk-toggle-button-active multiplot-check)
+		     (gtk-toggle-button-get-active multiplot-check)
 		     (format #f "set terminal ~a~a" opt-format
 				  (if opt-color " color" "")
 ;				  (if opt-landscape " landscape" "")
@@ -131,7 +132,7 @@
 	(format #t "~a\n" (join "\n" preamble))
 	(format #t "set output \"~a\"\n" fname)
 	(if multiplot
-	    (format #t "set multiplot\nset size 1,~f\n" (/ 1 npanels)))
+	    (format #t "set multiplot\nset size 1,~f\n" (exact->inexact (/ 1 npanels))))
 		
 	(if (wtable-xlogscale?)
 	    (display "set logscale x"))
@@ -143,7 +144,7 @@
 	     (if (< 0 (length wavelist))
 		 (begin
 		   (if multiplot
-		       (format #t "set origin 0,~f\n" (* (- (- npanels 1) pidx) (/ 1 npanels))))
+		       (format #t "set origin 0,~f\n" (* (- (- npanels 1) pidx) (exact->inexact (/ 1 npanels)))))
 		   (if (wavepanel-ylogscale? wp)
 		       (display "set logscale y\n")
 		       (display "set nologscale y\n"))

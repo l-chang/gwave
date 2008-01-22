@@ -34,10 +34,10 @@ remote_guile_eval(char *req, char **outp, char **errp)
         o_port = scm_set_current_output_port(make_output_strport(FUNC_NAME));
         e_port = scm_set_current_error_port(make_output_strport(FUNC_NAME));
         
-        /* Workaround for a problem with older Guiles */
-        saved_def_e_port = scm_def_errp;
+        /* Workaround for a problem with older Guiles? */
+/*        saved_def_e_port = scm_def_errp;
         scm_def_errp = scm_current_error_port();
-        
+*/      
         /* Evaluate the request expression and free it. */
         val = scwm_safe_eval_str((char *) req);
 
@@ -48,7 +48,7 @@ remote_guile_eval(char *req, char **outp, char **errp)
            below for getting the strings back */
         o_port = scm_set_current_output_port(o_port);
         e_port = scm_set_current_error_port(e_port);
-        scm_def_errp = saved_def_e_port;
+/*        scm_def_errp = saved_def_e_port;*/
         
         /* Retrieve output and errors */
 	if(outp) {

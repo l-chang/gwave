@@ -16,10 +16,5 @@ BUILT_SOURCES=$(DOT_DOC_FILES)
 
 EXTRA_DIST=$(guile_DATA)
 
-# ggtkhack_DATA gets set by configure to .scm files needed to patch around 
-# guile-gtk problems on specific installations.
-ggtkhackdir=@ggtk_hack_dir@
-ggtkhack_DATA=@ggtkhack_files@
-
 .scm.doc:
-	$(top_srcdir)/utilities/guile-doc-snarf --lang scheme $<  > $@
+	guile-tools doc-snarf --lang scheme $<  > $@

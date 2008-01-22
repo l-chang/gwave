@@ -3,8 +3,10 @@
 ;
 
 (define-module (app gwave cmds)
-  :use-module (gtk gtk)
+  :use-module (gnome-0)
+  :use-module (gnome gtk)
   :use-module (ice-9 optargs)
+  :use-module (app gwave gtk-helpers)
 )
 (read-set! keywords 'prefix)
 
@@ -147,18 +149,18 @@
 
 ;; Create and show a top-level window with the "about" information
 (define-public (show-about-window!)
-  (let* ((window (gtk-widget-new 'GtkWindow
+  (let* ((window (make <gtk-window>
 				 :type         'toplevel
-				 :title        "About Gwave"
-				 :GtkContainer::border_width 10))
+				 :title        "About Gwave"))
 	 (vbox (gtk-vbox-new #f 10)))
+    (gtk-container-set-border-width window 10)
     (gtk-widget-show vbox)
     (gtk-container-add window vbox)
     (let ((llab (gtk-label-new 
-		 (string-append "Gwave version " gwave-version-string))))
+		 (string-append "Gwave2 version " gwave-version-string))))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
-    (let ((llab (gtk-label-new "Copyright 1997-2005 Steve Tell")))
+    (let ((llab (gtk-label-new "Copyright 1997-2007 Steve Tell")))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
 
@@ -177,15 +179,14 @@
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
 
-    (make-button vbox "Close" (lambda () (gtk-widget-destroy window)))
+    (make-button vbox "Close" (lambda (x) (gtk-widget-destroy window)))
     (gtk-widget-show window)))
 
 ;; Pop up a dialog box to enter new axis limits (zoom setting) for a wavepanel.
 (define-public (show-zoom-dialog! wp)
   (let* ((window (gtk-widget-new 'GtkWindow
 				 :type         'toplevel
-				 :title        "Gwave axis settings"
-				 :GtkContainer::border_width 5))
+				 :title        "Gwave axis settings"))
 	 (vbox (gtk-vbox-new #f 5))
 	 (hbox (gtk-hbox-new #f 5))
 	 (frame_x (gtk-frame-new "Global X Axis"))
@@ -200,6 +201,7 @@
 	 (max-rect (wavepanel-max-rect wp))
 	 (disp-rect (wavepanel-disp-rect wp))
 	 )
+    (gtk-container-set-border-width window 5)
     (gtk-table-set-row-spacings table_x 3)
     (gtk-table-set-col-spacings table_x 3)
     (gtk-table-set-row-spacings table_y 3)
@@ -265,9 +267,9 @@
       (gtk-widget-show lab))
 
     (if (wavepanel-y-manual? wp)
-	(gtk-toggle-button-set-state man_y_button #f)
+	(gtk-toggle-button-set-active man_y_button #f)
 	(begin
-	  (gtk-toggle-button-set-state man_y_button #t)
+	  (gtk-toggle-button-set-active man_y_button #t)
 	  (gtk-widget-set-sensitive start_y_entry #f)
 	  (gtk-widget-set-sensitive end_y_entry #f)))
     (gtk-signal-connect man_y_button "toggled" (lambda ()
@@ -314,28 +316,38 @@
     (gtk-widget-show window)
 ))
 
-; Pop up a file-selection dialog with title S.
+
+; Pop up a file-chooser dialog with title S.
 ; When file seleted, run procedure P, passing it the name of the file.
 ; Optionaly, a default suggested filename can be specified using
 ; keyword #:default.
-(define*-public (with-selected-filename s p #:key (default #f))
-  (let* ((window (gtk-file-selection-new s))
-         (button #f))
-    (gtk-signal-connect
-     (gtk-file-selection-ok-button window)
-     "clicked" (lambda () 
-		 (p (gtk-file-selection-get-filename window))
-		 (gtk-widget-destroy window)
-		 ))
-			  
-    (gtk-signal-connect 
-     (gtk-file-selection-cancel-button window)
-     "clicked" (lambda () (gtk-widget-destroy window)))
+; allows choosing a new file to save to if keyword #:save is set to #t
+(define*-public (with-selected-filename title p 
+					#:key (exists #f) (default #f))
+  (let* ((dialog ( make <gtk-file-chooser-dialog> 
+		   #:title title
+		   )))
+    (format #t "with-selected ~s save=~s defname=~s\n" title exists default)
+    (if (not exists)
+	(gtk-file-chooser-set-action dialog 'save))
+    (gtk-dialog-add-button dialog (gtk-stock-id 'ok) -5)
+;    (gtk-dialog-set-default-response -5) ; throws wrong-type error
+    (gtk-dialog-add-button dialog (gtk-stock-id 'cancel) -6)
 
     (if (string? default)
-	(gtk-file-selection-set-filename window default))
-    (gtk-file-selection-hide-fileop-buttons window)
-    (gtk-widget-show window)
+	(gtk-file-chooser-set-filename dialog default))
+
+    (gtk-signal-connect dialog "response" 
+			(lambda (d r)
+			  (case r
+			    ((-6) (destroy dialog))
+			    ((-5) (let ((fn (gtk-file-chooser-get-filename dialog)))
+				    (format #t "chose file(~a): ~s\n" title fn)
+				    (p fn)
+				    (destroy dialog)))
+			    (else (format #t "chooser(~a) response ~s\n" title r)))))
+    
+    (gtk-widget-show dialog)
 ))
 
 

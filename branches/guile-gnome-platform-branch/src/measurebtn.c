@@ -32,7 +32,7 @@
 #include <math.h>
 #include <errno.h>
 #include <gtk/gtk.h>
-#include <guile-gtk.h>
+#include <guile-gnome-gobject/gobject.h>
 
 #include <config.h>
 #include <gwave.h>

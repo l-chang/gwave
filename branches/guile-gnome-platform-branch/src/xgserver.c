@@ -1,4 +1,4 @@
-/* $Id: xgserver.c,v 1.1 2000-11-06 06:42:20 sgt Exp $
+/* $Id: xgserver.c,v 1.1 2000/11/06 06:42:20 sgt Exp $
  * xgserver.c
  * Copyright 2000 Steve Tell
  * Copyright (C) 1998, 1999, 2000  Greg J. Badros and Maciej Stachowiak 
@@ -28,6 +28,7 @@
 #include <X11/Xutil.h>
 #include <assert.h>
 
+#include <guile-gnome-gobject/gobject.h>
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
 
@@ -128,7 +129,8 @@ xg_init(Display *display)
 /*	printf("xg_init root=%d LISTENER atom=%d\n", Root, XA_XGEXEC_LISTENER);
  */
 
-	XGetWindowAttributes (gdk_display, gdk_root_window, &xwa);
+
+	XGetWindowAttributes (gdk_display, Root, &xwa);
 	old_event_mask = xwa.your_event_mask;
 	XSelectInput (Dpy, Root, old_event_mask | PropertyChangeMask);
 

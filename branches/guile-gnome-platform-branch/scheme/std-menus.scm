@@ -3,8 +3,10 @@
 ;
 
 (define-module (app gwave std-menus)
-  :use-module (gtk gtk)
-  :use-module (gtk gdk)
+  :use-module (gnome-0)
+  :use-module (gnome gtk)
+  :use-module (gnome gtk gdk-event)
+  :use-module (app gwave gtk-helpers)
   :use-module (app gwave cmds)
   :use-module (app gwave export)
   :use-module (app gwave globals)
@@ -28,7 +30,8 @@
 		  (gtk-menu-item-new))))
     (gtk-widget-show item)
     (if proc
-	(gtk-signal-connect item "activate" proc))
+	(gtk-signal-connect item "activate" 
+			    (lambda (m) (proc))))
     (cond ((gtk-menu? parent) (gtk-menu-append parent item))
 	  ((gtk-menu-bar? parent) (gtk-menu-bar-append parent item)))
     item))
@@ -60,12 +63,13 @@
 		  (gtk-radio menu-item-new group))))
     (gtk-widget-show item)
     (if proc
-	(gtk-signal-connect item "activate" proc))
+	(gtk-signal-connect item "activate" (lambda (x) (proc))))
     (if active
-	(gtk-check-menu-item-set-state item active))
+	(gtk-check-menu-item-set-active item active))
     (cond ((gtk-menu? parent) (gtk-menu-append parent item))
 	  ((gtk-menu-bar? parent) (gtk-menu-bar-append parent item)))
-    item))
+    (gtk-radio-menu-item-get-group item)
+))
 
 
 ;*****************************************************************************
@@ -76,7 +80,7 @@
 (define (rebuild-varlist-submenu!)
   (for-each (lambda (mitem)
 	      (gtk-container-remove var-list-submenu mitem))
-	    (gtk-container-children var-list-submenu))
+	    (gtk-container-get-children var-list-submenu))
   (for-each (lambda (df)
    (add-menuitem var-list-submenu 
 		 (string-append (wavefile-tag df)
@@ -204,14 +208,17 @@
 				": "
 				(wavefile-file-name df))
 		 (lambda () (wavefile-show-listwin! df)))
-) #t )
+   ) #t )
 
 (add-hook!
  new-wavelist-hook
  (lambda (df)
-;   (display "in std-menus new-wavelist-hook for") (display df) (newline)
+   (dbprint "in std-menus new-wavelist-hook for " df "\n")
    (let* ((mbar (wavefile-listwin-menubar df))
 	  (menu (menu-create mbar "File")))
+     (dbprint "    mbar is " mbar " menu is " menu "\n")
+     (show mbar)
+     (show menu)
        (add-menuitem menu "Reload this File" 
 		     (lambda () (wavefile-reload! df)))
        (add-menuitem menu "Export Data..." 
@@ -272,9 +279,10 @@
 		   (lambda () (set-wavepanel-ylogscale! wp #f)))
 	 (add-menuitem menu "Log Y Scale"
 		   (lambda () (set-wavepanel-ylogscale! wp #t))))
-       
-     (gtk-menu-popup menu #f #f
-		     (gdk-event-button event)
-		     (gdk-event-time event)))))
+
+     (gtk-menu-popup menu #f #f  #f #f
+		     (gdk-event-button:button event)
+		     (gdk-event-button:time event))
+     )))
 
 (dbprint "std-menus.scm done\n")

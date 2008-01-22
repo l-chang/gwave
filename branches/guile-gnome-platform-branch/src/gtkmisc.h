@@ -1,7 +1,10 @@
 /*
  * prototypes for routines in gtkmisc.c
  *
- * $Log: not supported by cvs2svn $
+ * $Log: gtkmisc.h,v $
+ * Revision 1.2  2000/01/07 06:33:43  tell
+ * Merged in the guile and guile-gtk stuff
+ *
  * Revision 1.1  1998/08/31 21:00:57  tell
  * Initial revision
  *

@@ -35,6 +35,9 @@ SCM scwm_safe_apply (SCM proc, SCM args);
 SCM scwm_safe_call0 (SCM thunk);
 SCM scwm_safe_call1 (SCM proc, SCM arg);
 SCM scwm_safe_call2 (SCM proc, SCM arg1, SCM arg2);
+SCM scwm_safe_call3 (SCM proc, SCM arg1, SCM arg2, SCM arg3);
+SCM scwm_safe_call4 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4);
+SCM scwm_safe_call5 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5);
 
 SCM safe_load (SCM fname);
 SCM scwm_safe_load (char *filename);
@@ -101,19 +104,18 @@ SCM scm_empty_hook_p(SCM hook);
 #define GC_MARK_SCM_IF_SET(scm) do { if (scm && !UNSET_SCM((scm))) \
      { scm_gc_mark((scm)); } } while (0)
 
-#define SCWM_NEWCELL_SMOB(ANSWER,ID,PSMOB) \
-   do { \
-     SCM_NEWCELL((ANSWER)); \
-     SCM_SETCDR((ANSWER),(SCM) (PSMOB)); \
-     SCM_SETCAR((ANSWER),(ID)); \
-   } while (0)
-
-/* a variation that hides the tc16 part */
-#define SGT_NEWCELL_SMOB(ANSWER,ID,PSMOB) \
+/* a NEWSMOB variation that hides the tc16 part */
+/*#define SGT_NEWCELL_SMOB(ANSWER,ID,PSMOB)	\
    do { \
      SCM_NEWCELL((ANSWER)); \
      SCM_SETCAR((ANSWER),(scm_tc16_scwm_ ## ID)); \
      SCM_SETCDR((ANSWER),(SCM) (PSMOB)); \
+   } while (0)
+*/
+
+#define SGT_NEWCELL_SMOB(ANSWER,ID,PSMOB)	\
+   do { \
+     SCM_NEWSMOB(ANSWER, (scm_tc16_scwm_ ## ID), (SCM) (PSMOB)); \
    } while (0)
 
 #define DEREF_IF_SYMBOL(x) do { if (gh_symbol_p((x))) { \
