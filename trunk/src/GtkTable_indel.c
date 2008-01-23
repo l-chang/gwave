@@ -7,6 +7,7 @@
  * a table with 2 rows has rows numbered 0 and 1, etc.
  */
 
+#include <stdlib.h>
 #include <gtk/gtk.h>
 
 static GtkTableChild *

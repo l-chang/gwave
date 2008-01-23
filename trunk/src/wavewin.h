@@ -85,8 +85,8 @@ struct _WavePanel {
 
 EXTERN long scm_tc16_scwm_WavePanel;
 
-#define WavePanel_P(X) (SCM_NIMP(X) && gh_car(X) == (SCM)scm_tc16_scwm_WavePanel)
-#define WavePanel(X)  ((WavePanel *)gh_cdr(X))
+#define WavePanel_P(X) (SCM_NIMP(X) && SCM_SMOB_PREDICATE(scm_tc16_scwm_WavePanel, X))
+#define WavePanel(X)  ((WavePanel *)SCM_SMOB_DATA(X))
 #define SAFE_WavePanel(X)  (WavePanel_P((X))? WavePanel((X)) : NULL)
 
 #define VALIDATE_ARG_WavePanel(pos,scm) \
@@ -130,8 +130,8 @@ struct _VisibleWave {
 /* VisibleWave as a SMOB */ 
 EXTERN long scm_tc16_scwm_VisibleWave;
 
-#define VisibleWave_P(X) (SCM_NIMP(X) && gh_car(X) == (SCM)scm_tc16_scwm_VisibleWave)
-#define VisibleWave(X)  ((VisibleWave *)gh_cdr(X))
+#define VisibleWave_P(X) (SCM_NIMP(X) && SCM_SMOB_PREDICATE(scm_tc16_scwm_VisibleWave, X))
+#define VisibleWave(X)  ((VisibleWave *)SCM_SMOB_DATA(X))
 #define SAFE_VisibleWave(X)  (VisibleWave_P((X))? VisibleWave((X)) : NULL)
 
 #define VALIDATE_ARG_VisibleWave(pos,scm) \
@@ -194,5 +194,9 @@ extern void wavepanel_draw_labels(WavePanel *wp);
 extern WavePanel *first_selected_wavepanel();
 
 extern SCM wavepanel_mouse_binding[];
+extern void draw_wavepanel_labels(WavePanel *wp);
+extern void setup_wavepanel_lmtable(WavePanel *wp, int showlabels);
+extern void destroy_wave_panel(WavePanel *wp);
+extern void setup_wave_panel(WavePanel *wp, int minheight, int showlabels);
 
 #endif

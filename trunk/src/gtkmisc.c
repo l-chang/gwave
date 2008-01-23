@@ -283,7 +283,7 @@ shape_create_icon_d (char     **xpm_data,
   return window;
 }
 
-XSCM_DEFINE(gtk_tooltips_enabled_p, "gtk-tooltips-enabled?", 1, 0, 0, (SCM tt),
+SCM_DEFINE(gtk_tooltips_enabled_p, "gtk-tooltips-enabled?", 1, 0, 0, (SCM tt),
  "Return #t if the GtkTooltips object TT is enabled, otherwise"
 "return #f.  See gtk-tooltips-enable in the guile-gtk documentation,"
 "or gtk_tooltips_enable in the Gtk+ documentation for GtkTooltips.")

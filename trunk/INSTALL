@@ -1,6 +1,6 @@
 
 Some installation notes for gwave. 
-Updated November 2005.
+Updated January 2008
 
 Prerequesites:
 	Gtk-1.2		(http://www.gtk.org/)
@@ -10,8 +10,20 @@ Prerequesites:
 			(optional, only used for ploting/exporting)
 	GNUPlot		(optional, only used for ploting/exporting)
 
--------------
-tested configurations:
+----
+
+most recently tested configuration: Fedora  8
+	gtk+-1.2.10-59.fc8		(standard fedora 8)
+	gtk+-devel-1.2.10-59.fc8	(standard fedora 8)
+	glib-1.2.10-28.fc8		(standard fedora 8)
+	glib-devel-1.2.10-28.fc8	(standard fedora 8)
+	guile-1.8.2-2.fc8		(standard fedora 8)
+	guile-gtk-0.60-1sgt
+
+
+----
+
+previously tested configurations:
 
 Fedora Core 2 is my primary development platform. I use these rpms:
 	gtk+-1.2.10-29.1.1		(Standard With FC2)
@@ -22,13 +34,7 @@ Fedora Core 2 is my primary development platform. I use these rpms:
 	guile-gtk-0.41-1sgt	(http://www.telltronics.org/pub/guile/guile-gtk-0.41-1sgt.i386.rpm)
 
 
-Red Hat Linux 9 has also been used, with these RPMs:
-	gtk+-1.2.10-25		(Standard With RH9)
-	gtk+-devel-1.2.10-25	(Standard With RH9)
-	glib-1.2.10-10		(Standard With RH9)
-	glib-devel-1.2.10-10	(Standard With RH9)
-	guile-1.6.4-7.1		(ftp://ftp.redhat.com/pub/redhat/linux/rawhide/i386)
-	guile-gtk-1.2_0.31-1sgt	 (http://www.telltronics.org/pub/guile/guile-gtk-1.2_0.31-1sgt.i386.rpm)
+Red Hat Linux 9, 8.0, and 8 worked at one time,  but haven't been tested recently.
 
 Red Hat 8.0 and Red Hat 7 worked, but haven't been tested recently.
 
@@ -40,14 +46,16 @@ CAUTION: Use only the version of guile-gtk known to work with whatever
 version of guile you have. Mixing incompatibile versions of guile-gtk
 and guile definitely fails.
 
-The only combinations tested with this version of gwave are
-guile 1.6.4 and 1.6.7 with guile-gtk 1.2_0.31 and 0.41.
+The only combinations tested with this version of gwave are those listed above.
 
 Gwave definitely does not support versions of guile older than 1.6.0;
-and this version has only been tested with Guile 1.6.7.
+and this version has only been tested with Guile 1.8.2.
 
 
-Gwave does not yet support Gtk+ version 2.0.
+Gwave does not yet fully support Gtk+ version 2.0;
+the experimental guile-gnome-platform-branch is close, however.
+
+
 
 I recommend verifying that guile, gtk, and guile-gtk all work
 individualy before trying to build gwave using them.  Gtk and

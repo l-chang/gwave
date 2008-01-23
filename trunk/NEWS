@@ -1,5 +1,9 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20080122
+- Adapted for guile-1.8.  
+- I don't think I broke builds with guile-1.6, but not tested.
+
 New in 20051222
 - full-height vertical scrollbar appears if the total height of all
 panels becomes larger than the window.

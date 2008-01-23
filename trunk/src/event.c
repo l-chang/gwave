@@ -130,6 +130,8 @@
 #include <scwm_guile.h>
 #include <gwave.h>
 #include <wavewin.h>
+#include <measurebtn.h>
+
 #include <guile-gtk.h>
 
 extern sgtk_boxed_info sgtk_gdk_event_info;
@@ -167,7 +169,7 @@ set_all_wp_cursors(int cnum)
  * selecting a subset of the visible part of the X axis by dragging
  * with button 1.
  */
-XSCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
+SCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
            (SCM proc),
 "Prompt the user to select a range of the visible X axis using"
 "button 1 of the mouse.  "
@@ -187,7 +189,7 @@ XSCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
+SCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
            (SCM proc),
 "Prompt the user to select a range of the visible Y axis using"
 "button 1 of the mouse. " 
@@ -207,7 +209,7 @@ XSCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(select_range_xy, "select-range-xy", 1, 0, 0,
+SCM_DEFINE(select_range_xy, "select-range-xy", 1, 0, 0,
            (SCM proc),
 "Prompt the user to select a region of the "
 "visible XY plane using button 1 of the mouse.  "
@@ -590,7 +592,7 @@ gint expose_handler(GtkWidget *widget, GdkEventExpose *event,
 void init_event()
 {
 
-#ifndef XSCM_MAGIC_SNARF_INITS
+#ifndef SCM_MAGIC_SNARF_INITS
 #include "event.x"
 #endif
 }

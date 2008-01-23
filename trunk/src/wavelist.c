@@ -176,6 +176,8 @@
 #include <wavelist.h>
 
 #include <wavewin.h>
+#include <measurebtn.h>
+#include <dnd.h>
 
 GList *wdata_list = NULL;
 static char file_tag_chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -241,7 +243,7 @@ load_wave_file(char *fname, char *ftype)
 	return wdata;
 }
 
-XSCM_DEFINE(load_wavefile_x, "load-wavefile!", 1, 1, 0, (SCM file, SCM filetype),
+SCM_DEFINE(load_wavefile_x, "load-wavefile!", 1, 1, 0, (SCM file, SCM filetype),
 "Load waveform data from FILE into memory, and make it available for"
 "display.  If FILETYPE is specified, it indicates the format of the file"
 "and which wavefile reader to use, otherwise the format is inferred"
@@ -304,7 +306,7 @@ delete_wave_file(GtkWidget *w, GWDataFile *wdata)
 	}
 }
 
-XSCM_DEFINE(datafile_delete_x, "wavefile-delete!", 1, 0, 0, 
+SCM_DEFINE(datafile_delete_x, "wavefile-delete!", 1, 0, 0, 
            (SCM obj),
 	   "Delete from memory the waveform data from OBJ.")
 #define FUNC_NAME s_datafile_delete_x
@@ -375,7 +377,7 @@ reload_all_wave_files(GtkWidget *w)
 	g_list_foreach(wdata_list, reload_wave_file_w, NULL);
 }
 
-XSCM_DEFINE(reload_all_files_x, "reload-all-files!", 0, 0, 0, (),
+SCM_DEFINE(reload_all_files_x, "reload-all-files!", 0, 0, 0, (),
 	   "Reload all files")
 #define FUNC_NAME s_reload_all_files_x
 {
@@ -385,7 +387,7 @@ XSCM_DEFINE(reload_all_files_x, "reload-all-files!", 0, 0, 0, (),
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(datafile_reload_x, "wavefile-reload!", 1, 0, 0, 
+SCM_DEFINE(datafile_reload_x, "wavefile-reload!", 1, 0, 0, 
            (SCM obj),
 "Reread the data file for OBJ.  Useful for updating the display"
 "    after simulation has been rerun.")
@@ -408,8 +410,8 @@ get_gwave_tooltips()
 {
 	extern SCM scm_gwave_tooltips;
 	SCM scm_tt;
-	g_assert( SCM_CONSP(scm_gwave_tooltips) );
-	scm_tt = SCM_CDR(scm_gwave_tooltips);
+//	g_assert( SCM_CONSP(scm_gwave_tooltips) );
+	scm_tt = SCM_SMOB_DATA(scm_gwave_tooltips);
 	
 	if( sgtk_is_a_gtkobj (GTK_TYPE_TOOLTIPS, scm_tt))
 		return (GtkTooltips *) sgtk_get_gtkobj (scm_tt);
@@ -454,7 +456,7 @@ gwfile_add_wv_to_list(gpointer d, gpointer p)
 		     "Wavefile Variable.\nDrag-and-Drop to a WavePanel.",
 		     "");
 
-	dnd_setup_source(wdata->wlist_win, button, wv);
+	dnd_setup_source(GTK_WINDOW(wdata->wlist_win), button, wv);
 
 	gtk_signal_connect (GTK_OBJECT(button), "button-press-event",
 			    GTK_SIGNAL_FUNC(wavelist_button_click), 
@@ -581,7 +583,7 @@ wavelist_button_click(GtkWidget *widget,
 	}
 }
 
-XSCM_DEFINE(wavefile_show_listwin_x, "wavefile-show-listwin!", 1, 0, 0,
+SCM_DEFINE(wavefile_show_listwin_x, "wavefile-show-listwin!", 1, 0, 0,
            (SCM obj),
 "Displays the scrolling list of the variables in OBJ, from which they"
 "can be dragged into a waveform display panel.")
@@ -600,7 +602,7 @@ XSCM_DEFINE(wavefile_show_listwin_x, "wavefile-show-listwin!", 1, 0, 0,
 #undef FUNC_NAME
 
 /* maybe I should just expose the GTkWindow itself, and destroy from guile */
-XSCM_DEFINE(wavefile_remove_listwin_x, "wavefile-remove-listwin!", 1, 0, 0,
+SCM_DEFINE(wavefile_remove_listwin_x, "wavefile-remove-listwin!", 1, 0, 0,
            (SCM obj),
 	   "Removes the variable-list window for OBJ")
 #define FUNC_NAME s_wavefile_remove_listwin_x
@@ -617,7 +619,7 @@ XSCM_DEFINE(wavefile_remove_listwin_x, "wavefile-remove-listwin!", 1, 0, 0,
 
 /* Primitives for accessing GWDataFile info from scheme */
 
-XSCM_DEFINE(wavefile_file_name, "wavefile-file-name", 1, 0, 0,
+SCM_DEFINE(wavefile_file_name, "wavefile-file-name", 1, 0, 0,
            (SCM obj),
 "Returns the filename from which the GWDataFile OBJ was loaded."
 "If OBJ is invalid because the datafile has been deleted,"
@@ -635,7 +637,7 @@ XSCM_DEFINE(wavefile_file_name, "wavefile-file-name", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wavefile_nsweeps, "wavefile-nsweeps", 1, 0, 0,
+SCM_DEFINE(wavefile_nsweeps, "wavefile-nsweeps", 1, 0, 0,
            (SCM df),
 	   "Returns the number of sweeps for which data is present in GWDataFile DF.")
 #define FUNC_NAME s_wavefile_nsweeps
@@ -647,7 +649,7 @@ XSCM_DEFINE(wavefile_nsweeps, "wavefile-nsweeps", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wavefile_sweeps, "wavefile-sweeps", 1, 0, 0,
+SCM_DEFINE(wavefile_sweeps, "wavefile-sweeps", 1, 0, 0,
            (SCM df),
 	   "Returns a list of sweeps contained in GWDataFile DF.  Each element of the list is a pair, of the form (sweepname . sweepvalue)")
 #define FUNC_NAME s_wavefile_nsweeps
@@ -673,7 +675,7 @@ XSCM_DEFINE(wavefile_sweeps, "wavefile-sweeps", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wavefile_tag, "wavefile-tag", 1, 0, 0,
+SCM_DEFINE(wavefile_tag, "wavefile-tag", 1, 0, 0,
            (SCM obj),
 	   "Returns the short identifying tag for the GWDataFile OBJ.")
 #define FUNC_NAME s_wavefile_tag
@@ -685,7 +687,7 @@ XSCM_DEFINE(wavefile_tag, "wavefile-tag", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wavefile_set_tag_x, "wavefile-set-tag!", 2, 0, 0,
+SCM_DEFINE(wavefile_set_tag_x, "wavefile-set-tag!", 2, 0, 0,
 	    (SCM obj, SCM str),
 	   "Set the short identifying tag for the GWDataFile OBJ to STR.")
 #define FUNC_NAME s_wavefile_set_tag_x
@@ -702,7 +704,7 @@ XSCM_DEFINE(wavefile_set_tag_x, "wavefile-set-tag!", 2, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(wavefile_listwin_menubar, "wavefile-listwin-menubar", 1, 0, 0,
+SCM_DEFINE(wavefile_listwin_menubar, "wavefile-listwin-menubar", 1, 0, 0,
            (SCM obj),
 "Returns the GTK Menubar for the variable-list window of the"
 " * GWDataFile OBJ, or #f if the window doesn't exist.")
@@ -736,7 +738,7 @@ glist2scm(GList *list, SCM (*toscm)(void*))
 	  return result;
 }
 
-XSCM_DEFINE(wavefile_list, "wavefile-list", 0, 0, 0, (),
+SCM_DEFINE(wavefile_list, "wavefile-list", 0, 0, 0, (),
 	   "Returns a list containing all waveform data files")
 #define FUNC_NAME s_wavefile_list
 {
@@ -745,7 +747,7 @@ XSCM_DEFINE(wavefile_list, "wavefile-list", 0, 0, 0, (),
 #undef FUNC_NAME
 
 
-XSCM_DEFINE(wavefile_all_variables, "wavefile-all-variables", 1, 0, 0, (SCM df),
+SCM_DEFINE(wavefile_all_variables, "wavefile-all-variables", 1, 0, 0, (SCM df),
 	   "Returns a list of WaveVars, composed of all variables in the GWDataFile DF.")
 #define FUNC_NAME s_wavefile_all_variables
 {
@@ -788,7 +790,7 @@ XSCM_DEFINE(wavefile_all_variables, "wavefile-all-variables", 1, 0, 0, (SCM df),
 #undef FUNC_NAME
 
 
-XSCM_DEFINE(wavefile_variable, "wavefile-variable", 3, 0, 0,
+SCM_DEFINE(wavefile_variable, "wavefile-variable", 3, 0, 0,
 	    (SCM df, SCM vname, SCM swindex),
    "Returns a WaveVar representing the variable named VNAME in sweep/table/segment SWINDEX in the GWDataFile DF.  Return #f if there is no variable named VNAME")
 #define FUNC_NAME s_wavefile_variable
@@ -825,7 +827,7 @@ XSCM_DEFINE(wavefile_variable, "wavefile-variable", 3, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(variable_signame, "variable-signame", 1, 0, 0,
+SCM_DEFINE(variable_signame, "variable-signame", 1, 0, 0,
 	   (SCM var),
 	   "Return the signal name for the variable VAR.")
 #define FUNC_NAME s_variable_signame
@@ -841,7 +843,7 @@ XSCM_DEFINE(variable_signame, "variable-signame", 1, 0, 0,
 #undef FUNC_NAME
 
 
-XSCM_DEFINE(variable_sweepname, "variable-sweepname", 1, 0, 0,
+SCM_DEFINE(variable_sweepname, "variable-sweepname", 1, 0, 0,
 	   (SCM var),
 	   "Return the sweep name or table name for the variable VAR.")
 #define FUNC_NAME s_variable_sweepname
@@ -857,7 +859,7 @@ XSCM_DEFINE(variable_sweepname, "variable-sweepname", 1, 0, 0,
 #undef FUNC_NAME
 
 
-XSCM_DEFINE(variable_sweepindex, "variable-sweepindex", 1, 0, 0,
+SCM_DEFINE(variable_sweepindex, "variable-sweepindex", 1, 0, 0,
 	   (SCM var),
 	   "Return the sweep table index for the variable VAR.  Sweeps/tables are numbered starting with 0. ")
 #define FUNC_NAME s_variable_sweepindex
@@ -873,7 +875,7 @@ XSCM_DEFINE(variable_sweepindex, "variable-sweepindex", 1, 0, 0,
 #undef FUNC_NAME
 
 
-XSCM_DEFINE(variable_wavefile, "variable-wavefile", 1, 0, 0,
+SCM_DEFINE(variable_wavefile, "variable-wavefile", 1, 0, 0,
 	   (SCM var),
 	   "Return the WaveFile that the variable VAR is contained in.")
 // Really, the GWDataFile smob.
@@ -891,7 +893,7 @@ XSCM_DEFINE(variable_wavefile, "variable-wavefile", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-XSCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
+SCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
 	    (SCM varlist, SCM port, SCM from, SCM to),
 "Write the data for all variables in VARLIST to PORT in tabular ascii form"
 "If FROM and TO are specified, writes only data points for which the"
@@ -1010,7 +1012,7 @@ print_GWDataFile(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
 	return 1;
 }
 
-XSCM_DEFINE(GWDataFile_p, "GWDataFile?", 1, 0, 0,
+SCM_DEFINE(GWDataFile_p, "GWDataFile?", 1, 0, 0,
            (SCM obj),
 	   "Returns #t if OBJ is a gwave data file object, otherwise #f.")
 #define FUNC_NAME s_GWDataFile_p
@@ -1069,7 +1071,7 @@ print_WaveVar(SCM obj, SCM port, scm_print_state *ARG_IGNORE(pstate))
 	return 1;
 }
 
-XSCM_DEFINE(WaveVar_p, "WaveVar?", 1, 0, 0,
+SCM_DEFINE(WaveVar_p, "WaveVar?", 1, 0, 0,
            (SCM obj),
 	   "Returns #t if OBJ is a wave-file variable object, otherwise #f.")
 #define FUNC_NAME s_WaveVar_p
@@ -1088,7 +1090,7 @@ void init_wavelist()
         REGISTER_SCWMSMOBFUNS(GWDataFile);
         REGISTER_SCWMSMOBFUNS(WaveVar);
 
-#ifndef XSCM_MAGIC_SNARF_INITS
+#ifndef SCM_MAGIC_SNARF_INITS
 #include "wavelist.x"
 #endif
 }

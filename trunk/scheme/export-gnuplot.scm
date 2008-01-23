@@ -36,12 +36,12 @@
 				'("GPIC" . "gpic")
 				'("HPGL" . "hpgl")
 				'("LaTeX" . "latex")
-				'("LaTeX Picture \Specials" . "pslatex")
+				'("LaTeX Picture \\Specials" . "pslatex")
 				'("LaTeX Picture PSTricks" . "pstricks")
-				'("LaTeX TPic \Specials" . "tpic")
+				'("LaTeX TPic \\Specials" . "tpic")
 				'("Maker Interchange Format" . "mif")
 				'("Metafont" . "mf")
-				'("Plain TeX Picture \Specials" . "pstex")
+				'("Plain TeX Picture \\Specials" . "pstex")
 				'("Portable Anymap" . "pbm")
 				'("Portable Network Graphics" . "png")
 				'("Postscript EPS" . "postscript eps")
@@ -131,7 +131,7 @@
 	(format #t "~a\n" (join "\n" preamble))
 	(format #t "set output \"~a\"\n" fname)
 	(if multiplot
-	    (format #t "set multiplot\nset size 1,~f\n" (/ 1 npanels)))
+	    (format #t "set multiplot\nset size 1,~f\n" (exact->inexact (/ 1 npanels))))
 		
 	(if (wtable-xlogscale?)
 	    (display "set logscale x"))
@@ -143,7 +143,7 @@
 	     (if (< 0 (length wavelist))
 		 (begin
 		   (if multiplot
-		       (format #t "set origin 0,~f\n" (* (- (- npanels 1) pidx) (/ 1 npanels))))
+		       (format #t "set origin 0,~f\n" (* (- (- npanels 1) pidx) (exact->inexact (/ 1 npanels)))))
 		   (if (wavepanel-ylogscale? wp)
 		       (display "set logscale y\n")
 		       (display "set nologscale y\n"))
