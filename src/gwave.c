@@ -35,14 +35,22 @@
 #include <scwm_guile.h>
 #include "guile-compat.h"
 
-#ifndef XSCM_MAGIC_SNARF_INITS
-#include <scm_init_funcs.h>
-#endif
 
 #include <gwave.h>
 
 #include <wavelist.h>
 #include <wavewin.h>
+extern void init_scwm_guile();
+extern void init_gtkmisc();
+extern void init_gwave();
+extern void init_cmd();
+extern void init_wavewin();
+extern void init_wavelist();
+extern void init_wavepanel();
+extern void init_event();
+extern void init_draw();
+
+extern void xg_init(void *display);
  
 /* globals */
 char *prog_name = PACKAGE;
@@ -70,31 +78,33 @@ GdkColormap *win_colormap; /* colormap for main waveform window */
 
 /* variables accessible from both C and guile */
 
-XSCM_VCELL_INIT(scm_gwave_version, "gwave-version-string",  scm_makfrom0str(VERSION),
+SCM_VARIABLE_INIT(scm_gwave_version, "gwave-version-string",  scm_makfrom0str(VERSION));
+/*,
 "This variable is initialized to contain the version string for gwave, as"
-"set in configure.in.");
+"set in configure.in."); */
 
-XSCM_VCELL_INIT(scm_gwave_datadir, "gwave-datadir",  scm_makfrom0str(DATADIR),
-"This variable is initialized to contain the compiled-in pathname to"
+SCM_VARIABLE_INIT(scm_gwave_datadir, "gwave-datadir",  scm_makfrom0str(DATADIR));
+/*"This variable is initialized to contain the compiled-in pathname to"
 "the installed data directory, typicaly PREFIX/share, as set by configure."
 "It is used by the startup code as a default location for finding gwave's"
-"guile modules.");
+"guile modules.");*/
 
-XSCM_VCELL_INIT(scm_gwave_bingwave, "gwave-bin-gwave-path", scm_makfrom0str(BINGWAVE),
+SCM_VARIABLE_INIT(scm_gwave_bingwave, "gwave-bin-gwave-path", scm_makfrom0str(BINGWAVE));
+/*,
 "This variable is initialized to contain the compiled-in pathname to"
 "the installed gwave executable, typicaly PREFIX/bin/gwave, as set by configure."
 "It is used by the procedures that write out gwave configuration-restoring"
 "scripts so that when run from the command line command line, the scripts"
-"can use gwave as their interpreter.");
+"can use gwave as their interpreter.");*/
 
-XSCM_GLOBAL_VCELL(scm_gwave_debug, "gwave-debug",
-"This variable is set to #t very early in gwave's startup when the -x flag"
+SCM_GLOBAL_VARIABLE(scm_gwave_debug, "gwave-debug");
+/*"This variable is set to #t very early in gwave's startup when the -x flag"
 "is passed on the command line.  It enables debugging output to stdout"
-"in the startup code and in various modules.");
+"in the startup code and in various modules.");*/
 
-XSCM_GLOBAL_VCELL(scm_gwave_tooltips, "gwave-tooltips",
-"This variable is a GtkTooltips object used for controlling all"
-"of the popup tooltips in the user interface.");
+SCM_GLOBAL_VARIABLE(scm_gwave_tooltips, "gwave-tooltips");
+/*"This variable is a GtkTooltips object used for controlling all"
+  "of the popup tooltips in the user interface.");*/
 
 /*
  * usage -- prints the standard switch info, then exits.
@@ -203,7 +213,7 @@ void gwave_main(void *p, int argc, char **argv)
 
 	gtk_rc_parse_string(gwave_base_gtkrc);
 	gtk_rc_parse("gwave.gtkrc");
-	assert( SCM_CONSP(scm_gwave_tooltips) );
+//	assert( SCM_CONSP(scm_gwave_tooltips) );
 
 #ifdef GUILE_GTK_EXTRA_LOADPATH
 	scm_c_eval_string("(set! %load-path (cons \"" GUILE_GTK_EXTRA_LOADPATH "\" %load-path))");
@@ -259,7 +269,7 @@ void gwave_main(void *p, int argc, char **argv)
 /* guile initialization */
 void init_gwave()
 {
-#ifndef XSCM_MAGIC_SNARF_INITS
+#ifndef SCM_MAGIC_SNARF_INITS
 #include "gwave.x"
 #endif
 }

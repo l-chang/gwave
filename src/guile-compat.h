@@ -32,10 +32,11 @@ extern "C" {
 
 #define DEREF_LAST_STACK scm_fluid_ref(SCM_VARIABLE_REF (scm_the_last_stack_fluid_var))
 
-SCM 
+/*SCM 
 scm_internal_cwdr_no_unwind (scm_catch_body_t body, void *body_data,
 			     scm_catch_handler_t handler, void *handler_data,
 			     SCM_STACKITEM *stack_start);
+*/
 
 SCM make_output_strport(char *fname);
 

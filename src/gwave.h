@@ -145,6 +145,7 @@ extern void remove_wave_from_panel(WavePanel *wp, VisibleWave *vw);
 extern SCM add_var_to_panel(WavePanel *wp, WaveVar *dv);
 extern void wavepanel_update_data(WavePanel *wp);
 extern void wavetable_update_data();
+extern void update_wfile_waves(GWDataFile *wdata);
 
 /* defined in draw.c */
 extern void vw_wp_visit_draw(VisibleWave *vw, WavePanel *wp);

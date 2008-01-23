@@ -22,4 +22,4 @@ ggtkhackdir=@ggtk_hack_dir@
 ggtkhack_DATA=@ggtkhack_files@
 
 .scm.doc:
-	$(top_srcdir)/utilities/guile-doc-snarf --lang scheme $<  > $@
+	guile-tools doc-snarf --lang scheme $<  > $@
