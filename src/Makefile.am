@@ -28,9 +28,7 @@ DOT_X_FILES = gwave.x cmd.x wavewin.x wavelist.x scwm_guile.x event.x \
 DOT_DOC_FILES = gwave.doc cmd.doc wavewin.doc wavelist.doc scwm_guile.doc \
 	event.doc draw.doc
 
-BUILT_SOURCES=init_scheme_string.c $(DOT_X_FILES) 
-
-#$(DOT_DOC_FILES)
+BUILT_SOURCES=init_scheme_string.c $(DOT_X_FILES) $(DOT_DOC_FILES)
 
 init_scheme_string.c: $(top_srcdir)/scheme/minimal.scm
 	echo "char *init_scheme_string = " > $@
@@ -47,7 +45,7 @@ utils = $(top_srcdir)/utilities
 	|| { rm $@; false; }
 
 .c.doc:
-	guile-tools doc-snarf $< > $@
+	guile-tools doc-snarf --lang=c $< > $@
 
 $(DOT_DOC_FILES): $(utils)/gwave-doc-snarf xsnarf.h
 

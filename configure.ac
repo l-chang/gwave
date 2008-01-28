@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl ## Initialize autoconf ##
 
 AC_INIT(src/gwave.c)
-AM_INIT_AUTOMAKE(gwave, 20080122)
+AM_INIT_AUTOMAKE(gwave, 20080127)
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
 
@@ -24,10 +24,10 @@ AC_ARG_WITH(graph, [full pathname to GNU graph for postscript plotting])
 dnl AC_MSG_RESULT(with_graph is $with_graph)
 if test "$with_graph" != no; then
 	if test "$with_graph" != yes && test ! -z "$with_graph" ; then
-		AC_DEFINE_UNQUOTED(PROG_GRAPH, "$with_graph")
+		AC_DEFINE_UNQUOTED(PROG_GRAPH, "$with_graph", [If present, the pathname of graph, from GNU plotutils.])
 	else
 	    	AC_PROG_GREPSTDOUT(GRAPH, graph --version, GNU, $ac_dir/$ac_word)
-		AC_DEFINE_UNQUOTED(PROG_GRAPH, "$GRAPH")
+		AC_DEFINE_UNQUOTED(PROG_GRAPH, "$GRAPH", [If present, the pathname of graph, from GNU plotutils.])
 	fi
 fi
 
@@ -47,30 +47,22 @@ AC_CHECK_HEADER([regex.h], [AC_CHECK_FUNC([regcomp], [AC_DEFINE(HAVE_POSIX_REGEX
 AC_CHECK_HEADERS([sys/types.h])
 
 dnl check for GTK+
-AM_PATH_GTK(1.0.1, AC_DEFINE(HAVE_GTK,1,defined if we have GTK), AC_MSG_ERROR(Can not find GTK+ 1.0.1 or later on this system))
-
-case $gtk_config_major_version.$gtk_config_minor_version in
-	1.0)
-		;;
-	1.1|1.2|1.3)
-		AC_DEFINE(GTK_V12)
-		;;
-esac
+AM_PATH_GTK(1.2.1, AC_DEFINE(HAVE_GTK,1,defined if we have GTK), AC_MSG_ERROR(Can not find GTK+ on this system))
 
 
 dnl check for readline library
 AC_CHECK_LIB(termcap, tgoto, [
         AC_CHECK_LIB(readline, readline, [
         READLINE_LIB="-lreadline -ltermcap"
-        AC_DEFINE(HAVE_READLINE)
-        AC_CHECK_LIB(readline, add_history, AC_DEFINE(HAVE_HISTORY),,"-ltermcap"
+        AC_DEFINE(HAVE_READLINE,1,[Define this if you have the readline library])
+        AC_CHECK_LIB(readline, add_history, AC_DEFINE(HAVE_HISTORY,1,[Define this if your readline also has add_history]),,"-ltermcap"
 )
         ], READLINE_LIB="", "-ltermcap")  
 ], AC_CHECK_LIB(ncurses, tgoto, [
         AC_CHECK_LIB(readline, readline, [
                 READLINE_LIB="-lreadline -lncurses"
-                AC_DEFINE(HAVE_READLINE)
-                AC_CHECK_LIB(readline, add_history, AC_DEFINE(HAVE_HISTORY),,"-l
+                AC_DEFINE(HAVE_READLINE,1,[Define this if you have the readline library])
+                AC_CHECK_LIB(readline, add_history, AC_DEFINE(HAVE_HISTORY,1,[Define this if your readline also has add_history]),,"-l
 ncurses")
         ], READLINE_LIB="", "-lncurses")
 ], READLINE_LIB=""))
@@ -88,27 +80,27 @@ dnl This checks (roughly) if the guile lib is a sufficiently recent snapshot
 dnl to have a scm_eval_string that is safe against re-entry by continuations. 
 dnl I was to lazy to write a real test macro so I just check for a function
 dnl that was added soon after.
-AC_CHECK_LIB(guile, scm_done_malloc, AC_DEFINE(HAVE_SAFE_SCM_EVAL_STRING),  ,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_done_malloc, AC_DEFINE(HAVE_SAFE_SCM_EVAL_STRING, 1, [Define this if your libguile has a scm_eval_string that is safe against re-entry by continuations]),,$GUILE_LDFLAGS)
 
 dnl This checks if we have a guile with readline support
-AC_CHECK_LIB(guile, scm_readline, AC_DEFINE(HAVE_SCM_READLINE), ,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_readline, AC_DEFINE(HAVE_SCM_READLINE,1,[Define this if your libguile has readline support.]),,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_internal_cwdr, AC_DEFINE(HAVE_SCM_INTERNAL_CWDR),,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_internal_cwdr, AC_DEFINE(HAVE_SCM_INTERNAL_CWDR,1,[ Define this if your libguile has scm_internal_cwdr]),,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_internal_stack_catch, AC_DEFINE(HAVE_SCM_INTERNAL_STACK_CATCH), ,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_internal_stack_catch, AC_DEFINE(HAVE_SCM_INTERNAL_STACK_CATCH,1,[Define this if your libguile has scm_internal_stack_catch.]), ,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_internal_parse_path, AC_DEFINE(HAVE_SCM_INTERNAL_PARSE_PATH), ,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_internal_parse_path, AC_DEFINE(HAVE_SCM_INTERNAL_PARSE_PATH,1,[Define this if your libguile has scm_internal_parse_path, which should be used instead of scm_parse_path from C.]), ,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_make_hook, AC_DEFINE(HAVE_SCM_MAKE_HOOK), ancient_guile=yes,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_make_hook, AC_DEFINE(HAVE_SCM_MAKE_HOOK,1,[Define this if your libguile has scm_make_hook, indicating C-level support for hooks.]), ancient_guile=yes,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_create_hook, AC_DEFINE(HAVE_SCM_CREATE_HOOK), ancient_guile=yes,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_create_hook, AC_DEFINE(HAVE_SCM_CREATE_HOOK,1,[Define this if your libguile has scm_create_hook]), ancient_guile=yes,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_load_startup_files, AC_DEFINE(HAVE_SCM_LOAD_STARTUP_FILES), ancient_guile=yes,$GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_load_startup_files, AC_DEFINE(HAVE_SCM_LOAD_STARTUP_FILES,1,[Define this if your libguile has scm_load_startup_files]), ancient_guile=yes,$GUILE_LDFLAGS)
 
-AC_CHECK_LIB(guile, scm_make_smob_type_mfpe, AC_DEFINE(HAVE_SCM_MAKE_SMOB_TYPE_MFPE), ancient_guile=yes, $GUILE_LDFLAGS)
+AC_CHECK_LIB(guile, scm_make_smob_type_mfpe, AC_DEFINE(HAVE_SCM_MAKE_SMOB_TYPE_MFPE,1,[Define this if your libguile has scm_make_smob_type_mfpe]), ancient_guile=yes, $GUILE_LDFLAGS)
  
 if test "$ancient_guile" = "yes"; then
-	AC_ERROR(Your guile is too old; Guile-1.6 or later is required)
+	AC_ERROR(Your guile is too old; Guile-1.6 or 1.8 is required)
 fi
 
 dnl check for guile-gtk

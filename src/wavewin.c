@@ -272,21 +272,6 @@ wavewin_build_table(WaveTable *wt)
 	gtk_container_set_focus_vadjustment(
 		GTK_CONTAINER (wt->table),
 		gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(wt->vswindow)));
-
-
-#ifndef GTK_V12
-	/* can't set up dnd_drop on wavepanel drawing areas until it
-	 * is connected to a window and realized so that it has
-	 * an X-window.  At least I think that's the deal. */
-	for(i = 0; i < wt->npanels; i++) {
-		WavePanel *wp = wt->panels[i];
-		gtk_widget_dnd_drop_set (wp->lvbox, TRUE,
-					 accepted_drop_types, 1, FALSE);
-	
-		gtk_widget_dnd_drop_set (wp->drawing, TRUE,
-					 accepted_drop_types, 1, FALSE);
-	}
-#endif
 }
 
 /*
