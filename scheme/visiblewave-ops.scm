@@ -40,7 +40,7 @@
 
    (gtk-signal-connect (visiblewave-button vw) "clicked" 
 			(lambda (b)
-			  ;(format #t "clicked ~s ~s\n" vw (gtk-toggle-button-active (visiblewave-button vw)))
+			  ;(format #t "clicked ~s ~s\n" vw (gtk-toggle-button-get-active (visiblewave-button vw)))
 			  ; TODO: redraw only the one panel affected
 			  (wtable-redraw!) ))
    (gtk-signal-connect (visiblewave-button vw) "button-press-event" 

@@ -20,6 +20,8 @@
 (define-public (gtk-signal-connect w sig p) 
   (gtype-instance-signal-connect w (string->symbol sig) p))
 
+(define-public (gtk-entry-new) (make <gtk-entry>))
+
 ;
 ; create a gtk-radio-button that calls proc when selected,
 ; add it to the parent widget, and return it.
@@ -35,7 +37,7 @@
     (if proc
 	(gtk-signal-connect item "clicked" (lambda (x) (proc))))
 ;			    (lambda ()
-;			      (if (gtk-toggle-button-active item)
+;			      (if (gtk-toggle-button-get-active item)
 ;				  proc))))
     (if active
 	(gtk-toggle-button-set-active item #t))

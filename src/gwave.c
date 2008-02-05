@@ -195,6 +195,14 @@ void gwave_main(void *p, int argc, char **argv)
 	
 	gtk_init(&argc, &argv);
 
+/*
+#ifdef HAVE_G_SLICE_SET_CONFIG
+	// default mode leads to a crash; this probably masks rather
+	// than fixing it.
+	if(!getenv("G_SLICE"))
+		g_slice_set_config(G_SLICE_CONFIG_ALWAYS_MALLOC, 1);
+#endif
+*/
 	prog_name = argv[0];
 
 	/* simple pre-processing of debugging options that we need to set up
@@ -219,14 +227,9 @@ void gwave_main(void *p, int argc, char **argv)
 	scm_c_eval_string("(set! %load-path (cons \"" GUILE_GTK_EXTRA_LOADPATH "\" %load-path))");
 #endif
 
-	/* the default for this seems to have changed between guile-1.3
-	   and guile-1.3.2;  only the first clause is needed when 
-	   we drop support for guile-1.3.2 */
 	if (!nobacktrace) {
 		scm_c_eval_string("(debug-enable 'debug)(debug-enable 'backtrace) (read-enable 'positions)");
-	} /* else {
-	scm_c_eval_str("(debug-disable 'debug)(read-disable 'positions)");
-	}*/
+	}
 
 	/* the compiled-in initial scheme code comes from minimal.scm,
 	   built into init_scheme_string.c by the Makefile
