@@ -160,7 +160,7 @@
 		 (string-append "Gwave2 version " gwave-version-string))))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
-    (let ((llab (gtk-label-new "Copyright 1997-2007 Steve Tell")))
+    (let ((llab (gtk-label-new "Copyright 1997-2008 Steve Tell")))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
 
@@ -184,7 +184,7 @@
 
 ;; Pop up a dialog box to enter new axis limits (zoom setting) for a wavepanel.
 (define-public (show-zoom-dialog! wp)
-  (let* ((window (gtk-widget-new 'GtkWindow
+  (let* ((window (make <gtk-window>
 				 :type         'toplevel
 				 :title        "Gwave axis settings"))
 	 (vbox (gtk-vbox-new #f 5))
@@ -273,7 +273,7 @@
 	  (gtk-widget-set-sensitive start_y_entry #f)
 	  (gtk-widget-set-sensitive end_y_entry #f)))
     (gtk-signal-connect man_y_button "toggled" (lambda ()
-			(if (gtk-toggle-button-active man_y_button)
+			(if (gtk-toggle-button-get-active man_y_button)
 			    (begin 
 			      (gtk-widget-set-sensitive start_y_entry #f)
 			      (gtk-widget-set-sensitive end_y_entry #f))
@@ -295,18 +295,18 @@
 
  ; 3rd part: button row
     (make-button hbox "OK"
-	(lambda () 
+	(lambda (b) 
 	  (let ((n_sx (spice->number (gtk-entry-get-text start_x_entry)))
 		(n_ex (spice->number (gtk-entry-get-text end_x_entry)))
 		(n_sy (spice->number (gtk-entry-get-text start_y_entry)))
 		(n_ey (spice->number (gtk-entry-get-text end_y_entry)))
 		)
 	    (x-zoom! n_sx n_ex)
-	    (if (gtk-toggle-button-active man_y_button)
+	    (if (gtk-toggle-button-get-active man_y_button)
 		(wavepanel-y-zoom! wp #f #f)
 		(wavepanel-y-zoom! wp n_sy n_ey))
 	    (gtk-widget-destroy window))))
-    (make-button hbox "Cancel" (lambda () (gtk-widget-destroy window)))
+    (make-button hbox "Cancel" (lambda (b) (gtk-widget-destroy window)))
     
     (gtk-widget-show hbox)
     (gtk-container-add vbox hbox)

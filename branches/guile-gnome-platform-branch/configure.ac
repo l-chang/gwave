@@ -48,6 +48,10 @@ AC_CHECK_HEADERS([sys/types.h])
 dnl check for GTK+
 AM_PATH_GTK_2_0(2.0.8, AC_DEFINE(HAVE_GTK2,1,defined if we have a new enough GTK2), AC_MSG_ERROR(Can not find GTK+ 2.0.8 or later on this system))
 
+dnl check for gtk/glib features
+AC_CHECK_LIB(c, g_slice_set_config, AC_DEFINE(HAVE_G_SLICE_SET_CONFIG,1,[Define this if your version of glib2 has the slice allocator and g_slice_set_config]),,[$GTK_LIBS])
+
+
 dnl check for readline library
 AC_CHECK_LIB(termcap, tgoto, [
         AC_CHECK_LIB(readline, readline, [
