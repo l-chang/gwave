@@ -195,14 +195,14 @@ void gwave_main(void *p, int argc, char **argv)
 	
 	gtk_init(&argc, &argv);
 
-/*
+
 #ifdef HAVE_G_SLICE_SET_CONFIG
-	// default mode leads to a crash; this probably masks rather
-	// than fixing it.
+	/* default mode causes frequent crashes; this probably masks it rather
+	   than fixing it.  still, its better than crashing */
 	if(!getenv("G_SLICE"))
-		g_slice_set_config(G_SLICE_CONFIG_ALWAYS_MALLOC, 1);
+		putenv("G_SLICE=always-malloc");		
 #endif
-*/
+
 	prog_name = argv[0];
 
 	/* simple pre-processing of debugging options that we need to set up
@@ -221,7 +221,6 @@ void gwave_main(void *p, int argc, char **argv)
 
 	gtk_rc_parse_string(gwave_base_gtkrc);
 	gtk_rc_parse("gwave.gtkrc");
-//	assert( SCM_CONSP(scm_gwave_tooltips) );
 
 #ifdef GUILE_GTK_EXTRA_LOADPATH
 	scm_c_eval_string("(set! %load-path (cons \"" GUILE_GTK_EXTRA_LOADPATH "\" %load-path))");

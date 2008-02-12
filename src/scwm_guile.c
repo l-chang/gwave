@@ -202,54 +202,54 @@ scwm_safe_call7 (SCM proc, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM
 
 static SCM run_hook_proc;
 
-__inline__ SCM scwm_run_hook(SCM hook, SCM args)
+SCM scwm_run_hook(SCM hook, SCM args)
 {
   
   return scwm_safe_apply(run_hook_proc, scm_cons(hook,args));
 }
 
-__inline__ SCM scwm_run_hook_message_only(SCM hook, SCM args)
+SCM scwm_run_hook_message_only(SCM hook, SCM args)
 {
   return scwm_safe_apply_message_only(run_hook_proc, scm_cons(hook,args));
 }
 
 
-__inline__ SCM call0_hooks(SCM hook)
+SCM call0_hooks(SCM hook)
 {
   return scwm_run_hook(hook,SCM_EOL);
 }
 
-__inline__ SCM call1_hooks(SCM hook, SCM arg1)
+SCM call1_hooks(SCM hook, SCM arg1)
 {
   return scwm_run_hook(hook,scm_list_1(arg1));
 }
 
-__inline__ SCM call2_hooks(SCM hook, SCM arg1, SCM arg2)
+SCM call2_hooks(SCM hook, SCM arg1, SCM arg2)
 {
   return scwm_run_hook(hook,scm_list_2(arg1,arg2));
 }
 
-__inline__ SCM call3_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3)
+SCM call3_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3)
 {
   return scwm_run_hook(hook,scm_list_n(arg1,arg2,arg3,SCM_UNDEFINED));
 }
 
-__inline__ SCM call4_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
+SCM call4_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
   return scwm_run_hook(hook,scm_list_n(arg1,arg2,arg3,arg4,SCM_UNDEFINED));
 }
 
-__inline__ SCM call5_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5)
+SCM call5_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5)
 {
   return scwm_run_hook(hook,scm_list_n(arg1,arg2,arg3,arg4,arg5,SCM_UNDEFINED));
 }
 
-__inline__ SCM call6_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
+SCM call6_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
   return scwm_run_hook(hook,scm_list_n(arg1,arg2,arg3,arg4,arg5,arg6,SCM_UNDEFINED));
 }
 
-__inline__ SCM call7_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6, SCM arg7)
+SCM call7_hooks(SCM hook, SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6, SCM arg7)
 {
   return scwm_run_hook(hook,scm_list_n(arg1,arg2,arg3,arg4,arg5,arg6,arg7,SCM_UNDEFINED));
 }
@@ -275,7 +275,7 @@ scwm_body_eval_x (void *body_data)
   return scm_eval_x (expr, scm_current_module() );
 }
 
-__inline__ static SCM 
+static SCM 
 scwm_catching_eval_x (SCM expr) {
   return scm_internal_stack_catch (SCM_BOOL_T, scwm_body_eval_x, &expr,
 			  scwm_handle_error, prog_name);
@@ -283,7 +283,7 @@ scwm_catching_eval_x (SCM expr) {
 
 static int clnsProcessingHook = 5;
 
-__inline__ static SCM 
+static SCM 
 scwm_catching_load_from_port (SCM port)
 {
   SCM expr;

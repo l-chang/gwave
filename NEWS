@@ -1,5 +1,11 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20080206
+- Another alpha release using guile-gnome-platform, for wider testing
+- Fixed "zoom dialog" for guile-gnome-platform
+- Still having some occasional crashes, apparently due to memory corruption
+  that I haven't yet tracked down or pinned on guile-gnome-platform or anything else.
+
 New in 20070514
 
 a "gwave2" version that uses Gtk+-2.0 by way of guile-gnome-platform.

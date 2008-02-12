@@ -304,6 +304,27 @@ SCM_DEFINE(gtk_tooltips_enabled_p, "gtk-tooltips-enabled?", 1, 0, 0, (SCM tt),
 }
 #undef FUNC_NAME
 
+#ifndef HAVE_GUILE_GTK_MENU_POPUP
+
+SCM_DEFINE(gwave_gtk_menu_popup, "gtk-menu-popup", 7, 0, 0, 
+(SCM menu, SCM n2, SCM n3, SCM n4, SCM n5, SCM button, SCM activate_time),
+"Guile wrapper for the gtk-menu-popup function, which is missing in some versions of guile-gnome-platform")
+#define FUNC_NAME s_gwave_gtk_menu_popup
+{
+	GtkMenu *cmenu;
+	guint cbutton;
+	guint32 ctime;
+
+	SCM_VALIDATE_GOBJECT_COPY(1, menu, cmenu);
+	if(!GTK_IS_MENU(cmenu))
+		scm_wrong_type_arg(FUNC_NAME,1,menu);;
+	VALIDATE_ARG_INT_COPY(6, button, cbutton);
+	VALIDATE_ARG_INT_COPY(7, activate_time, ctime);
+
+	gtk_menu_popup(cmenu, NULL, NULL, NULL, NULL, cbutton, ctime);
+}
+#undef FUNC_NAME
+#endif /* HAVE_GUILE_GTK_MENU_POPUP */
 
 /* guile initialization */
 void init_gtkmisc()

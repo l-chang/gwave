@@ -6,6 +6,8 @@
 (define-module (app gwave gtk-helpers)
   :use-module (gnome-0)
   :use-module (gnome gtk)
+  :use-module (gnome gobject)
+  :use-module (oop goops)
 )
 
 (read-set! keywords 'prefix)

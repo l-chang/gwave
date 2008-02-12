@@ -1,4 +1,10 @@
 
+CAUTION: gwave2 is an experimental port of gwave to Gtk-2 using
+the guile-gnome-platform toolkit.   This alpha release may still
+crash or contain other bugs.
+
+
+
 gwave - a  viewer for the output of spice-like simulators and other
 sorts of of analog data.
 
@@ -180,19 +186,17 @@ Reading of binary rawfiles has only been tested with both ng-spice and
 gwave running on a little-endian machine.  Your mileage may vary (but
 please send bug reports!)
 
+
+GnuCAP (http://www.gnu.org/software/gnucap), and its predecessor 
 ACS (Al's Circuit Simulator, http://www.geda.seul.org/tools/acs/index.html)
-and its newer, renamed decendant GnuCAP (http://www.gnu.org/software/gnucap):
 Gwave should identify and read ACS/GnuCAP output files, generated with
 the '>' option to a .tran statement.
 
 Synopsys (formerly Avanti, formerl Meta Software) HSPICE.
 Gwave should work with both ascii and binary output in the form of
 .tr0/.sw0/.ac0 files.  If one form doesn't work for you, try the other form.
-Binary .tr0 files only work when gwave is run on a big-endian machines; if
-running hspice on your Sun and gwave on linux, use ascii .tr0 files.
-(Put .options post=2 in your spice deck)   I used to have problems with
-some .ac0 files but I believe this is fixed.  Try putting ".options probe"
-in your input file if you have troubles.
+I used to have problems with some .ac0 files but I believe this is fixed. 
+Try putting ".options probe" in your input file if you have troubles.
 
 Tanner Research T-Spice.
 It has been a while since I tried tspice, but gwave should read the output,

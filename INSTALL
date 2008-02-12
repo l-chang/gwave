@@ -1,10 +1,13 @@
 
-Some installation notes for gwave2.
-Updated May 2007
+Some installation notes for gwave2, a version of gwave using the Gtk2
+toolkit by way of guile-gnome-platform.
+
+Updated Feb 2008
 
 Prerequesites:
-	Guile		(http://www.gnu.org/software/guile/guile.html)
+	Guile	version 1.8 (http://www.gnu.org/software/guile/guile.html)
 	gtk+ 2.x
+	g-wrap
 	guile-gnome-platform 
 	
 
@@ -15,12 +18,14 @@ Prerequesites:
 -------------
 tested configurations:
 
-Fedora core 6
-	guile-1.8.0-8.20060831cvs	(Standard with FC6+updates)
-	gtk2-2.10.8-3.fc6		(Standard with FC6+updates)
-	g-wrap-1.9.7-1sgt		 (my own rpm)
-	guile-gnome-platform-2.15.90-2sgt  (my own rpm)
+Fedora 8
+	guile-1.8.2-2.fc8		(Standard with F8+updates)
+	gtk2-2.12.5-1.fc8		(Standard with F8+updates)
+	g-wrap-1.9.9-4.fc8		(Standard with F8+updates)
+	guile-gnome-platform-2.15.93-6.fc8  (Standard with F8+updates)
 
+	(Note that in order to build from source, you also need the -devel 
+	versions of those RPMs)
 
 -------------
 
@@ -81,8 +86,8 @@ The GWAVE_GUILE_DIR environment variable can be used to make gwave
 look in an alternate directory for these guile files.  Set
 GWAVE_GUILE_DIR to the full pathname of the src directory in this
 distribution, for example if this file is called 
-/home/tell/build/gwave2-20070301/INSTALL, set 
-GWAVE_GUILE_DIR=/home/tell/build/gwave2-20070301/src
+/home/tell/build/gwave2/INSTALL, set 
+GWAVE_GUILE_DIR=/home/tell/build/gwave2/src
 
 
 
