@@ -36,7 +36,10 @@ static GdkFilterReturn xg_gdk_filter(GdkXEvent *xevent,
 			      GdkEvent *event,
 			      gpointer data);
 static void xg_cleanup();
-extern char *remote_guile_eval(char *req, unsigned char **outp, unsigned char **errp);
+extern char *remote_guile_eval(char *req, size_t *reslen,
+			       char **outp, size_t *outlenp,
+			       char **errp, size_t *errlenp);
+
 static void xg_handle_exec();
 
 
@@ -187,6 +190,8 @@ xg_handle_exec()
 	Atom type_ret;
 	int form_ret;
 	unsigned char *ret, *output, *error;
+	size_t reslen, outlen, errlen;
+
 	unsigned long nitems;
 	unsigned long bytes_after;
 	unsigned char *req;
@@ -242,19 +247,24 @@ xg_handle_exec()
 				*/
 				w_for_exec_response = w;
 
-				ret = remote_guile_eval(req, &output, &error);
+				ret = remote_guile_eval(req,  &reslen,
+							(char **)&output, &outlen,
+							(char **)&error, &errlen);
 				XFree(req); 
 
 				/* Set the output, error and reply properties appropriately. */
 				XChangeProperty(Dpy, w_for_exec_response,
 						XA_XGEXEC_OUTPUT, XA_STRING,
-						8, PropModeReplace, output, strlen(output));
+						8, PropModeReplace, output,
+						(long)outlen);
 				XChangeProperty(Dpy, w_for_exec_response,
 						XA_XGEXEC_ERROR, XA_STRING,
-						8, PropModeReplace, error, strlen(error));
+						8, PropModeReplace, error,
+						(long)errlen);
 				XChangeProperty(Dpy, w_for_exec_response,
 						XA_XGEXEC_REPLY, XA_STRING,
-						8, PropModeReplace, ret, strlen(ret));
+						8, PropModeReplace, ret, 
+						(long)reslen);
           
 				/* Since we successfully reset the reply properties,
 				   shutdown.c's Done no longer needs to, so reset

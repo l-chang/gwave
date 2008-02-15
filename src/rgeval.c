@@ -18,12 +18,14 @@
 #include <guile-compat.h>
 
 char *
-remote_guile_eval(char *req, char **outp, char **errp)
+remote_guile_eval(char *req,   size_t *reslenp,
+		  char **outp, size_t *outlenp,
+		  char **errp, size_t *errlenp)
 {
 #define FUNC_NAME "remote_guile_eval"
 
         SCM val, str_val;
-	char *ret, *output, *error;
+	char *res, *output, *error;
         SCM o_port, e_port;
         
         /* Temporarily redirect output and error to string ports. 
@@ -36,7 +38,8 @@ remote_guile_eval(char *req, char **outp, char **errp)
         val = scwm_safe_eval_str((char *) req);
 
         str_val = scm_strprint_obj(val);
-        ret = scm_to_locale_string(str_val);
+
+        res = safe_scm_to_stringn(str_val, reslenp);
         
         /* restore output and error ports; use returned o_port/e_port
            below for getting the strings back */
@@ -45,14 +48,14 @@ remote_guile_eval(char *req, char **outp, char **errp)
         
         /* Retrieve output and errors */
 	if(outp) {
-		output = scm_to_locale_string(scm_strport_to_string(o_port));
+		output = safe_scm_to_stringn(scm_strport_to_string(o_port), outlenp);
 		*outp = output;
 	}
 	if(errp) {
-		error = scm_to_locale_string(scm_strport_to_string(e_port));
+		error = safe_scm_to_stringn(scm_strport_to_string(e_port), errlenp);
 		*errp = error;
 	}
 
-	return ret;
+	return res;
 }
 #undef FUNC_NAME

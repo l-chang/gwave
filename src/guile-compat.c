@@ -1,6 +1,7 @@
 /* $Id: guile-compat.c,v 1.3 2002/03/28 06:35:21 sgt Exp $ */
 /*
- * Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
+ * Original Copyright (C) 1997-1999, Maciej Stachowiak and Greg J. Badros
+ * Additions copyright 2008 Stephen G. Tell.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +23,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-
+#include <string.h>
 #include <guile/gh.h>
 
 #include "guile-compat.h"
@@ -46,15 +47,40 @@ SCM make_output_strport(char *fname)
 		       fname);
 }
 
+
+/* variant of guile-1.8's scm_to_locale_string that never throws an error.
+ * Instead of throwing an exception, NULL is returned if the arg is not a
+ * scheme string.
+ *
+ * The result is always nul terminated, and the length is always available,
+ * although a the lenp pointer may be passed as NULL, if the caller wants to
+ * ignore the length and assume that the string contains no inner \0s.
+ */
+char *safe_scm_to_stringn (SCM str, size_t *lenp)
+{
+	char *res;
+	size_t len;
+
+	if (!scm_is_string (str)) {
+		if(lenp)
+			*lenp = 0;
+		return NULL;
+	}
+	len = scm_i_string_length (str);
+	res = scm_malloc (len + 1);
+	memcpy (res, scm_i_string_chars (str), len);
+	res[len] = '\0';   //unconditionaly null terminate
+	
+	if(lenp)
+		*lenp = len;
+	
+	scm_remember_upto_here_1 (str);
+	return res;
+}
+
+
+
+
 #ifdef __cplusplus
 }
 #endif
-
-
-/* Local Variables: */
-/* tab-width: 8 */
-/* c-basic-offset: 2 */
-/* End: */
-/* vim:ts=8:sw=2:sta 
- */
-
