@@ -3,6 +3,7 @@
 ;
 
 (define-module (app gwave cmds)
+  :use-module (oop goops)
   :use-module (gnome-0)
   :use-module (gnome gtk)
   :use-module (ice-9 optargs)
