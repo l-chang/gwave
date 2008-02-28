@@ -67,8 +67,8 @@
 
 (wavepanel-bind-mouse 1
  (lambda (wp event)
- (format #t "wavepanel ~s event=~s modifiers=~s\n" wp event 
-	 (gdk-event-button:modifiers event))
+; (format #t "wavepanel ~s event=~s modifiers=~s\n" wp event 
+;	 (gdk-event-button:modifiers event))
  
  (if (not (member 'shift-mask (gdk-event-button:modifiers event)))
      (unselect-all-wavepanels!))

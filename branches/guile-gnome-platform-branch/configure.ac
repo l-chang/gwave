@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl ## Initialize autoconf ##
 
 AC_INIT(src/gwave.c)
-AM_INIT_AUTOMAKE(gwave2, 20080212)
+AM_INIT_AUTOMAKE(gwave2, 20080227)
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
 
