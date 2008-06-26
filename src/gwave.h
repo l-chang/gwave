@@ -57,6 +57,8 @@ struct _VBCursor {
 
 #define N_WTABLE_MBTNS 4
 
+#define N_MOUSE_BUTTONS 6
+
 /* rows of the WaveTable's ftable */
 #define WTABLE_FTR_TOOLBAR 0
 #define WTABLE_FTR_XMHBOX  1
