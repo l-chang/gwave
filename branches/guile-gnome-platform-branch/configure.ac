@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl ## Initialize autoconf ##
 
 AC_INIT(src/gwave.c)
-AM_INIT_AUTOMAKE(gwave2, 20080227)
+AM_INIT_AUTOMAKE(gwave2, 20080528)
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
 
@@ -80,10 +80,10 @@ dnl checks for guile version-specific features, if any
 
 dnl check for guile-gnome-platform
 
-GUILE_MODULE_REQUIRED(gnome-0)
+GUILE_MODULE_REQUIRED(gnome-2)
 dnl GUILE_MODULE_REQUIRED(gnome gtk)
 
-PKG_CHECK_MODULES(GUILE_GNOME, guile-gnome-gtk-0, ,AC_MSG_ERROR(Can not find Guile-gnome-platform))
+PKG_CHECK_MODULES(GUILE_GNOME, guile-gnome-gtk-2, ,AC_MSG_ERROR(Can not find Guile-gnome-platform))
 
 dnl remind myself how to check for somthing I know exists
 dnl GUILE_MODULE_EXPORTS(foo_widget_show, (gnome-0)(gnome gtk),gtk-widget-show)
@@ -91,7 +91,7 @@ dnl if test "$foo_widget_show" = yes; then
 dnl  AC_DEFINE(FOO_WIDGET_SHOW,1,"Defined if guile-gnome module (gnome gtk) already contains gtk-widget-show")
 dnl fi
 
-GUILE_MODULE_EXPORTS(have_guile_gtk_menu_popup,(gnome-0)(gnome gtk),gtk-menu-popup)
+GUILE_MODULE_EXPORTS(have_guile_gtk_menu_popup,(gnome-2)(gnome gtk),gtk-menu-popup)
 if test "$have_guile_gtk_menu_popup" = yes; then
  AC_DEFINE(HAVE_GUILE_GTK_MENU_POPUP,1,"Defined if guile-gnome module (gnome gtk) already contains gtk-menu-popup")
 fi

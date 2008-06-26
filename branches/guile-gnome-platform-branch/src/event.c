@@ -386,14 +386,15 @@ window_update_cursor(WavePanel *wp, VBCursor *csp, int x)
  */
 gint
 button_press_handler(GtkWidget *widget, GdkEventButton *event, 
-			  gpointer data)
+		     gpointer data)
 {
 	WavePanel *wp = (WavePanel *)data;
 	GdkCursor *cursor;
         SCM scm_event;
 
 	if(wtable->mstate == M_NONE) {
-		if(wavepanel_mouse_binding[event->button]) {
+		if(event->button >= 0 && event->button < N_MOUSE_BUTTONS 
+		   && wavepanel_mouse_binding[event->button]) {
                         scm_event = scm_c_make_gvalue (GDK_TYPE_EVENT);
                         g_value_set_boxed((GValue *) SCM_SMOB_DATA(scm_event),
                                           event);

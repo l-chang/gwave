@@ -53,9 +53,6 @@ XSCM_HOOK(new_wavewin_hook,"new-wavewin-hook", 0, (),
 "The main purpose of this hook is to allow creation of the"
 "contents of the menubar and toolbar.");
 
-SCM wavepanel_mouse_binding[6];
-
-
 /* create horizontal button box for top of main window */
 GtkWidget *create_toolbar()
 {

@@ -53,7 +53,7 @@ XSCM_HOOK(new_wavepanel_hook,"new-wavepanel-hook", 1, (SCM wp),
 "The main purpose of this hook is to allow creation of "
 "popup menus and other event bindings for the wavepanel.");
 
-SCM wavepanel_mouse_binding[6];
+SCM wavepanel_mouse_binding[N_MOUSE_BUTTONS];
 
 void wavepanel_lmtable_size_handler(GtkWidget *w,
 				    GtkRequisition *req, gpointer d);
@@ -535,7 +535,7 @@ SCM_DEFINE(wavepanel_bind_mouse, "wavepanel-bind-mouse", 2, 0, 0,
 #define FUNC_NAME s_wavepanel_bind_mouse
 {
 	int bnum;
-	VALIDATE_ARG_INT_RANGE_COPY(1, button, 1, 5, bnum);
+	VALIDATE_ARG_INT_RANGE_COPY(1, button, 1, N_MOUSE_BUTTONS-1, bnum);
 	VALIDATE_ARG_PROC(2, proc);
 
 /* TODO: find right way to initialize and test to remove old binding.

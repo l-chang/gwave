@@ -280,7 +280,8 @@
 	 (add-menuitem menu "Log Y Scale"
 		   (lambda () (set-wavepanel-ylogscale! wp #t))))
 
-     (gtk-menu-popup menu #f #f  #f #f
+     (gtk-menu-popup menu #f #f  #f 
+		     ;#f
 		     (gdk-event-button:button event)
 		     (gdk-event-button:time event))
      )))
