@@ -1,7 +1,8 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
-New in 20080122
-- Adapted for guile-1.8.  
+New in 20080127
+- Adapted for guile-1.8.
+- cleaned up warnings from autoconf
 - I don't think I broke builds with guile-1.6, but not tested.
 
 New in 20051222

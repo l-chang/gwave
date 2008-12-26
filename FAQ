@@ -2,6 +2,26 @@
 
 Building
 
+
+Q. Configure fails with:
+
+checking for guile... /usr/bin/guile
+checking for guile-config... no
+configure: error: guile-config required but not found
+
+A. Your may have installed a guile from a binary package that includes
+only the pieces needed for running pure-scheme programs and other
+compiled binary packages, but omits the development headers and
+libraries.  Linux distributions commonly require installing a seperate
+"guile-dev" or "guile-devel" package.  
+
+The exact command for installing these packages vary with OS and
+Distribution, but some examples include:
+
+	apt-get install guile-1.8-dev  (debian Sid)
+	yum install guile-devel (Fedora)
+
+
 Q. Configure spews error messages when guile and guile-gtk are installed
 in different prefixes.
 
