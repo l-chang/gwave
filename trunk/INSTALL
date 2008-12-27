@@ -3,7 +3,7 @@ Some installation notes for gwave.
 Updated January 2008
 
 Prerequesites:
-	Gtk-1.2		(http://www.gtk.org/)
+	Gtk2-2.x	(http://www.gtk.org/)
 	Guile		(http://www.gnu.org/software/guile/guile.html)
 	Guile-Gtk	(http://www.gnu.org/software/guile-gtk/)
 	GNU Plotutils-2.4.1 or later with patches
@@ -13,32 +13,13 @@ Prerequesites:
 ----
 
 most recently tested configuration: Fedora  8
-	gtk+-1.2.10-59.fc8		(standard fedora 8)
-	gtk+-devel-1.2.10-59.fc8	(standard fedora 8)
-	glib-1.2.10-28.fc8		(standard fedora 8)
-	glib-devel-1.2.10-28.fc8	(standard fedora 8)
-	guile-1.8.2-2.fc8		(standard fedora 8)
-	guile-gtk-0.60-1sgt
+	gtk2-2.12.8-2.fc8		(standard fedora 8)
+	gtk2-devel-2.12.8-2.fc8		(standard fedora 8)
+	glib2-2.14.6-2.fc8		(standard fedora 8)
+	glib2-devel-2.14.6-2.fc8	(standard fedora 8)
+	guile-1.8.5-1sgt
+	guile-gtk-2.1-1sgt
 
-
-----
-
-previously tested configurations:
-
-Fedora Core 2 is my primary development platform. I use these rpms:
-	gtk+-1.2.10-29.1.1		(Standard With FC2)
-	gtk+-devel-1.2.10-29.1.1	(Standard With FC2)
-	glib-1.2.10-12.1.1		(Standard With FC2)
-	glib-devel-1.2.10-12.1.1	(Standard With FC2)
-	guile-1.6.7-1sgt 	(http://www.telltronics.org/pub/guile/guile-1.6.7-1sgt.i386.rpm and guile-devel-1.6.7-1sgt.i386.rpm)	
-	guile-gtk-0.41-1sgt	(http://www.telltronics.org/pub/guile/guile-gtk-0.41-1sgt.i386.rpm)
-
-
-Red Hat Linux 9, 8.0, and 8 worked at one time,  but haven't been tested recently.
-
-Red Hat 8.0 and Red Hat 7 worked, but haven't been tested recently.
-
-Sun Solaris 2.8 is known to work.
 
 -------------
 
@@ -49,11 +30,13 @@ and guile definitely fails.
 The only combinations tested with this version of gwave are those listed above.
 
 Gwave definitely does not support versions of guile older than 1.6.0;
-and this version has only been tested with Guile 1.8.2.
+and this version has only been tested with Guile 1.8.5.
 
 
-Gwave does not yet fully support Gtk+ version 2.0;
-the experimental guile-gnome-platform-branch is close, however.
+This branch of gwave has been adapted from Gtk-1.2.x to Gtk2,
+using version 2.1 of the guile-gtk package
+
+
 
 
 
@@ -77,7 +60,7 @@ bitmap files for hardcopy or documentation use.  Either Gnu Graph
 (from Gnu plotutils) or GnuPlot can be used.
 
 GNU graph is part of the GNU plotutils package.  The old berkely/sysv
-"graph" program sometimes found on commercial unixes doesn't work.
+"graph" program sometimes found on commercial unixes does not work.
 Configure attempts to locate GNU graph and ignore other programs named
 "graph" that may be found in $PATH.  If the automatic detection
 doesn't work, try somthing like this:
