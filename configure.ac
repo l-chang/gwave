@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl ## Initialize autoconf ##
 
 AC_INIT(src/gwave.c)
-AM_INIT_AUTOMAKE(gwave, 20080127)
+AM_INIT_AUTOMAKE(gwave, 20081227)
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
 
@@ -47,7 +47,7 @@ AC_CHECK_HEADER([regex.h], [AC_CHECK_FUNC([regcomp], [AC_DEFINE(HAVE_POSIX_REGEX
 AC_CHECK_HEADERS([sys/types.h])
 
 dnl check for GTK+
-AM_PATH_GTK(1.2.1, AC_DEFINE(HAVE_GTK,1,defined if we have GTK), AC_MSG_ERROR(Can not find GTK+ on this system))
+AM_PATH_GTK_2_0(2.0.8, AC_DEFINE(HAVE_GTK2,1,defined if we have GTK), AC_MSG_ERROR(Can not find GTK+-2.0.8 or later on this system))
 
 
 dnl check for readline library
@@ -107,7 +107,7 @@ dnl check for guile-gtk
 
 AC_PATH_PROG(bggtk, build-guile-gtk, no)
 if test "no" = "$bggtk"; then
-  AC_ERROR(Need guile-gtk 0.17 or later)
+  AC_ERROR(Need guile-gtk 2.0 or later)
 fi
 
 AC_MSG_CHECKING(for guile-gtk CFLAGS)

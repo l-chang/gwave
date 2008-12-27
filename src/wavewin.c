@@ -314,7 +314,7 @@ SCM_DEFINE(get_wavewin, "get-wavewin", 0, 0, 0, (),
 	   "Return the GtkWindow object for the main waveform window.")
 #define FUNC_NAME s_get_wavewin
 {
-	return sgtk_wrap_gtkobj(GTK_OBJECT(wtable->window));
+	return sgtk_wrap_gtkobj(G_OBJECT(wtable->window));
 }
 #undef FUNC_NAME
 
@@ -323,7 +323,7 @@ SCM_DEFINE(get_wavewin_toolbar, "get-wavewin-toolbar", 0, 0, 0, (),
 "function buttons or icons in the main waveform window")
 #define FUNC_NAME s_get_wavewin_toolbar
 {
-	return sgtk_wrap_gtkobj(GTK_OBJECT(wtable->toolbar));
+	return sgtk_wrap_gtkobj(G_OBJECT(wtable->toolbar));
 }
 #undef FUNC_NAME
 
@@ -331,7 +331,7 @@ SCM_DEFINE(get_wavewin_menubar, "get-wavewin-menubar", 0, 0, 0, (),
 	   "return the GtkMenuBar object for menubar in the main waveform window")
 #define FUNC_NAME s_get_wavewin_menubar
 {
-	return sgtk_wrap_gtkobj(GTK_OBJECT(wtable->menubar));
+	return sgtk_wrap_gtkobj(G_OBJECT(wtable->menubar));
 }
 #undef FUNC_NAME
 
@@ -460,12 +460,14 @@ void setup_waveform_window(void)
 	gtk_widget_show(wtable->bot_hbox3);
 	gtk_box_pack_start(GTK_BOX(hbox1), wtable->bot_hbox3, FALSE, FALSE, 0);
 
-	gtk_signal_connect(GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar,
+	gtk_signal_connect(GTK_OBJECT(GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar),
 			   "show", 
-			   wavewin_ptablevsbar_sh_handler, (gpointer)wtable);
-	gtk_signal_connect(GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar,
+			   GTK_SIGNAL_FUNC(wavewin_ptablevsbar_sh_handler), 
+			   (gpointer)wtable);
+	gtk_signal_connect(GTK_OBJECT(GTK_SCROLLED_WINDOW(wtable->vswindow)->vscrollbar),
 			   "hide", 
-			   wavewin_ptablevsbar_sh_handler, (gpointer)wtable);
+			   GTK_SIGNAL_FUNC(wavewin_ptablevsbar_sh_handler), 
+			   (gpointer)wtable);
 
 		/* horizontal box for X-axis labels */
 	wtable->xlhbox = create_xlabel_hbox(wtable);

@@ -39,6 +39,7 @@ scm_internal_cwdr_no_unwind (scm_catch_body_t body, void *body_data,
 */
 
 SCM make_output_strport(char *fname);
+char *safe_scm_to_stringn (SCM str, size_t *lenp);
 
 #endif /* GUILE_COMPAT_H */
 

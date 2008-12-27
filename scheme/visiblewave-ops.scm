@@ -38,21 +38,28 @@
 
    (gtk-signal-connect (visiblewave-button vw) "clicked" 
 			(lambda ()
-			  ;(format #t "clicked ~s ~s\n" vw (gtk-toggle-button-active (visiblewave-button vw)))
+			  ;(format #t "clicked ~s\n" vw)
+			  (gtk-toggle-button-active (visiblewave-button vw))
 			  ; TODO: redraw only the one panel affected
-			  (wtable-redraw!) ))
+			  (wtable-redraw!) 
+			  #t
+			  ))
+			
    (gtk-signal-connect (visiblewave-button vw) "button-press-event" 
 			(lambda (event) 
-;			  (display "press-signal") 
-;			  (display event)
-;			  (display (gdk-event-type event))
-;			  (display " ")
-;			  (display (gdk-event-button event))
-;			  (newline)
+; 			  (display "press-signal") 
+; 			  (display event)
+; 			  (display (gdk-event-type event))
+; 			  (display " ")
+; 			  (display (gdk-event-button event))
+; 			  (newline)
 			  (if (= (gdk-event-button event) 3)
-			      (gtk-menu-popup (make-vwb3-menu vw) #f #f
-					      (gdk-event-button event)
-					      (gdk-event-time event)))))
+			      (begin
+				(gtk-menu-popup (make-vwb3-menu vw) #f #f
+						(gdk-event-button event)
+						(gdk-event-time event))
+				#t)
+			      #f)))
    (gtk-tooltips-set-tip gwave-tooltips (visiblewave-button vw)
 			 (string-append (visiblewave-varname vw)
 			 "\nVisibleWave Button:\nClick button 1 to select wave.\nPress button 3 for options menu.") "")
@@ -100,7 +107,9 @@
 	((= i 6))
       (let* ((label (gtk-label-new 
 		     (string-append "color " (number->string j))))
-	     (menuitem (gtk-radio-menu-item-new group))
+	     (menuitem (if group 
+			   (gtk-radio-menu-item-new group)
+			   (gtk-widget-new 'GtkRadioMenuItem)))
 	     (eventbox (gtk-event-box-new)))
 	(gtk-widget-set-name label 
 			     (string-append "wavecolor" (number->string j)))

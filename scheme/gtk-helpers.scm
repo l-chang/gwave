@@ -4,6 +4,7 @@
 ;
 
 (define-module (app gwave gtk-helpers)
+  :use-module (app gwave std-menus)
   :use-module (gtk gtk)
 )
 
@@ -78,7 +79,7 @@
 
     (define (add-optlist-to-menu menu proc optlist)
       (let* ((label (gtk-label-new ""))
-	     (menuitem (gtk-radio-menu-item-new group))
+	     (menuitem (hack-gtk-radio-menu-item-new group))
 	     (eventbox (gtk-event-box-new)))
 
         (if (not (null? optlist))

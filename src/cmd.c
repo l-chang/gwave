@@ -629,7 +629,7 @@ SCM_DEFINE(visiblewave_button, "visiblewave-button", 1, 0, 0, (SCM vw),
 	if(!cvw->valid || !cvw->button) 
 		return SCM_BOOL_F;
 	else {
-		return sgtk_wrap_gtkobj(GTK_OBJECT(cvw->button));
+		return sgtk_wrap_gtkobj(G_OBJECT(cvw->button));
 	}
 }
 #undef FUNC_NAME

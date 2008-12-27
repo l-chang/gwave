@@ -714,7 +714,7 @@ SCM_DEFINE(wavefile_listwin_menubar, "wavefile-listwin-menubar", 1, 0, 0,
 	VALIDATE_ARG_GWDataFile_COPY(1, obj, wdata);
 
 	if(wdata->wlist_win && wdata->wlist_menubar)
-		return sgtk_wrap_gtkobj(GTK_OBJECT(wdata->wlist_menubar));
+		return sgtk_wrap_gtkobj(G_OBJECT(wdata->wlist_menubar));
 	else
 		return SCM_BOOL_F;
 }
