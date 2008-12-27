@@ -46,6 +46,37 @@
     (gtk-menu-item-set-submenu (add-menuitem parent label #f) menu)
     menu))
 
+; Borrowed from guile-gtk/examples/test-gtk.scm:
+;;
+;; This is a slightly nasty hack to make a version of
+;; gtk-radio-menu-item-new-with-label-from-widget which accepts #f for the
+;; group parameter, to ask it to create a new group.
+;;
+;; In Guile-Gtk 1.2 we had our own implementation of
+;; gtk-radio-menu-item-new-with-label-from-widget, and it accepted #f in
+;; this way.  But we now use the Gtk version, and as of version 2.10 it
+;; doesn't accept NULL there.
+;;
+;; In general the current guile-gtk wrappers for radio group creation are
+;; slightly inadequate.  There's nothing that deals adequately with the
+;; GSList taken by other radio funcs.
+;;
+(define (hack-gtk-radio-menu-item-new-with-label-from-widget group str)
+  (if group
+      (gtk-radio-menu-item-new-with-label-from-widget group str)
+
+      (let ((item  (gtk-widget-new 'GtkRadioMenuItem))
+	    (label (gtk-widget-new 'GtkLabel
+				   #:label str #:xalign 0 #:yalign 0.5)))
+	(gtk-widget-show label)
+	(gtk-container-add item label)
+	item)))
+
+(define-public (hack-gtk-radio-menu-item-new group)
+  (if group
+      (gtk-radio-menu-item-new-from-widget group)
+      (gtk-widget-new 'GtkRadioMenuItem)))
+
 ;
 ; create a gtk-radio-menu-item that calls proc when selected,
 ; in a fashion very much like add-menuitem. 
@@ -56,8 +87,8 @@
 ;
 (define-public (add-radio-menuitem parent group label active proc)
   (let ((item (if label
-		  (gtk-radio-menu-item-new-with-label group label)
-		  (gtk-radio menu-item-new group))))
+		  (hack-gtk-radio-menu-item-new-with-label-from-widget group label)
+		  (gtk-radio-menu-item-new group))))
     (gtk-widget-show item)
     (if proc
 	(gtk-signal-connect item "activate" proc))
@@ -135,7 +166,7 @@
 ;       (add-menuitem menu "foo" #f)
 
        (let ((ptmenu (gtk-menu-new))
-	     (group #f)
+	     (group #f )
 	     (save-wp-type default-wavepanel-type)) ; GTK bug - first radio-menu-item gets immediate callback
 	 (gtk-widget-show ptmenu)
 

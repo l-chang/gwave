@@ -46,6 +46,29 @@ SCM make_output_strport(char *fname)
 		       fname);
 }
 
+char *safe_scm_to_stringn (SCM str, size_t *lenp)
+{
+        char *res;
+        size_t len;
+
+        if (!scm_is_string (str)) {
+                if(lenp)
+                        *lenp = 0;
+                return NULL;
+        }
+        len = scm_i_string_length (str);
+        res = scm_malloc (len + 1);
+        memcpy (res, scm_i_string_chars (str), len);
+        res[len] = '\0';   //unconditionaly null terminate
+        
+        if(lenp)
+                *lenp = len;
+        
+        scm_remember_upto_here_1 (str);
+        return res;
+}
+
+
 #ifdef __cplusplus
 }
 #endif

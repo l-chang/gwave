@@ -1,5 +1,10 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20081227
+- Change from gtk+-1.2.x to gtk2, using guile-gtk-2.1. tested with gtk2-2.12.8
+- merge in xgserver and rgevel from ggpgwave branch that are safer from buffer
+overflows
+
 New in 20080127
 - Adapted for guile-1.8.
 - cleaned up warnings from autoconf
