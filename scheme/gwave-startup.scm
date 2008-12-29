@@ -15,7 +15,7 @@
 ;
 
 (use-modules 
- (gnome-0)
+ (gnome-2)
  (gnome gtk)
  (app gwave cmds)
 )

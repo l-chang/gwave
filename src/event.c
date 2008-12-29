@@ -392,13 +392,16 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 	GdkCursor *cursor;
         SCM scm_event;
 
+/*	fprintf(stderr, "P%d;mstate=%d\n", event->button, wtable->mstate); */
+
 	if(wtable->mstate == M_NONE) {
 		if(event->button >= 0 && event->button < N_MOUSE_BUTTONS 
 		   && wavepanel_mouse_binding[event->button]) {
-                        scm_event = scm_c_make_gvalue (GDK_TYPE_EVENT);
-                        g_value_set_boxed((GValue *) SCM_SMOB_DATA(scm_event),
-                                          event);
 
+			if(event == NULL)
+				scm_event = SCM_BOOL_F;
+			else
+				scm_event = scm_c_gvalue_new_from_boxed(GDK_TYPE_EVENT, event);
 			scwm_safe_call2(
 				wavepanel_mouse_binding[event->button],
 				wp->smob,
@@ -445,7 +448,6 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 	default:
 		break;
 	}
-/*	fprintf(stderr, "P%d;mstate=%d\n", event->button, wtable->mstate); */
 	return 0;
 }
 

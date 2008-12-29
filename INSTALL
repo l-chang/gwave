@@ -6,9 +6,9 @@ Updated Feb 2008
 
 Prerequesites:
 	Guile	version 1.8 (http://www.gnu.org/software/guile/guile.html)
-	gtk+ 2.x
-	g-wrap
-	guile-gnome-platform 
+	gtk2 2.x
+	g-wrap			(http://www.nongnu.org/g-wrap/)
+	guile-gnome-platform	(http://www.gnu.org/software/guile-gnome/)
 	
 
 	GNU Plotutils-2.4.1 or later with patches
@@ -19,10 +19,11 @@ Prerequesites:
 tested configurations:
 
 Fedora 8
-	guile-1.8.2-2.fc8		(Standard with F8+updates)
-	gtk2-2.12.5-1.fc8		(Standard with F8+updates)
-	g-wrap-1.9.9-4.fc8		(Standard with F8+updates)
-	guile-gnome-platform-2.15.93-6.fc8  (Standard with F8+updates)
+	gtk2-2.12.8-2.fc8		(Standard with F8+updates)
+
+	guile-1.8.5-1sgt
+	g-wrap-1.9.11-1sgt
+	guile-gnome-platform-2.16.1-1sgt
 
 	(Note that in order to build from source, you also need the -devel 
 	versions of those RPMs)
@@ -34,7 +35,7 @@ to work with whatever version of guile you have. Mixing incompatibile
 versions of guile-gnome-platorm, g-wrap, and guile definitely fails.
 
 
-I recommend verifying that guile, gtk+-2.0, and guile-gnome-platofrm
+I recommend verifying that guile, gtk2, and guile-gnome-platofrm
 all work individualy before trying to build gwave using them.  Gtk
 and guile-gtk both come with "test-gtk" programs in their respective
 examples directories which are ideal for this purpose.  ** Please try
