@@ -6,7 +6,7 @@
 (dbprint "globals.scm running\n")
 
 (define-module (app gwave globals)
-  :use-module (gnome-0)
+  :use-module (gnome-2)
   :use-module (gnome gtk)
 )
 

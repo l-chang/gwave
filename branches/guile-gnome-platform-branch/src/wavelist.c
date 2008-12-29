@@ -417,14 +417,13 @@ get_gwave_tooltips()
 	extern SCM scm_gwave_tooltips;
 	SCM scm_tt;
 	GtkTooltips *tt;
-	SCM tmp_instance;
+	GObject *tmp;
 
 	scm_tt = SCM_CDR(scm_gwave_tooltips);
-	
 	if(!SCM_GOBJECTP(scm_tt))
 		return NULL;
-	tmp_instance = scm_slot_ref (scm_tt, scm_sym_gtype_instance);
-	tt = GTK_TOOLTIPS( SCM_SMOB_DATA(tmp_instance)); 
+        tmp = (GObject*)(SCM_SMOB_DATA(scm_tt));
+	tt = GTK_TOOLTIPS(tmp);
 	return tt;
 }
 

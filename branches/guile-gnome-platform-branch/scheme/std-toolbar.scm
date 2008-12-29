@@ -3,7 +3,7 @@
 ;
 
 (define-module (app gwave std-toolbar)
-  :use-module (gnome-0)
+  :use-module (gnome-2)
   :use-module (gnome gtk)
   :use-module (app gwave cmds)
   :use-module (app gwave globals)

@@ -8,7 +8,7 @@
 
 (define-module (app gwave visiblewave-ops)
   :use-module (ice-9 format)
-  :use-module (gnome-0)
+  :use-module (gnome-2)
   :use-module (gnome gtk)
   :use-module (gnome gtk gdk-event)
   :use-module (app gwave gtk-helpers)
@@ -53,7 +53,8 @@
 ;			  (newline)
 			  (if (= (gdk-event-button:button event) 3)
 			      (begin
-				(gtk-menu-popup (make-vwb3-menu vw) #f #f #f #f 
+				(gtk-menu-popup (make-vwb3-menu vw) 
+						#f #f #f
 						(gdk-event-button:button event)
 						(gdk-event-button:time event))
 				#t)

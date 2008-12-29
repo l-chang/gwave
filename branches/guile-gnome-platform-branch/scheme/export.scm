@@ -4,7 +4,7 @@
 
 (define-module (app gwave export)
   :use-module (oop goops)
-  :use-module (gnome-0)
+  :use-module (gnome-2)
   :use-module (gnome gtk)
   :use-module (ice-9 optargs)
   :use-module (app gwave cmds)
