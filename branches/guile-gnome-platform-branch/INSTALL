@@ -2,7 +2,7 @@
 Some installation notes for gwave2, a version of gwave using the Gtk2
 toolkit by way of guile-gnome-platform.
 
-Updated Feb 2008
+Updated Jan 2009
 
 Prerequesites:
 	Guile	version 1.8 (http://www.gnu.org/software/guile/guile.html)
@@ -34,12 +34,12 @@ CAUTION: Use only the version of guile-gnome-platform and g-wrap known
 to work with whatever version of guile you have. Mixing incompatibile
 versions of guile-gnome-platorm, g-wrap, and guile definitely fails.
 
-
-I recommend verifying that guile, gtk2, and guile-gnome-platofrm
-all work individualy before trying to build gwave using them.  Gtk
-and guile-gtk both come with "test-gtk" programs in their respective
-examples directories which are ideal for this purpose.  ** Please try
-this before reporting guile-gtk related problems with gwave. **
+I recommend verifying that guile, gtk2, and guile-gnome-platofrm all
+work individualy before trying to build gwave using them.  Gtk and
+guile-gnome-platform both come with "test-gtk" programs in their
+respective examples directories which are ideal for this purpose.  **
+Please try this before reporting guile-gtk related problems with
+gwave. **
 
 *** I strongly recommend installing Guile and Guile-gtk the same way
 *** with the same prefix: either build both from source, installing
@@ -48,6 +48,13 @@ this before reporting guile-gtk related problems with gwave. **
 *** can be made to work, but often requires a lot of additional
 *** fiddling.
 
+Note on Gnome and guile-gnome-platform: Although the name of the
+required Gui package is "guile-gnome-platform", it can be built
+without installing all of gnome, so long as the Gtk2 (gnome toolkit)
+is installed.  All that GWave requires is the Gtk2 portions of
+guile-gnome-platform.
+
+----
 
 
 Gwave requires external programs in order to export postscript and
