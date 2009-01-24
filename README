@@ -192,7 +192,7 @@ ACS (Al's Circuit Simulator, http://www.geda.seul.org/tools/acs/index.html)
 Gwave should identify and read ACS/GnuCAP output files, generated with
 the '>' option to a .tran statement.
 
-Synopsys (formerly Avanti, formerl Meta Software) HSPICE.
+Synopsys (formerly Avanti, formerly Meta Software) HSPICE.
 Gwave should work with both ascii and binary output in the form of
 .tr0/.sw0/.ac0 files.  If one form doesn't work for you, try the other form.
 I used to have problems with some .ac0 files but I believe this is fixed. 
@@ -200,7 +200,7 @@ Try putting ".options probe" in your input file if you have troubles.
 
 Tanner Research T-Spice.
 It has been a while since I tried tspice, but gwave should read the output,
-at least from transient analysis runs.  Tspice output is in a variant of the
+at least from transient analysis runs.  T-Spice output is in a variant of the
 CAzM format, not surprising since Tanner bought the rights to CAzM from MCNC.
 
 Silvaco SmartSpice
@@ -211,6 +211,9 @@ hasn't been tested recently.
 Apache Design Automation NSPICE
 Nspice produces yet another variant of the berkeley spice3 rawfile format.
 Both ascii and binary files should work.
+
+Synopsys Nanosim
+GWave can read the ".out" format from nanosim.
 
 Your own custom waveforms:
 
@@ -279,8 +282,6 @@ This tool is far from complete. Partial contents of the To Do list:
 - Send feedback and error messages from loading of files to a popup window
   or status line instead of to stdout or stderr.
 - Drag-and-drop to move waveform from one panel to another
-- Generate a postscript representation for printing or documentation.
-	(partly done)
 - More guile methods to round out the interface, including:
 	access to selected-VisibleWave list, others.
 - Drawing a labeled graticule in the waveform area
@@ -302,5 +303,5 @@ the Guile/C interaction was borrowed from SCWM.  Any misinterpretation
 and bugs introduced along the way are most certainly my fault.
 
 And last but not least, thanks to the authors of Gtk+, Guile, and
-Guile-gtk for some great building blocks.
+Guile-gnome-platform for some great building blocks.
 
