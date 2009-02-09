@@ -736,6 +736,8 @@ SCM_DEFINE(set_visiblewave_measure_x, "set-visiblewave-measure!", 3, 0, 0,
 		mbtn_set_func(cvw->mbtn[mno], mfunc);
 		mbtn_update(cvw->mbtn[mno], NULL);
 	}
+
+	return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
 

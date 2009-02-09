@@ -9,7 +9,9 @@ Prerequesites:
 	gtk2 2.x
 	g-wrap			(http://www.nongnu.org/g-wrap/)
 	guile-gnome-platform	(http://www.gnu.org/software/guile-gnome/)
-	
+	guile-cairo 		(http://home.gna.org/guile-cairo/)
+				(required guile-gnome-platform)
+
 
 	GNU Plotutils-2.4.1 or later with patches
 			(optional, only used for ploting/exporting)

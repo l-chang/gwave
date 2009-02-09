@@ -194,8 +194,8 @@ static GtkWidget *create_wavelist_menu(GWDataFile *wdata);
 void gwfile_add_wv_to_list(gpointer d /*WaveVar* */,
 			   gpointer p /*GWDataFile */);
 
-static gint wavelist_button_click(GtkWidget *widget,
-				  GdkEventButton *event, gpointer data);
+void wavelist_button_click(GtkWidget *widget,
+                           GdkEventButton *event, gpointer data);
 
 XSCM_HOOK(new_wavefile_hook,"new-wavefile-hook", 1, (SCM DF),
 "This hook is invoked when a new waveform file is successfully loaded."
@@ -576,7 +576,7 @@ cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
  * Called for all button presses on wavelist button.
  * If it is a doubleclick, add variable to the "current" wavepanel immediately.
  */
-static gint
+void
 wavelist_button_click(GtkWidget *widget, 
 		      GdkEventButton *bevent, 
 		      gpointer data)

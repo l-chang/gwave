@@ -183,6 +183,8 @@ SCM_DEFINE(select_range_x, "select-range-x", 1, 0, 0,
 
 	set_all_wp_cursors(GDK_RIGHT_SIDE);
 	wtable->mstate = M_SELRANGE_ARMED;
+
+	return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
 
@@ -203,6 +205,8 @@ SCM_DEFINE(select_range_y, "select-range-y", 1, 0, 0,
 
 	set_all_wp_cursors(GDK_TOP_SIDE);
 	wtable->mstate = M_SELRANGE_ARMED;
+
+	return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
 
@@ -223,6 +227,8 @@ SCM_DEFINE(select_range_xy, "select-range-xy", 1, 0, 0,
 
 	set_all_wp_cursors(GDK_TOP_LEFT_CORNER);
 	wtable->mstate = M_SELRANGE_ARMED;
+
+	return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
 
