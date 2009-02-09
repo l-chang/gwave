@@ -1,6 +1,6 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
-New in 20081229
+New in 20090124
 - minor fixes adaptating for stable guile-gnome-platform-2.16.1
 - seems to be stable now
 

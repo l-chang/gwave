@@ -322,6 +322,8 @@ SCM_DEFINE(gwave_gtk_menu_popup, "gtk-menu-popup", 7, 0, 0,
 	VALIDATE_ARG_INT_COPY(7, activate_time, ctime);
 
 	gtk_menu_popup(cmenu, NULL, NULL, NULL, NULL, cbutton, ctime);
+
+	return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
 #endif /* HAVE_GUILE_GTK_MENU_POPUP */
