@@ -76,7 +76,6 @@ mbtn_set_func(MeasureBtn *mbtn, int mfunc)
 {
 	int need_var;
 	char *tip = NULL;
-	GtkTooltips *gw_tooltips;
 
 	mbtn->measurefunc = mfunc;
 
@@ -132,13 +131,14 @@ mbtn_set_func(MeasureBtn *mbtn, int mfunc)
 	if(need_var && !mbtn->var)
 		g_error("new_MeasureBtn: measure function %d requires a WaveVar", mfunc);
 
-	gw_tooltips = get_gwave_tooltips();
-	if(tip) 
-		gtk_tooltips_set_tip(GTK_TOOLTIPS(gw_tooltips), 
-				     mbtn->button, tip, "");
-	else
-		gtk_tooltips_set_tip(GTK_TOOLTIPS(gw_tooltips), 
+	if(GTK_IS_TOOLTIPS(wtable->ttips)) {
+		if(tip) 
+			gtk_tooltips_set_tip(GTK_TOOLTIPS(wtable->ttips),
+					     mbtn->button, tip, "");
+		else
+			gtk_tooltips_set_tip(GTK_TOOLTIPS(wtable->ttips),
 				     mbtn->button, "", "");
+	}
 }
 
 

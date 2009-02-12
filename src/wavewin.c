@@ -719,6 +719,27 @@ SCM_DEFINE(wtable_bottom_fixup, "wtable-bottom-fixup", 0, 0, 0,
 }
 #undef FUNC_NAME
 
+
+
+SCM_DEFINE(set_wtable_tooltips_x, "set-wtable-tooltips!", 1, 0, 0, 
+	   (SCM tt),
+ "Use tooltips group TT when adding pop-up tool tips to"
+ "widgets within the wave table")
+#define FUNC_NAME s_set_wtable_tooltips_x
+{
+	GtkTooltips *gtt;
+
+	SCM_VALIDATE_GOBJECT_COPY(1, tt, gtt);
+
+	if(!GTK_IS_TOOLTIPS(gtt)) {
+		printf("set_wtable_tooltips!: not a tooltips %lx\n",  gtt);
+	}
+	wtable->ttips = gtt;
+	return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+
 /*********************************************************************** 
  * guile initialization 
  */

@@ -19,146 +19,6 @@
  * License along with this software; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Log: wavelist.c,v $
- * Revision 1.31  2005/11/29 06:46:03  sgt
- * fix crash when adding waves after reload of file
- * attempt to put big all-panels vertical scrollbar on the right and
- * then put the horizontal scrollbar in the right place.
- * doesn't quite come out right after resizing window.
- *
- * Revision 1.30  2005/11/23 05:51:53  sgt
- * do the full-window vertical scrollbar
- * bump version to 20051123
- * add "jumbo" panel type
- *
- * Revision 1.29  2005/11/23 02:38:06  sgt
- * fix marking of WaveVar smobs
- * code cleanup: move several widgets from globals into WaveTable structure
- *
- * Revision 1.28  2005/10/08 05:48:58  sgt
- * get rid of most uses of the deprecated gh_ interfaces to guile
- *
- * Revision 1.27  2005/10/08 04:55:33  sgt
- * fix wavefile-all-variables to work with all sweeps
- * create wavefile-sweeps to return list of sweep info
- *
- * Revision 1.26  2005/09/30 04:31:36  sgt
- * add scrollbar to wavepanel button/measure lists to better control panel
- * height vs. number of buttons
- * fix gc issue with sweep rework
- *
- * Revision 1.25  2005/09/27 05:33:53  sgt
- * sweeps working decently well,
- * although wavelist selection for them is ugly.
- *
- * Revision 1.24  2004/12/26 23:49:32  sgt
- * add notion of "selected" panels.  left-click in panel (including cursor0-move)
- * selects, shift-click selects without unselecting others.
- * double-click in wavelist adds to first selected panel.
- * selected panels have a highlighted outline.
- * add ability to change the "tag" (shorthand identifier) for a file
- * added example of using this to put case name into the tag to
- * experimental .gwaverc
- *
- * Revision 1.23  2003/12/03 03:58:16  sgt
- * clean up string literals containing newlines, all in documentation
- * strings.
- * Modify xsnarf.h to get document-extraction working again
- *
- * Revision 1.22  2003/07/13 23:44:42  sgt
- *
- * some further work on export
- *
- * Revision 1.21  2003/06/02 13:10:33  sgt
- * new code for data-export functions
- * make export-variables able to accept either WaveVar or VisibleWave to export
- *
- * Revision 1.20  2003/05/22 05:03:09  sgt
- * Add C-level primitive export-variables, for use in writing new
- * plot/export features.
- * update TODO list
- * add info about GNU plotutils breakage and patch
- * bump version number.
- *
- * Revision 1.19  2002/04/19 17:21:33  sgt
- * Add configure check for scm_c_read_string, and finish ifdeffing in gwave.c
- * so that we build and run properly on 1.3.4 again.
- * Fix a snarf-macro renaming that we missed in wavelist.c
- *
- * Revision 1.18  2002/03/28 06:35:21  sgt
- * Snarfing overhaul to make it guile-version-independent
- * now compiles and runs under guile-1.5.6
- * some issues remain - bound? in cmds.scm for example.
- *
- * Revision 1.17  2001/06/01 16:11:56  sgt
- * create mbtn_update_var() subroutine, and use it to fix up measure-button
- * pointers into wave data after a reaload.  This avoids a crash after reloading.
- *
- * Revision 1.16  2000/11/28 03:22:35  sgt
- * draw.c: expand to five sig-figs in displayed values
- * wavelist: properly free up old wave data after a reload.
- *
- * Revision 1.15  2000/10/24 06:33:08  sgt
- * cmd.c - make wavepanel-add-variable return the new VisibleWave
- * wavelist.c - fix wavefile-variable.
- *
- * Revision 1.14  2000/10/24 05:50:55  sgt
- * SMOBify WaveVar, and add most access methods needed for
- * restoring VisibleWave/Panel configurations
- *
- * Revision 1.13  2000/08/11 06:40:47  sgt
- * Get common GtkTooltips sharable between guile and C, use it in wavelist
- * window.
- * add gtk-tooltips-enabled? to gtkmisc.c
- * add VALIDATE_GTK_COPY to validate.h, addtional snarfing macros to guile-ext.h
- * Try out new .gwaverc features
- *
- * Revision 1.12  2000/08/10 04:43:27  sgt
- * Extend our documentation-snarfing mechanism to handle hooks,
- * variables, and concepts; changed various .c files to use new system.
- * guile-ext.h contains additions to libguile/snarf.h for this.
- * scwm-snarf.h is no longer neeeded.
- *
- * Revision 1.11  2000/08/08 06:41:24  sgt
- * Convert to guile-1.4 style SCM_DEFINE macros, where the docstrings
- * are strings, not comments.  Remove some unused functions.
- * Other guile-1.4 compatibility.  Not tested with earlier guile yet.
- *
- * Revision 1.10  2000/08/08 01:08:58  sgt
- * be more explicit about required pointer casting in wavefile_to_scm()
- *
- * Revision 1.9  2000/05/18 07:03:26  sgt
- * draw.c: fix embarassing mistake in x2val; Log X scale now works
- * wavewin.c: add wtable-wavepanels and wavepanel-visiblewaves in the
- * 	name of completeness of data structure access from guile.
- * The usual tweaks for another snapshot release.
- * minor comment fixes: wavewin.h cmds.scm wavelist.c
- *
- * Revision 1.8  2000/01/07 06:33:44  tell
- * Merged in the guile and guile-gtk stuff
- *
- * Revision 1.6  1999/05/28 23:06:12  tell
- * change to use spicefile library to read data.
- * Add "file" menu to wavelist window
- * add file-delete and file-reload operations
- *
- * Revision 1.5  1999/01/08 22:41:13  tell
- * when loading file, defer generating wavelist window if main window
- * isn't present yet.  Attempt nicer placement of wavelist windows.
- *
- * Revision 1.4  1998/11/09 20:29:53  tell
- * always display variable-select list after loading file
- *
- * Revision 1.3  1998/09/17 18:38:29  tell
- * Added load_wave_file function and other stuff for multiple files.
- * Change variable box packing so it looks better (no fill/expand).
- *
- * Revision 1.2  1998/09/01 21:29:04  tell
- * add copyright notice, misc cleanup
- *
- * Revision 1.1  1998/08/31 20:58:56  tell
- * Initial revision
- *
  */
 
 #include <ctype.h>
@@ -409,25 +269,6 @@ SCM_DEFINE(datafile_reload_x, "wavefile-reload!", 1, 0, 0,
 #undef FUNC_NAME
 
 /*
- * Return the GtkTooltips object used for gwave.
- */
-GtkTooltips *
-get_gwave_tooltips()
-{
-	extern SCM scm_gwave_tooltips;
-	SCM scm_tt;
-	GtkTooltips *tt;
-	GObject *tmp;
-
-	scm_tt = SCM_CDR(scm_gwave_tooltips);
-	if(!SCM_GOBJECTP(scm_tt))
-		return NULL;
-        tmp = (GObject*)(SCM_SMOB_DATA(scm_tt));
-	tt = GTK_TOOLTIPS(tmp);
-	return tt;
-}
-
-/*
  * Callback for use with wv_foreach_wavevar:
  *
  * Add a button for each variable in the file to the win_wlist box for it.
@@ -443,9 +284,6 @@ gwfile_add_wv_to_list(gpointer d, gpointer p)
 	GWDataFile *wdata = (GWDataFile *)p;
 	int i;
 	GtkWidget *button;
-	GtkTooltips *gw_tooltips;
-	
-	gw_tooltips = get_gwave_tooltips();
 
 	if(wv_is_multisweep(wv)) {
 		char lab[4096];
@@ -458,9 +296,10 @@ gwfile_add_wv_to_list(gpointer d, gpointer p)
 		
 	gtk_box_pack_start (GTK_BOX (wdata->wlist_box), button, FALSE, FALSE, 0);
 	gtk_widget_show (button);
-	gtk_tooltips_set_tip(GTK_TOOLTIPS(gw_tooltips), button,
-		     "Wavefile Variable.\nDrag-and-Drop to a WavePanel.",
-		     "");
+
+	if(GTK_IS_TOOLTIPS(wtable->ttips))
+		gtk_tooltips_set_tip(GTK_TOOLTIPS(wtable->ttips), button,
+ 		"Wavefile Variable.\nDrag-and-Drop to a WavePanel.", "");
 
 	dnd_setup_source(GTK_WINDOW(wdata->wlist_win), button, wv);
 

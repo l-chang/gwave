@@ -26,6 +26,7 @@
 
 ; Variables that can get set or altered in .gwaverc
 (define-public gwave-tooltips (gtk-tooltips-new))
+(set-wtable-tooltips! gwave-tooltips)
 (define default-wavepanel-type 0)
 (define gwave-no-std-toolbar #f)
 (define gwave-no-std-menus #f)
