@@ -102,9 +102,6 @@ SCM_GLOBAL_VARIABLE(scm_gwave_debug, "gwave-debug");
 "is passed on the command line.  It enables debugging output to stdout"
 "in the startup code and in various modules.");*/
 
-SCM_GLOBAL_VARIABLE(scm_gwave_tooltips, "gwave-tooltips");
-/*"This variable is a GtkTooltips object used for controlling all"
-  "of the popup tooltips in the user interface.");*/
 
 /*
  * usage -- prints the standard switch info, then exits.
@@ -230,6 +227,13 @@ void gwave_main(void *p, int argc, char **argv)
 		scm_c_eval_string("(debug-enable 'debug)(debug-enable 'backtrace) (read-enable 'positions)");
 	}
 
+	wtable = g_new0(WaveTable, 1);
+	wtable->cursor[0] = g_new0(VBCursor, 1);
+	wtable->cursor[1] = g_new0(VBCursor, 1);
+	wtable->srange = g_new0(SelRange, 1);
+	wtable->npanels = 0;
+	wtable->panels = NULL;
+
 	/* the compiled-in initial scheme code comes from minimal.scm,
 	   built into init_scheme_string.c by the Makefile
 	   Among other things, it finds and loads system and user .gwaverc
@@ -251,13 +255,6 @@ void gwave_main(void *p, int argc, char **argv)
                 }
 
 	} /* end scope */
-
-	wtable = g_new0(WaveTable, 1);
-	wtable->cursor[0] = g_new0(VBCursor, 1);
-	wtable->cursor[1] = g_new0(VBCursor, 1);
-	wtable->srange = g_new0(SelRange, 1);
-	wtable->npanels = 0;
-	wtable->panels = NULL;
 
 	setup_colors(wtable);
 	setup_waveform_window();

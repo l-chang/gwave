@@ -105,6 +105,7 @@ struct _WaveTable {
 	GWMouseState mstate;
 	VBCursor *drag_cursor;
 	int button_down;
+	GtkTooltips *ttips;
 };
 
 /*

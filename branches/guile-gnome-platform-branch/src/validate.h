@@ -229,11 +229,4 @@ NOTE: Assignments to the cvar in the error handling
   else if (!PROCEDURE_OR_SYMBOL_P(scm)) scm_wrong_type_arg(FUNC_NAME,pos,scm); \
   } while (0)
 
-
-#define VALIDATE_ARG_GTK_COPY(pos,scm,gtktype,pch) \
-  do { \
-	  if (sgtk_is_a_gtkobj(gtktype, scm)) pch = sgtk_get_gtkobj(scm); \
-  else { pch = NULL; scm_wrong_type_arg(FUNC_NAME,pos,scm); } \
-  } while (0)
-
 #endif
