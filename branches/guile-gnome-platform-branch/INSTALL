@@ -2,7 +2,7 @@
 Some installation notes for gwave2, a version of gwave using the Gtk2
 toolkit by way of guile-gnome-platform.
 
-Updated Jan 2009
+Updated Feb 2009
 
 Prerequesites:
 	Guile	version 1.8 (http://www.gnu.org/software/guile/guile.html)
@@ -24,7 +24,7 @@ Fedora 8
 	gtk2-2.12.8-2.fc8		(Standard with F8+updates)
 
 	guile-1.8.5-1sgt
-	g-wrap-1.9.11-1sgt
+	g-wrap-1.9.11-1sgt  (with g-wrap-1.9.11.pkgconfig.patch)
 	guile-gnome-platform-2.16.1-1sgt
 
 	(Note that in order to build from source, you also need the -devel 
@@ -55,6 +55,15 @@ required Gui package is "guile-gnome-platform", it can be built
 without installing all of gnome, so long as the Gtk2 (gnome toolkit)
 is installed.  All that GWave requires is the Gtk2 portions of
 guile-gnome-platform.
+
+
+Guile-gnome-platform requires g-wrap.  G-wrap version 1.9.11 often requires
+applying the enclosed patchfile, g-wrap-1.9.11.pkgconfig.patch . 
+Without the patch, I find that guile-gnome-platform fails to build because
+of a defective pkgconfig file installed by g-wrap.
+The error message is somthing like
+ gcc: @LIBFFI_CFLAGS_INSTALLED@: No such file or directory
+
 
 ----
 
