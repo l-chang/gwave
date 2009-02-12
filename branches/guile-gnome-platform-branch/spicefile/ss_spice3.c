@@ -240,11 +240,13 @@ static char *sf_nexttoken(SpiceStream *sf)
 	// search for start of token
 	while(!tok) {
 		if(*cp == 0) {
-			if(fread_line(sf->fp, &sf->linebuf, &sf->lbufsize) == EOF) {
-			return 0;  /* normal EOF */
-			}
-			sf->lineno++;
-			cp = sf->linebuf;
+			do {
+				if(fread_line(sf->fp, &sf->linebuf, &sf->lbufsize) == EOF) {
+					return 0;  /* normal EOF */
+				}
+				sf->lineno++;
+				cp = sf->linebuf;
+			} while (*cp == 0); // skip multiple blank lines
 		}
 		if(!isspace(*cp))
 			tok = cp;
