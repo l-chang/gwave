@@ -258,11 +258,6 @@ draw_cursor(VBCursor *csp)
 void 
 update_cursor(VBCursor *csp, double xval)
 {
-	WavePanel *wp;
-	int i;
-	char abuf[128];
-	char lbuf[128];
-
 	/* undraw old cursor */
 	if(csp->shown) {
 		draw_cursor(csp);
@@ -431,7 +426,6 @@ motion_handler(GtkWidget *widget, GdkEventMotion *event,
 gint scroll_handler(GtkWidget *widget)
 {
 	GtkAdjustment *hsadj = GTK_ADJUSTMENT(widget);
-	double owidth;
 	int i;
 	WavePanel *wp;
 

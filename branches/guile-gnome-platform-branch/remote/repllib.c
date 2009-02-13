@@ -39,7 +39,7 @@
 #endif /* HAVE_READLINE */
 
 #ifdef HAVE_READLINE
-char *scwm_complete(char *text, int state)
+char *scwm_complete(const char *text, int state)
 {
 	static char *result=NULL;
 	static char *last=NULL;
@@ -93,7 +93,7 @@ char *scwm_complete(char *text, int state)
 
 void init_readline()
 {
-	rl_completion_entry_function=(Function *)scwm_complete;
+	rl_completion_entry_function = scwm_complete;
 }
 #endif
 

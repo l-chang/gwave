@@ -412,10 +412,7 @@ vw_wp_draw_lineclip(VisibleWave *vw, WavePanel *wp)
 	int x0, x1;
 	int y0, y1;
 	int i;
-	double xstep;
-	double xval;
-	double yval;
-        double xval0, yval0, xval1, yval1;
+        double xval1, yval1;
         double xval0d, yval0d, xval1d, yval1d;
 
         xval1 = wds_get_point(&vw->var->wv_iv->wds[0], 0);

@@ -281,14 +281,11 @@ scwm_catching_eval_x (SCM expr) {
 			  scwm_handle_error, prog_name);
 }
 
-static int clnsProcessingHook = 5;
-
 static SCM 
 scwm_catching_load_from_port (SCM port)
 {
   SCM expr;
   SCM answer = SCM_UNSPECIFIED;
-  int i = 0;
 
   while (!SCM_EOF_OBJECT_P(expr = scm_read (port))) {  
     answer = scwm_catching_eval_x (expr);

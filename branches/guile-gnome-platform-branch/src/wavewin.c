@@ -56,7 +56,7 @@ XSCM_HOOK(new_wavewin_hook,"new-wavewin-hook", 0, (),
 /* create horizontal button box for top of main window */
 GtkWidget *create_toolbar()
 {
-	GtkWidget *bbox, *btn;
+	GtkWidget *bbox;
 
 	bbox = gtk_hbutton_box_new();
 	gtk_button_box_set_layout(GTK_BUTTON_BOX(bbox), GTK_BUTTONBOX_START);
@@ -595,7 +595,6 @@ wavewin_delete_panel(WavePanel *dwp)
 WavePanel *
 first_selected_wavepanel()
 {
-	WavePanel *wp;
 	int i;
 	for(i = wtable->npanels-1; i >= 0; i--) {
 		WavePanel *wp = wtable->panels[i];

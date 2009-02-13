@@ -426,7 +426,6 @@ SCM_DEFINE(wavepanel_y_manual_p, "wavepanel-y-manual?", 1, 0, 0,
 #define FUNC_NAME s_wavepanel_y_manual_p
 {
 	WavePanel *wp;
-	int logy;
 	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
 
 	if(wp->man_yzoom)
@@ -490,7 +489,6 @@ SCM_DEFINE(wavepanel_ylogscale_p, "wavepanel-ylogscale?", 1, 0, 0,
 #define FUNC_NAME s_wavepanel_ylogscale_p
 {
 	WavePanel *wp;
-	int logy;
 	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
 
 	if(wp->logy)

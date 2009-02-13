@@ -415,8 +415,6 @@ vw_wp_visit_update_data(gpointer p, gpointer d)
 void
 wavepanel_update_data(WavePanel *wp)
 {
-	char lbuf[128];
-
 	wp->min_xval = G_MAXDOUBLE;
 	wp->max_xval = -G_MAXDOUBLE;
 	wp->min_yval = G_MAXDOUBLE;

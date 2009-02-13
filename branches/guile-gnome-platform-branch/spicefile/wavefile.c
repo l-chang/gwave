@@ -169,7 +169,6 @@ WaveFile *wf_read(char *name, char *format)
 WaveFile *wf_finish_read(SpiceStream *ss)
 {
 	WaveFile *wf;
-	int rc;
 	double ival;
 	double *dvals;
 	WvTable *wt;

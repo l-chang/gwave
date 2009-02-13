@@ -103,27 +103,6 @@ SCM_GLOBAL_VARIABLE(scm_gwave_debug, "gwave-debug");
 "in the startup code and in various modules.");*/
 
 
-/*
- * usage -- prints the standard switch info, then exits.
- *
- * TODO: coordinate C- and guile-parsed options
- */
-static void usage(char *fmt, ...)
-{
-	va_list args;
-	fflush(stdout);
-	if (fmt) {
-		va_start(args, fmt);
-		fprintf(stderr, "%s: ", prog_name);
-		vfprintf(stderr, fmt, args);
-		fprintf(stderr, "\n");
-		va_end(args);
-	}
-	fprintf(stderr, "Usage: %s [options] [initial-waveform-file] ...\n", prog_name);
-	fprintf(stderr, " options:\n");
-	fprintf(stderr, " -p N     Start up with N panels\n");
-	fprintf(stderr, "(%s version %s)\n", prog_name, prog_version);
-}
 
 /* if we don't set up some colors, users without a gwave.gtkrc get black
  * waves on black background
@@ -166,7 +145,6 @@ main(int argc, char **argv)
 
 void gwave_main(void *p, int argc, char **argv)
 {
-	int c;
 	int i;
 	int nobacktrace = 0;
 

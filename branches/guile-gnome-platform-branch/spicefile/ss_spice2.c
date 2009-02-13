@@ -129,15 +129,15 @@ static int
 sf_readrow_s2raw(SpiceStream *sf, double *ivar, double *dvars)
 {
 	int i, rc;
-	char *tok;
 	spice_var_t val;
 
 	/* independent var */
-	if ((rc = fread (&val,sizeof(val),1, sf->fp)) != 1)
+	if ((rc = fread (&val,sizeof(val),1, sf->fp)) != 1) {
 		if(rc == 0)
 			return 0;
 		else
 			return -1;
+	}
 	if (memcmp(&val,SPICE_MAGIC,8) == 0) /* another analysis */
 		return 0;
 	*ivar = val.val;
