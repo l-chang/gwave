@@ -60,10 +60,8 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 {
 	SpiceStream *sf = NULL;
 	char *line = NULL;
-	char *signam;
 	int lineno = 0;
 	int linesize = 1024;
-	int dvsize = 128;
 	char *key, *val;
 	int nvars, npoints;
 	int got_nvars = 0;
@@ -350,7 +348,6 @@ sf_getval_s3bin(SpiceStream *sf, double *dval)
 {
 	off64_t pos;
 	double val;
-	int i;
 
 	if(sf->read_vals >= sf->expected_vals) {
 		pos = ftello64(sf->fp);

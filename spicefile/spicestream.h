@@ -95,6 +95,7 @@ extern SpiceStream *ss_open_fp(FILE *fp, char *type);
 extern SpiceStream *ss_open_internal(FILE *fp, char *name, char *type);
 extern SpiceStream *ss_new(FILE *fp, char *name, int ndv, int nspar);
 extern void ss_close(SpiceStream *sf);
+extern void ss_delete(SpiceStream *ss);
 extern char *ss_var_name(SpiceVar *sv, int col, char *buf, int n);
 extern char *vartype_name_str(VarType type);
 extern int fread_line(FILE *fp, char **bufp, int *bufsize);

@@ -118,8 +118,6 @@ sf_rdhdr_ascii(char *name, FILE *fp)
 	char *line = NULL;
 	int lineno = 0;
 	int linesize = 1024;
-	int done = 0;
-	VarType ivtype;
 	char *cp;
 	
 	/* 

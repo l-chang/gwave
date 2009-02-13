@@ -50,7 +50,6 @@ static char file_tag_chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkl
 static const int n_file_tags = sizeof(file_tag_chars)/sizeof(char);
 static int next_file_tagno = 0;
 
-static GtkWidget *create_wavelist_menu(GWDataFile *wdata);
 void gwfile_add_wv_to_list(gpointer d /*WaveVar* */,
 			   gpointer p /*GWDataFile */);
 
@@ -76,8 +75,6 @@ GWDataFile *
 load_wave_file(char *fname, char *ftype)
 {
 	GWDataFile *wdata;
-	SCM swdata;
-	int i;
 
 	wdata = g_new0(GWDataFile, 1);
 	wdata->wf = wf_read(fname, ftype);
@@ -140,7 +137,6 @@ SCM_DEFINE(load_wavefile_x, "load-wavefile!", 1, 1, 0, (SCM file, SCM filetype),
 void
 delete_wave_file(GtkWidget *w, GWDataFile *wdata)
 {
-	int i;
 	GSList *list;
 /* remove references from displayed waves */
 	remove_wfile_waves(wdata);
@@ -192,7 +188,6 @@ SCM_DEFINE(datafile_delete_x, "wavefile-delete!", 1, 0, 0,
 void
 reload_wave_file(GtkWidget *w, GWDataFile *wdata)
 {
-	int i;
 	WaveFile *new_wf;
 	WaveFile *old_wf;
 
@@ -239,7 +234,6 @@ reload_wave_file_w(gpointer p, gpointer d)
 void
 reload_all_wave_files(GtkWidget *w)
 {
-	WaveFile *wf;
 	g_list_foreach(wdata_list, reload_wave_file_w, NULL);
 }
 
@@ -247,7 +241,6 @@ SCM_DEFINE(reload_all_files_x, "reload-all-files!", 0, 0, 0, (),
 	   "Reload all files")
 #define FUNC_NAME s_reload_all_files_x
 {
-	WaveFile *wf;
 	g_list_foreach(wdata_list, reload_wave_file_w, NULL);
 	return SCM_UNSPECIFIED;
 }
@@ -282,7 +275,6 @@ gwfile_add_wv_to_list(gpointer d, gpointer p)
 {
 	WaveVar *wv = (WaveVar *)d;
 	GWDataFile *wdata = (GWDataFile *)p;
-	int i;
 	GtkWidget *button;
 
 	if(wv_is_multisweep(wv)) {
@@ -316,11 +308,8 @@ void
 cmd_show_wave_list(GtkWidget *w, GWDataFile *wdata)
 {
 	GtkWidget *box1;
-	GtkWidget *box2;
         GtkWidget *scrolled_window;
-	GtkWidget *button;
 	GtkWidget *label;
-	int i;
 
 	if(!wdata) {
 		fprintf(stderr, "cmd_show_wave_list: wdata is NULL");
@@ -504,7 +493,7 @@ SCM_DEFINE(wavefile_sweeps, "wavefile-sweeps", 1, 0, 0,
 	SCM p;
 	WvTable *wt;
 	WaveFile *wf;
-	int i, j;
+	int i;
 	VALIDATE_ARG_GWDataFile_COPY(1, df, wdata);
 
 	if(!wdata->wf)
@@ -643,7 +632,6 @@ SCM_DEFINE(wavefile_variable, "wavefile-variable", 3, 0, 0,
 	GWDataFile *wdata;
 	SCM result = SCM_BOOL_F;
 	char *s;
-	int i;
 	int swp;
 	VALIDATE_ARG_GWDataFile_COPY(1, df, wdata);
 	VALIDATE_ARG_STR_NEWCOPY(2, vname, s);
@@ -752,7 +740,6 @@ SCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
 	double from_val, to_val;
 	int starti, endi, i;
 	double x,y;
-	int idx;
 	char buf[128];
 	SCM_ASYNC_TICK;
 	/* validate varlist and count elements */
@@ -805,7 +792,7 @@ SCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
  */
 int wavefile_try_free(GWDataFile *wdata)
 {
-	int i, n;
+	int n;
 	if(wdata->outstanding_smob)
 		return 0;
 	if(wdata->wf)

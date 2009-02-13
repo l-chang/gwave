@@ -22,6 +22,7 @@
  *
  */
 
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -141,7 +142,6 @@ main(int argc, char **argv)
 
 void dump_table_info(WvTable *wt)
 {
-	int i, j;
 	WaveFile *wf = wt->wf;
 
 	printf("independent variable:\n");
@@ -161,7 +161,6 @@ void
 dump_wavevar(gpointer p, gpointer u)
 {
 	WaveVar *wv = (WaveVar *)p;
-	WaveFile *wf = wv->wv_file;
 	int j;
 
 	printf(" dv \"%s\" ", wv->wv_name);

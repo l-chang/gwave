@@ -42,7 +42,6 @@ static SpiceStream *hs_process_header(int nauto, int nprobe,
 				      int nsweepparam, char *line, char *name);
 static int sf_readsweep_hsascii(SpiceStream *sf, double *svar);
 static int sf_readsweep_hsbin(SpiceStream *sf, double *svar);
-static int sf_endblock_hsbin(SpiceStream *sf);
 static int sf_readblock_hsbin(FILE *fp, char **bufp, int *bufsize, int offset);
 
 struct hsblock_header {  /* structure of binary tr0 block headers */
@@ -295,7 +294,6 @@ hs_process_header(int nauto, int nprobe, int nsweepparam, char *line, char *name
 	char *signam;
 	SpiceStream *sf;
 	int i;
-	int ncols;
 	int hstype;
 
 /* type of independent variable */
@@ -471,7 +469,6 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 {
 	off64_t pos;
 	float val;
-	int i;
 	struct hsblock_header hh;
 	gint32 trailer;
 
@@ -626,8 +623,6 @@ sf_readrow_hsbin(SpiceStream *sf, double *ivar, double *dvars)
 {
 	int i;
 	int rc;
-	float val;
-	long pos;
 
 	if(!sf->read_sweepparam) { /* first row of table */
 		if(sf_readsweep_hsbin(sf, NULL) <= 0) /* discard sweep parameters, if any */
@@ -691,7 +686,6 @@ static int
 sf_readsweep_hsbin(SpiceStream *sf, double *svar)
 {
 	int i;
-	long pos;
 	double val;
 	for(i = 0; i < sf->nsweepparam; i++) {
 		if(sf_getval_hsbin(sf, &val) != 1) {
@@ -720,7 +714,6 @@ sf_readsweep_hsbin(SpiceStream *sf, double *svar)
 static long
 sf_guessrows_hsbin(SpiceStream *sf)
 {
-	long pos;
 	int rc;
 	struct stat st;
 

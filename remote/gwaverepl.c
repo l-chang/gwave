@@ -51,16 +51,11 @@ void die(char *str)
 	exit(1);
 }
 
+int
 main(int argc, char **argv)
 {
 	extern char *optarg;
 	extern int optind;
-	int ch, fd;
-	char *msg;
-	char rbuf[32768];
-	int port;
-	int len;
-	char *result, *out, *err;
 
 	int splitpoint;
 	char *expr;
