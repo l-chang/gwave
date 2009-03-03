@@ -1,7 +1,7 @@
 /*
  * ss_hspice.c: HSPICE routines for SpiceStream
  *
- * Copyright (C) 1998-2002  Stephen G. Tell
+ * Copyright (C) 1998-2009  Stephen G. Tell
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,7 +96,8 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 	
 	/* version of post format */
 	if(strncmp(&lbuf[16], "9007", 4) != 0 
-	   && strncmp(&lbuf[16], "9601", 4) != 0)
+	   && strncmp(&lbuf[16], "9601", 4) != 0
+	   && strncmp(&lbuf[16], "2001", 4) != 0 )
 		return NULL;
 	strncpy(nbuf, &lbuf[0], 4);
 	nbuf[4] = 0;
@@ -200,6 +201,7 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	int datasize;
 	int nauto, nprobe, nsweepparam, ntables;
 	char nbuf[16];
+	int ntable_offset;
 	struct hsblock_header hh;
 	
 	do {
@@ -217,8 +219,15 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	 */
 
 	if(strncmp(&ahdr[16], "9007", 4) != 0 	/* version of post format */
-	   && strncmp(&ahdr[16], "9601", 4) != 0)
+	   && strncmp(&ahdr[16], "9601", 4) != 0
+	   && strncmp(&ahdr[20], "2001", 4) != 0 )
 		goto fail;
+
+	if(strncmp(&ahdr[20], "2001", 4) == 0)
+		ntable_offset = 187;
+	else
+		ntable_offset = 176;
+
 	strncpy(nbuf, &ahdr[0], 4);
 	nbuf[4] = 0;
 	nauto = atoi(nbuf);	/* number of automaticly-included variables,
@@ -231,7 +240,7 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	nbuf[4] = 0;
 	nsweepparam = atoi(nbuf);	/* number of sweep parameters */
 
-	ntables = atoi(&ahdr[176]);
+	ntables = atoi(&ahdr[ntable_offset]);
 	if(ntables == 0)
 		ntables = 1;
 
