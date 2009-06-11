@@ -603,7 +603,7 @@ SCM_DEFINE(wavefile_all_variables, "wavefile-all-variables", 1, 0, 0, (SCM df),
 		for(j = 0; j < wf->wf_ndv; j++) {
 			WaveVar *wv;
 			WaveVarH *wvh;
-			wv = &wt->dv[j];
+			wv = wt_dv(wt, j);
 			if(!wv->udata) {
                                 wvh = g_new0(WaveVarH, 1);
                                 wvh->wv = wv;

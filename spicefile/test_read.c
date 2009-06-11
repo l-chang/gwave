@@ -99,6 +99,7 @@ main(int argc, char **argv)
 
 	if(l_flag) {
 		int t;
+		WaveVar *dv;
 		for(t = 0; t < wf->wf_ntables; t++) {
 			printf("table %d: ", t);
 			wt = wf_wtable(wf, t);
@@ -108,14 +109,16 @@ main(int argc, char **argv)
 			putchar('\n');
 			printf("      %10s", wt->iv->wv_name);
 			for(i = 0; i < wt->wt_ndv; i++) {
-				printf(" %10s", wt->dv[i].wv_name);
+				dv = wt_dv(wt, i);
+				printf(" %10s", dv->wv_name);
 			}
 			putchar('\n');
 			for(j = 0; j < wt->nvalues; j++) {
 				printf("[%3d] %10g", j, wds_get_point(wt->iv->wds, j));
 				for(i = 0; i < wt->wt_ndv; i++) {
+					dv = wt_dv(wt, i);
 					printf(" %10g", 
-					       wds_get_point(&wt->dv[i].wds[0], j));
+					       wds_get_point(&dv->wds[0], j));
 				}
 				putchar('\n');
 			}
@@ -163,7 +166,7 @@ dump_wavevar(gpointer p, gpointer u)
 	WaveVar *wv = (WaveVar *)p;
 	int j;
 
-	printf(" dv \"%s\" ", wv->wv_name);
+	printf(" dv %p \"%s\" ", wv, wv->wv_name);
 	printf(" (type=%s)", vartype_name_str(wv->wv_type));
 
 	if(wv->wv_ncols > 1)
@@ -186,6 +189,7 @@ void
 test_interp(WvTable *wt, double mytm)
 {
 	int idx;
+	WaveVar *wv;
 	idx = wf_find_point(wt->iv, mytm);
 	printf("last %8s < %14.8g is %14.8g at [%4d];",
 	       wt->iv->wv_name,
@@ -193,9 +197,10 @@ test_interp(WvTable *wt, double mytm)
 	       wds_get_point(wt->iv->wds, idx),
 	       idx);
 	fflush(stdout);
+	wv = wt_dv(wt, 0);
 	printf("%8s at %8s=%14.8g is %14.8g\n",
-	       wt->dv[0].wv_name,
+	       wv->wv_name,
 	       wt->iv->wv_name,
 	       mytm,
-	       wv_interp_value(&wt->dv[0], mytm));
+	       wv_interp_value(wv, mytm));
 }

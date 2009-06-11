@@ -89,10 +89,13 @@ struct _WvTable {
 	double swval;	/* value at which the sweep was taken */
 	int nvalues;	/* number of rows */
 	WaveVar *iv;	/* pointer to single independent variable */
-	WaveVar *dv;	/* pointer to array of dependent var info */
+	GPtrArray *dvp;  /* array of WaveVar* */
 };
 
-#define wt_ndv	wf->ss->ndv
+#define wt_dv(WT, I) (WaveVar *)g_ptr_array_index((WT)->dvp, (I))
+
+//#define wt_ndv	wf->ss->ndv
+#define wt_ndv	dvp->len
 
 /*
  * WaveFile - data struture containing all of the data from a file.
@@ -118,5 +121,9 @@ extern double wds_get_point(WDataSet *ds, int n);
 extern void wf_free(WaveFile *df);
 extern WaveVar *wf_find_variable(WaveFile *wf, char *varname, int swpno);
 extern void wf_foreach_wavevar(WaveFile *wf, GFunc func, gpointer *p);
+
+extern int wf_add_var(WaveFile *wf, char *varname, int ncols, VarType type,
+		       void *udata);
+
 
 #endif /* WAVEFILE_H */
