@@ -259,7 +259,8 @@ wf_read_table(SpiceStream *ss, WaveFile *wf,
 	if(*statep == 2) {
 		wf_set_point(wt->iv->wds, row, *ivalp);
 		for(i = 0; i < wt->wt_ndv; i++) {
-			dv = &wt->dv[i];
+			WaveVar *dv;
+			dv = wt_dv(wt, i);
 			for(j = 0; j < dv->wv_ncols; j++)
 				wf_set_point(&dv->wds[j], row,
 					     dvals[dv->sv->col - 1 + j ]);
@@ -289,7 +290,8 @@ wf_read_table(SpiceStream *ss, WaveFile *wf,
 		last_ival = *ivalp;
 		wf_set_point(wt->iv->wds, row, *ivalp);
 		for(i = 0; i < wt->wt_ndv; i++) {
-			dv = &wt->dv[i];
+			WaveVar *dv;
+			dv = wt_dv(wt, i);
 			for(j = 0; j < dv->wv_ncols; j++)
 				wf_set_point(&dv->wds[j], row,
 					     dvals[dv->sv->col - 1 + j ]);
@@ -330,9 +332,13 @@ wf_free(WaveFile *wf)
 void wt_free(WvTable *wt)
 {
 	int i;
-	for(i = 0; i < wt->wt_ndv; i++)
-		wf_free_dataset(wt->dv[i].wds);
-	g_free(wt->dv);
+	WaveVar *dv;
+	for(i = 0; i < wt->wt_ndv; i++) {
+		dv = wt_dv(wt, i);
+		wf_free_dataset(dv->wds);
+		g_free(dv);
+	}
+	g_ptr_array_free(wt->dvp, 0);
 	wf_free_dataset(wt->iv->wds);
 	g_free(wt->iv);
 	if(wt->name)
@@ -358,13 +364,18 @@ wvtable_new(WaveFile *wf)
 	wt->iv->wds = g_new0(WDataSet, 1);
 	wf_init_dataset(wt->iv->wds);
 
-	wt->dv = g_new0(WaveVar, wf->ss->ndv);
+	//wt->dv = g_new0(WaveVar, wf->ss->ndv);
+	wt->dvp = g_ptr_array_sized_new(wf->ss->ndv);
 	for(i = 0; i < wf->wf_ndv; i++) {
-		wt->dv[i].wtable = wt;
-		wt->dv[i].sv = &ss->dvar[i];
-		wt->dv[i].wds = g_new0(WDataSet, wt->dv[i].sv->ncols);
-		for(j = 0; j < wt->dv[i].sv->ncols; j++)
-			wf_init_dataset(&wt->dv[i].wds[j]);
+		WaveVar *dv;
+		dv = g_new0(WaveVar, 1);
+		g_ptr_array_add(wt->dvp, dv);
+
+		dv->wtable = wt;
+		dv->sv = &ss->dvar[i];
+		dv->wds = g_new0(WDataSet, dv->sv->ncols);
+		for(j = 0; j < dv->sv->ncols; j++)
+			wf_init_dataset(&dv->wds[j]);
 	}
 	return wt;
 }
@@ -384,6 +395,28 @@ wf_init_dataset(WDataSet *ds)
 	ds->bptr[0] = g_new(double, DS_DBLKSIZE);
 	ds->bpused = 1;
 	ds->nreallocs = 0;
+}
+
+
+/*
+ * initialize DataSet, all ready to hold N elements.
+ */
+void
+wf_init_dataset_size(WDataSet *ds, int nelem)
+{
+	int nblocks, i;
+
+	ds->min = G_MAXDOUBLE;
+	ds->max = -G_MAXDOUBLE;
+	ds->nreallocs = 0;
+
+	nblocks = (nelem - 1) / DS_DBLKSIZE + 1;
+
+	ds->bpused = ds->bpsize = nblocks;
+	ds->bptr = g_new0(double *, ds->bpsize);
+	for(i = 0; i < nblocks; i++) {
+		ds->bptr[i] = g_new(double, DS_DBLKSIZE);
+	}
 }
 
 /*
@@ -414,7 +447,8 @@ wf_foreach_wavevar(WaveFile *wf, GFunc func, gpointer *p)
 	for(i = 0; i < wf->wf_ntables; i++) {
 		wt = wf_wtable(wf, i);
 		for(j = 0; j < wf->wf_ndv; j++) {
-			wv = &wt->dv[j];
+			WaveVar *wv;
+			wv = wt_dv(wt, j);
 			(func)(wv, p);
 		}
 	}
@@ -558,13 +592,75 @@ wf_find_variable(WaveFile *wf, char *varname, int swpno)
 {
 	int i;
 	WvTable *wt;
+	WaveVar *dv;
 	if(swpno >= wf->wf_ntables)
 		return NULL;
 
 	for(i = 0; i < wf->wf_ndv; i++) {
 		wt = wf_wtable(wf, swpno);
-		if(0==strcmp(wt->dv[i].wv_name, varname))
-			return &wt->dv[i];
+		dv = wt_dv(wt, i);
+		if(0==strcmp(dv->wv_name, varname))
+			return dv;
 	}
 	return NULL;
+}
+
+/*
+ * add a new variable to all sweeps in a WaveFile object, 
+ * initialiazing the data to all 0's.
+ * 
+ */
+int wf_add_var(WaveFile *wf, char *varname, int ncols, VarType type,
+		void *udata)
+{
+	int swpno;
+	WvTable *wt;
+	WaveVar *wv;
+	SpiceVar *sv;
+	WDataSet *wds;
+	int col0;
+	int dvno;
+	int nblocks;
+	int i;
+
+
+	for(swpno = 0; swpno < wf->wf_ntables; swpno++) {
+		wv = wf_find_variable(wf, varname, swpno);
+		if(wv)
+			return -1;
+	}
+	
+	col0 = wf->wf_ncols;
+	dvno = wf->wf_ndv;
+	wf->wf_ndv++;
+
+	/* TODO: change wf->ss->dvar array to GPtrArray */
+	wf->wf_ncols += ncols;
+	/* expand wf->ss->dvar by one */
+
+	sv = g_new0(SpiceVar, 1);
+	sv->name = g_strdup(varname);
+	sv->type = type;
+	sv->col = col0;
+	sv->ncols = ncols;
+	
+//	wf->ss->dvar[dvno]  = sv;
+
+	for(swpno = 0; swpno < wf->wf_ntables; swpno++) {
+		wt = wf_wtable(wf, swpno);
+		
+		wv = g_new0(WaveVar, 1);
+		wv->wtable = wt;
+		wv->sv = sv;
+		wv->udata = udata;
+		wv->wds = g_new0(WDataSet, ncols);
+		g_ptr_array_add(wt->dvp, wv);
+
+		for(i = 0; i < ncols; i++) {
+			wf_init_dataset_size(&wv->wds[i], wt->nvalues);
+			wds->min = 0.0;
+			wds->max = 0.0;
+		}
+	}
+	return 0;
 }
