@@ -125,5 +125,6 @@ extern void wf_foreach_wavevar(WaveFile *wf, GFunc func, gpointer *p);
 extern int wf_add_var(WaveFile *wf, char *varname, int ncols, VarType type,
 		       void *udata);
 
+extern void wf_set_point(WDataSet *ds, int n, double val);
 
 #endif /* WAVEFILE_H */

@@ -81,16 +81,17 @@ sf_rdhdr_s2raw(char *name, FILE *fp)
 	sf->ivar->ncols = 1;
 
         for (i = 0; i < ndv; i++) {
+		SpiceVar *dvar;
 		if(fread (&s2vname, sizeof(s2vname), 1, fp) != 1)
 			goto err;
 		s2vname.name[7] = 0;
 		if(cp = strchr(s2vname.name, ' '))
 			*cp = 0;
 
-		sf->dvar[i].name = g_strdup(s2vname.name);
-		sf->dvar[i].type = VOLTAGE;  /* FIXME:sgt: get correct type */
-		sf->dvar[i].col = i; /* FIXME:sgt: handle complex */
-		sf->dvar[i].ncols = 1;
+		/* FIXME:sgt: get correct type */
+		/* FIXME:sgt: handle complex */
+		dvar = ss_spicevar_new(s2vname.name, VOLTAGE, i, 1); 
+		g_ptr_array_add(sf->dvarp, dvar);
 	}
 
 	if(fread (&s2vtype, sizeof(s2vtype), 1, fp) != 1)

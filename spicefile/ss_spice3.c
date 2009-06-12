@@ -154,15 +154,11 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 						sf->ivar->ncols = 1;
 						
 				} else {
-					sf->dvar[i-1].name = g_strdup(vname);
-					sf->dvar[i-1].type = sf_str2type_s3raw(vtypestr);
-					sf->dvar[i-1].col = sf->ncols;
-					if(dtype_complex)
-						sf->dvar[i-1].ncols = 2;
-					else
-						sf->dvar[i-1].ncols = 1;
-
-					sf->ncols += sf->dvar[i-1].ncols;
+					SpiceVar *dvar;
+					dvar = ss_spicevar_new(name, sf_str2type_s3raw(vtypestr), sf->ncols, dtype_complex ? 2 : 1);
+					g_ptr_array_add(sf->dvarp, dvar);
+					
+					sf->ncols += dvar->ncols;
 				}
 			}
 		} else if(strcmp(key, "Values") == 0) {
@@ -313,7 +309,7 @@ sf_readrow_s3raw(SpiceStream *sf, double *ivar, double *dvars)
 	
 	for(i = 0; i < sf->ndv; i++) {
 		SpiceVar *dv;
-		dv = &sf->dvar[i];
+		dv = ss_dvar(sf, i);
 
 		tok = sf_nexttoken(sf);
 		if(!tok) {

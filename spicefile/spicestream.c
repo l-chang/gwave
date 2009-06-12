@@ -130,8 +130,9 @@ ss_new(FILE *fp, char *filename, int ndv, int nspar)
 	ss->fp = fp;
 	ss->ivar = g_new0(SpiceVar, 1);
 	ss->ndv = ndv;
-	if(ndv)
-		ss->dvar = g_new0(SpiceVar, ndv);
+	if(ndv) {
+		ss->dvarp = g_ptr_array_sized_new(ndv);
+	}
 	ss->nsweepparam = nspar;
 	if(nspar)
 		ss->spar = g_new0(SpiceVar, nspar);
@@ -158,14 +159,27 @@ void ss_delete(SpiceStream *ss)
 {
 	if(ss->fp)
 		fclose(ss->fp);
-	if(ss->filename)
+	if(ss->filename) {
 		g_free(ss->filename);
-	if(ss->ivar)
-		g_free(ss->ivar);
-	if(ss->dvar)
-		g_free(ss->dvar);
-	if(ss->linebuf)
+	}	
+	if(ss->ivar) {
+		ss_spicevar_free(ss->ivar);
+	}
+	if(ss->dvarp) {
+		int i;
+		for(i = 0; i < ss->dvarp->len; i++) {
+			SpiceVar *sv;
+			sv = ss_dvar(ss, i);
+			ss_spicevar_free(sv);
+		}
+		g_ptr_array_free(ss->dvarp, 0);
+	}
+	if(ss->spar) {
+		g_free(ss->spar);
+	}
+	if(ss->linebuf) {
 		g_free(ss->linebuf);
+	}
 	g_free(ss);
 }
 
@@ -341,4 +355,26 @@ ss_msg(SSMsgLevel type, const char *id, const char *msg, ...)
 		fputs(buf, stderr);
 	
 	va_end(args);
+}
+
+SpiceVar *ss_spicevar_new(char *name, VarType type, int col, int ncols)
+{
+	SpiceVar *sv;
+	
+	sv = g_new0(SpiceVar, 1);
+	
+	if(name)
+		sv->name = g_strdup(name);
+	sv->type = type;
+	sv->col = col;
+	sv->ncols = ncols;
+	return sv;
+}
+
+void
+ss_spicevar_free(SpiceVar *sv)
+{
+	if(sv->name)
+		g_free(sv->name);
+	g_free(sv);
 }

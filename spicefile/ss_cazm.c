@@ -193,14 +193,8 @@ SpiceStream *ascii_process_header(char *line, VarType ivtype,
 	sf->ncols = 1;
 	sf->ntables = 1;
 	while((signam = strtok(NULL, " \t\n")) != NULL) {
-		if(sf->ndv >= dvsize) {
-			dvsize *= 2;
-			sf->dvar = g_realloc(sf->dvar, dvsize * sizeof(SpiceVar));
-		}
-		sf->dvar[sf->ndv].name = g_strdup(signam);
-		sf->dvar[sf->ndv].type = UNKNOWN;
-		sf->dvar[sf->ndv].col = sf->ncols;
-		sf->dvar[sf->ndv].ncols = 1;
+		SpiceVar *dvar = ss_spicevar_new(signam, UNKNOWN, sf->ncols, 1);
+		g_ptr_array_add(sf->dvarp, dvar);
 		sf->ndv++;
 		sf->ncols++;
 	}

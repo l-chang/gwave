@@ -61,7 +61,7 @@ regexp_compile(char *str)
 WaveFile *wf_finish_read(SpiceStream *ss);
 WvTable *wf_read_table(SpiceStream *ss, WaveFile *wf, int *statep, double *ivalp, double *dvals);
 void wf_init_dataset(WDataSet *ds);
-inline void wf_set_point(WDataSet *ds, int n, double val);
+extern inline void wf_set_point(WDataSet *ds, int n, double val);
 void wf_free_dataset(WDataSet *ds);
 WvTable *wvtable_new(WaveFile *wf);
 void wt_free(WvTable *wt);
@@ -162,6 +162,16 @@ WaveFile *wf_read(char *name, char *format)
 	}
 }
 
+WaveFile *wf_new(SpiceStream *ss)
+{
+	WaveFile *wf;
+	wf = g_new0(WaveFile, 1);
+	wf->ss = ss;
+	wf->tables = g_ptr_array_new();
+	return wf;
+}
+
+
 /* 
  * read all of the data from a SpiceStream and store it in the WaveFile
  * structure.
@@ -175,9 +185,7 @@ WaveFile *wf_finish_read(SpiceStream *ss)
 	int state;
 	double *spar = NULL;
 
-	wf = g_new0(WaveFile, 1);
-	wf->ss = ss;
-	wf->tables = g_ptr_array_new();
+	wf = wf_new(ss);
 	dvals = g_new(double, ss->ncols);
 
 	state = 0;
@@ -372,7 +380,7 @@ wvtable_new(WaveFile *wf)
 		g_ptr_array_add(wt->dvp, dv);
 
 		dv->wtable = wt;
-		dv->sv = &ss->dvar[i];
+		dv->sv = ss_dvar(ss, i);
 		dv->wds = g_new0(WDataSet, dv->sv->ncols);
 		for(j = 0; j < dv->sv->ncols; j++)
 			wf_init_dataset(&dv->wds[j]);
@@ -633,18 +641,10 @@ int wf_add_var(WaveFile *wf, char *varname, int ncols, VarType type,
 	col0 = wf->wf_ncols;
 	dvno = wf->wf_ndv;
 	wf->wf_ndv++;
-
-	/* TODO: change wf->ss->dvar array to GPtrArray */
 	wf->wf_ncols += ncols;
-	/* expand wf->ss->dvar by one */
 
-	sv = g_new0(SpiceVar, 1);
-	sv->name = g_strdup(varname);
-	sv->type = type;
-	sv->col = col0;
-	sv->ncols = ncols;
-	
-//	wf->ss->dvar[dvno]  = sv;
+	sv = ss_spicevar_new(varname, type, col0, ncols);
+	g_ptr_array_add(wf->ss->dvarp, sv);
 
 	for(swpno = 0; swpno < wf->wf_ntables; swpno++) {
 		wt = wf_wtable(wf, swpno);

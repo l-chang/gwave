@@ -176,17 +176,17 @@ sf_rdhdr_nsout(char *name, FILE *fp)
 	sf->ivar->col = 0;
 	
 	for(i = 0; i < ndvars; i++) {
+		SpiceVar *dvar;
+
 		nsv = g_list_nth_data(vlist, i);
 
-		sf->dvar[i].name = g_strdup(nsv->name);
-		sf->dvar[i].type = nsv->type;
-		sf->nsindexes[i] = nsv->index;
-		sf->dvar[i].ncols = 1;
-		sf->dvar[i].col = sf->ncols;
-		sf->ncols += sf->dvar[i].ncols;
+		dvar = ss_spicevar_new(nsv->name, nsv->type, sf->ncols, 1);
+		g_ptr_array_add(sf->dvarp, dvar);
+		sf->ncols += dvar->ncols;
 
+		sf->nsindexes[i] = nsv->index;
 		ss_msg(DBG, msgid, "dv[%d] \"%s\" nsindex=%d",
-		       i, sf->dvar[i].name, sf->nsindexes[i]);
+		       i, dvar->name, sf->nsindexes[i]);
 	}
 
 	sf->readrow = sf_readrow_nsout;
@@ -260,9 +260,10 @@ sf_readrow_nsout(SpiceStream *sf, double *ivar, double *dvars)
 	}
 
 	for(i = 0; i < sf->ndv; i++) {
-		dvp = &sf->dvar[i];
+		SpiceVar *dvar;
+		dvar = ss_dvar(sf, i);
 		scale = 1.0;
-		switch(dvp->type) {
+		switch(dvar->type) {
 		case VOLTAGE:
 			scale = sf->voltage_resolution;
 			break;

@@ -43,6 +43,7 @@ main(int argc, char **argv)
 	int i, j;
 	extern int optind;
 	extern char *optarg;
+	int a_flag = 0;
 	int v_flag = 0;
 	int x_flag = 0;
 	int l_flag = 0;
@@ -50,8 +51,11 @@ main(int argc, char **argv)
 	char *filetype = NULL;
 	int c;
 
-	while ((c = getopt (argc, argv, "lt:vx")) != EOF) {
+	while ((c = getopt (argc, argv, "alt:vx")) != EOF) {
 		switch(c) {
+		case 'a':
+			a_flag = 1;
+			break;
 		case 'v':
 			v_flag = 1;
 			break;
@@ -71,7 +75,7 @@ main(int argc, char **argv)
 	}
 
 	if(errflg || optind >= argc)  {
-		fprintf(stderr, "usage: %s [-ltvx] file\n", argv[0]);
+		fprintf(stderr, "usage: %s [-altvx] file\n", argv[0]);
 		exit(1);
 	}
 	
@@ -96,6 +100,39 @@ main(int argc, char **argv)
 		dump_table_info(wt);
 	}
 	wf_foreach_wavevar(wf, dump_wavevar, NULL);
+
+	wt = wf_wtable(wf, 0);
+	if(a_flag && wt->wt_ndv > 2) {
+		// test wf_add_var();
+		WaveVar *dv1;
+		WaveVar *dv2;
+		WaveVar *dvn;
+		char *nname;
+		int name_len;
+
+		printf("before add: ndv=%d\n", wt->wt_ndv);
+		dv1 = wt_dv(wt, wt->wt_ndv-2);
+		name_len = strlen(dv1->wv_name);
+		dv2 = wt_dv(wt, wt->wt_ndv-1);
+		name_len += strlen(dv2->wv_name);
+		name_len += 18;
+		nname = g_new0(char, name_len);
+
+		sprintf(nname, "calc( %s - %s )", 
+			dv1->wv_name,
+			dv2->wv_name);
+			
+		wf_add_var(wf, nname, 1, MATH, NULL);
+		printf("after add: ndv=%d\n", wt->wt_ndv);
+		dvn = wt_dv(wt, wt->wt_ndv-1);
+
+		for(j = 0; j < wt->nvalues; j++) {
+			wf_set_point(&dvn->wds[0], j, 
+				      wds_get_point(&dv1->wds[0], j) -
+				      wds_get_point(&dv2->wds[0], j));
+		}
+		
+	}
 
 	if(l_flag) {
 		int t;
@@ -140,6 +177,7 @@ main(int argc, char **argv)
 		putchar('\n');
 		test_interp(wt, mytm);
    	}
+	wf_free(wf);
 	exit(0);
 }
 
