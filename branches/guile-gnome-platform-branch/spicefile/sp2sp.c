@@ -189,11 +189,13 @@ main(int argc, char **argv)
 		}
 		printf("dependent variables: %d\n", sf->ndv);
 		for(i = 0; i < sf->ndv; i++) {
-			printf(" dv[%d] \"%s\" ", i, sf->dvar[i].name);
+			SpiceVar *dvar;
+			dvar = ss_dvar(sf, i);
+			printf(" dv[%d] \"%s\" ", i, dvar->name);
 			printf(" (type=%s col=%d ncols=%d)\n", 
-			       vartype_name_str(sf->dvar[i].type),
-			       sf->dvar[i].col,
-			       sf->dvar[i].ncols);
+			       vartype_name_str(dvar->type),
+			       dvar->col,
+			       dvar->ncols);
 		}
 	}
 
@@ -202,9 +204,12 @@ main(int argc, char **argv)
 		nsel = 0;
 		idx = 0;
 		for(i = 0; i < sf->ndv+1; i++) {
+			SpiceVar *dvar;
+			dvar = ss_dvar(sf, i-1);
+
 			if(i == 0 || 
 			   (vartype == UNKNOWN 
-			    || sf->dvar[i-1].type == vartype)) {
+			    || dvar->type == vartype)) {
 				out_indices[idx++] = i;
 				nsel++;
 			}
@@ -270,10 +275,12 @@ ascii_header_output(SpiceStream *sf, int *indices, int nidx)
 			printf("%s", buf);
 		} else {
 			int varno = indices[i]-1;
-			for(j = 0; j < sf->dvar[varno].ncols; j++) {
+			SpiceVar *dvar;
+			dvar = ss_dvar(sf, varno);
+			for(j = 0; j < dvar->ncols; j++) {
 				if(j > 0)
 					putchar(' ');
-				ss_var_name(&sf->dvar[varno], j, buf, 1024);
+				ss_var_name(dvar, j, buf, 1024);
 				printf("%s", buf);
 			}
 		}
@@ -338,8 +345,9 @@ ascii_data_output(SpiceStream *sf, int *indices, int nidx,
 					printf("%.*g", ndigits, ival);
 				else {
 					int varno = indices[i]-1;
-					int dcolno = sf->dvar[varno].col - 1;
-					for(j = 0; j < sf->dvar[varno].ncols; j++) {
+					SpiceVar *dvar = ss_dvar(sf, varno);
+					int dcolno = dvar->col - 1;
+					for(j = 0; j < dvar->ncols; j++) {
 						if(j > 0)
 							putchar(' ');
 						printf("%.*g", ndigits,
@@ -405,13 +413,17 @@ static int parse_field_numbers(int **indices, int *idxsize, int *nidx,
 static int find_dv_by_name(char *name, SpiceStream *sf)
 {
 	int i;
+	SpiceVar *dvar;
+
 	for(i = 0; i < sf->ndv; i++) {
-		if(strcasecmp(name, sf->dvar[i].name) == 0)
+		dvar = ss_dvar(sf, i);
+		if(strcasecmp(name, dvar->name) == 0)
 			return i;
 	}
 	for(i = 0; i < sf->ndv; i++) {
-		if(strncasecmp("v(", sf->dvar[i].name, 2) == 0
-		   && strcasecmp(name, &sf->dvar[i].name[2]) == 0)
+		dvar = ss_dvar(sf, i);
+		if(strncasecmp("v(", dvar->name, 2) == 0
+		   && strcasecmp(name, &dvar->name[2]) == 0)
 			return i;
 	}
 	return -1;

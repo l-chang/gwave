@@ -7,9 +7,14 @@
  *
  */
 
+#ifndef SPICESTREAM_H
+#define SPICESTREAM_H
+
 #ifdef __cplusplus
 extern "C" {
 #endif 
+
+#include <glib.h>
 
 typedef struct _SpiceStream SpiceStream;
 typedef struct _SpiceVar SpiceVar;
@@ -21,6 +26,7 @@ typedef enum {
 	VOLTAGE = 2,
 	CURRENT = 3,
 	FREQUENCY = 4,
+	MATH = 5,
 } VarType;
 
 typedef enum SSMsgLevel_tag {DBG = -1, INFO = 0, WARN = 1, ERR = 2} SSMsgLevel;
@@ -48,7 +54,7 @@ struct _SpiceStream {
 	int ndv;	/* number of dependent variables */
 	int ncols;	/* number of columns of data readrow will fill in */
 	SpiceVar *ivar; /* ptr to independent-variable info */
-	SpiceVar *dvar; /* ptr to array of dependent variable info */
+	GPtrArray *dvarp; /* array of SpiceVar* */
 	SpiceVar *spar; /* ptr to array of sweep parameter info */
 
 	SSReadRow readrow;  /* func to read one row of data points */
@@ -89,11 +95,15 @@ struct _SpiceStream {
 
 #define ss_readrow(sf, ivp, dvp) ((sf->readrow)(sf, ivp, dvp))
 #define ss_readsweep(sf, swp) ((sf->readsweep)(sf, swp))
+#define ss_dvar(SF, I) (SpiceVar*)(g_ptr_array_index((SF)->dvarp, (I)))
+
 
 extern SpiceStream *ss_open(char *filename, char *type);
 extern SpiceStream *ss_open_fp(FILE *fp, char *type);
 extern SpiceStream *ss_open_internal(FILE *fp, char *name, char *type);
 extern SpiceStream *ss_new(FILE *fp, char *name, int ndv, int nspar);
+extern SpiceVar *ss_spicevar_new(char *name, VarType type, int col, int ncols);
+extern void ss_spicevar_free(SpiceVar *sv);
 extern void ss_close(SpiceStream *sf);
 extern void ss_delete(SpiceStream *ss);
 extern char *ss_var_name(SpiceVar *sv, int col, char *buf, int n);
@@ -106,3 +116,6 @@ extern char *ss_filetype_name(int n);
 #ifdef __cplusplus
 	   }
 #endif 
+
+#endif /* SPICESTREAM_H */
+

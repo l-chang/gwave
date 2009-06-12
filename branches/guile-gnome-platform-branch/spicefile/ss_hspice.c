@@ -283,8 +283,8 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	if(ahdr)
 		g_free(ahdr);
 	if(sf) {
-		if(sf->dvar)
-			g_free(sf->dvar);
+		if(sf->dvarp)
+			g_ptr_array_free(sf->dvarp, 1);
 		g_free(sf);
 	}
 
@@ -333,6 +333,10 @@ hs_process_header(int nauto, int nprobe, int nsweepparam, char *line, char *name
 
 /* dependent variable types */
 	for(i = 0; i < sf->ndv; i++) {
+		int ncols;
+		VarType vtype;
+		SpiceVar *dvar;
+
 		cp = strtok(NULL, " \t\n");
 		if(!cp) {
 			ss_msg(DBG, "hs_process_header", "%s: not enough vartypes on header line", name);
@@ -346,26 +350,26 @@ hs_process_header(int nauto, int nprobe, int nsweepparam, char *line, char *name
 		switch(hstype) {
 		case 1:
 		case 2:
-			sf->dvar[i].type = VOLTAGE;
+			vtype = VOLTAGE;
 			break;
 		case 8:
 		case 15:
 		case 22:
-			sf->dvar[i].type = CURRENT;
+			vtype = CURRENT;
 			break;
 		default:
-			sf->dvar[i].type = UNKNOWN;
+			vtype = UNKNOWN;
 			break;
 		}
-
-		/* how many columns comprise this variable? */
-		sf->dvar[i].col = sf->ncols;
+		
 		if(i < nauto-1 && sf->ivar->type == FREQUENCY) {
-			sf->dvar[i].ncols = 2;
+			ncols = 2;
 		} else {
-			sf->dvar[i].ncols = 1;
+			ncols = 1;
 		}
-		sf->ncols += sf->dvar[i].ncols;
+		dvar = ss_spicevar_new(NULL, vtype, sf->ncols, ncols);
+		g_ptr_array_add(sf->dvarp, dvar);
+		sf->ncols += ncols;
 	}
 
 /* independent variable name */
@@ -378,11 +382,13 @@ hs_process_header(int nauto, int nprobe, int nsweepparam, char *line, char *name
 	
  /* dependent variable names */
 	for(i = 0; i < sf->ndv; i++) {
+		SpiceVar *dvar;
 		if((signam = strtok(NULL, " \t\n")) == NULL) {
 			ss_msg(DBG, "hs_process_header", "%s: not enough DV names found on header line", name);
 			goto fail;
 		}
-		sf->dvar[i].name = g_strdup(signam);
+		dvar = ss_dvar(sf, i);
+		dvar->name = g_strdup(signam);
 	}
 /* sweep parameter names */
 	for(i = 0; i < sf->nsweepparam; i++) {
