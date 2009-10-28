@@ -86,7 +86,6 @@ struct _GWDataFile {
 	char *ftag;	/* short tag used to help identify which file is which */
 	SCM smob;
 	int outstanding_smob;	/* if the guile world has a pointer, defer freeing. */
-	int ndv;
 	GSList *wvhl;
 };
 
