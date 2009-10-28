@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <sys/time.h>
+#include <locale.h>
 
 #include <gtk/gtk.h>
 #include <config.h>
