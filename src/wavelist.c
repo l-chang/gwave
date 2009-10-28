@@ -92,7 +92,6 @@ load_wave_file(char *fname, char *ftype)
 	wdata->ftag[0] = file_tag_chars[next_file_tagno];
 	wdata->ftag[1] = '\0';
 	next_file_tagno = (next_file_tagno + 1) % n_file_tags;
-	wdata->ndv = wdata->wf->wf_ndv;
 	wdata->wvhl = NULL; /* empty GSList  of WaveVarH* */
 
 	wdata_list = g_list_append(wdata_list, wdata);
@@ -730,7 +729,7 @@ SCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
 	    (SCM varlist, SCM port, SCM from, SCM to),
 "Write the data for all variables in VARLIST to PORT in tabular ascii form"
 "If FROM and TO are specified, writes only data points for which the"
-"independent variable is between FROM and TO includsive."
+"independent variable is between FROM and TO inclusive."
 "All variables in VARLIST must share the same independent variable")
 #define FUNC_NAME s_export_variables
 {
@@ -782,6 +781,34 @@ SCM_DEFINE(export_variables, "export-variables", 2, 2, 0,
 }
 #undef FUNC_NAME
 
+
+SCM_DEFINE(new_wavevar_calc_x, "new-wavevar-calc!", 3, 1, 0,
+	   (SCM newname, SCM proc, SCM var1, SCM var2),
+"Compute new variable NEWNAME by applying PROC to existing variable VAR1"
+"and optionaly a second variable, VAR2."
+"The new variable is added to the datafile containing VAR1."
+"early prototype: both variables must share the same independent variable, PROC is is ignored, and the function applied is unary or binary subtraction")
+#define FUNC_NAME s_export_variables
+{
+	WaveVar *wv1;
+	WaveVar *wv2;
+	int i;
+	char *nn;
+	SCM_ASYNC_TICK;
+
+	VALIDATE_ARG_STR_NEWCOPY(1, newname, nn);
+        VALIDATE_ARG_PROC(2, proc);
+	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(3, var1, wv1);
+	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(4, var2, wv2);
+
+	if(wv1->wv_iv != wv2->wv_iv) {
+		scm_misc_error(FUNC_NAME, "Both WaveVars must relate to the same independent variable", SCM_UNDEFINED);
+	}
+
+}
+#undef FUNC_NAME
+
+
 /*
  * On the C side we never free WaveVars without freeing the whole
  * WaveFile structure.  When guile GC's one, we invalidate the pointer
@@ -802,7 +829,6 @@ int wavefile_try_free(GWDataFile *wdata)
 
 	if(gwave_debug)
 		printf("free GWDataFile 0x%x during gc\n", wdata);
-	n = wdata->ndv;
 	g_free(wdata);
 	return sizeof(GWDataFile);
 }
