@@ -169,7 +169,7 @@ void gwave_main(void *p, int argc, char **argv)
 	init_draw();
 	
 	gtk_init(&argc, &argv);
-
+	setlocale(LC_NUMERIC, "POSIX");
 
 #ifdef HAVE_G_SLICE_SET_CONFIG
 	/* default mode causes frequent crashes; this probably masks it rather
