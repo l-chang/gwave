@@ -48,9 +48,35 @@
 
        (add-menuitem menu "list files"
 		     (lambda () 
-		       (display "wavefile-list:") (newline)
-		       (display (wavefile-list))
-		       (newline)))
+		       (format #t "wavefile-list: ~a\n" (wavefile-list))))
+
+       (add-menuitem menu "waveform calculate test" 
+		     (lambda ()
+		       (display "calculate-waves stub\n")
+		       (let ((wvlist (all-selected-waves)))
+			 (cond 
+			  ((eq? 2 (length wvlist))
+			   (let* ((w1 (car wvlist))
+				  (w2 (cadr wvlist))
+				  (newname (format #f "~a-~a" 
+						   (visiblewave-varname w1)
+						   (visiblewave-varname w2))))
+			     (format #t "calc ~s - ~s => ~s\n"  w1 w2 newname)
+			     (new-wavevar-calc! newname - w1 w2)
+			     ))
+
+			  ((eq? 1 (length wvlist))
+			   (let* ((w1 (car wvlist))
+				  (newname (format #f "(-~a)" 
+						   (visiblewave-varname w1))))
+			     (format #t "calc - ~s => ~s\n"  w1 newname)
+			     (new-wavevar-calc! newname - w1)
+			     ))
+			   
+			  (else (display "calculate requires one or two waves.\n"))
+			  ))))
+
+
 )))
 
 

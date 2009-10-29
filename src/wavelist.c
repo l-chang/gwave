@@ -792,19 +792,63 @@ SCM_DEFINE(new_wavevar_calc_x, "new-wavevar-calc!", 3, 1, 0,
 {
 	WaveVar *wv1;
 	WaveVar *wv2;
+	WaveVar *wvnew;
+	GWDataFile *df;
+        WvTable *wt;
+	int swpno;
 	int i;
+	double x1, x2, xn;
 	char *nn;
-	SCM_ASYNC_TICK;
 
 	VALIDATE_ARG_STR_NEWCOPY(1, newname, nn);
         VALIDATE_ARG_PROC(2, proc);
 	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(3, var1, wv1);
-	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(4, var2, wv2);
+	VALIDATE_ARG_VisibleWaveOrWaveVar_COPY_USE_NULL(4, var2, wv2);
 
-	if(wv1->wv_iv != wv2->wv_iv) {
-		scm_misc_error(FUNC_NAME, "Both WaveVars must relate to the same independent variable", SCM_UNDEFINED);
+	df = wvar_gwdatafile(wv1);
+
+	if(wv2 && (wv1->wv_iv != wv2->wv_iv)) {
+		scm_misc_error(FUNC_NAME, "prototype: Both WaveVars must relate to the same independent variable", SCM_UNDEFINED);
+	}
+	wf_add_var(df->wf, g_strdup(nn), 1, MATH, NULL);
+	
+//	for(swpno = 0; df->wf->wf_ntables; swpno++) {
+	{
+// TODO: figure out how to get from  WaveVar* back to dv-number, so we can
+// do all of the corresponding wavevars in each of the tables (sweeps)
+
+	swpno = 0;
+		wt = wf_wtable(df->wf, swpno);
+		wvnew = wt_dv(wt, wt->wt_ndv-1);
+
+		for(i = 0; i < wt->nvalues; i++) {
+			if(wv2) {
+				x1 = wds_get_point(&wv1->wds[0], i);
+				x2 = wds_get_point(&wv2->wds[0], i);
+				xn = scm_to_double(
+				scwm_safe_call2(proc,
+						scm_make_real(x1),
+						scm_make_real(x2)));
+				wf_set_point(&wvnew->wds[0], i, xn);
+
+/*
+				wf_set_point(&wvnew->wds[0], i, 
+                                      wds_get_point(&wv1->wds[0], i) -
+                                      wds_get_point(&wv2->wds[0], i));
+*/
+			} else {
+				x1 = wds_get_point(&wv1->wds[0], i);
+				xn = scm_to_double(
+					scwm_safe_call1(proc, scm_make_real(x1)));
+				wf_set_point(&wvnew->wds[0], i, xn);
+			}
+                }
+
 	}
 
+	if(df->wlist_win) {
+		gwfile_add_wv_to_list(wvnew, df);
+	}
 }
 #undef FUNC_NAME
 
