@@ -152,10 +152,18 @@ EXTERN long scm_tc16_scwm_VisibleWave;
   else cvar = VisibleWave(scm); \
   } while (0)
 
-// this one always gets the WaveVarH*
+// these one always gets the WaveVarH* from either type
 #define VALIDATE_ARG_VisibleWaveOrWaveVar_COPY(pos,scm,cvar) \
   do { \
   if (VisibleWave_P(scm)) cvar = VisibleWave(scm)->var; \
+  else if(WaveVarH_P(scm)) cvar = SAFE_WaveVar(scm); \
+  else scm_wrong_type_arg(FUNC_NAME,pos,scm); \
+  } while (0)
+
+#define VALIDATE_ARG_VisibleWaveOrWaveVar_COPY_USE_NULL(pos,scm,cvar) \
+  do { \
+  if (UNSET_SCM(scm) || scm == SCM_BOOL_F) cvar = NULL; \
+  else if (VisibleWave_P(scm)) cvar = VisibleWave(scm)->var;	\
   else if(WaveVarH_P(scm)) cvar = SAFE_WaveVar(scm); \
   else scm_wrong_type_arg(FUNC_NAME,pos,scm); \
   } while (0)

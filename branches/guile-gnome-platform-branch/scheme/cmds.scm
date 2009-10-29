@@ -161,7 +161,7 @@
 		 (string-append "Gwave2 version " gwave-version-string))))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
-    (let ((llab (gtk-label-new "Copyright 1997-2008 Steve Tell")))
+    (let ((llab (gtk-label-new "Copyright 1997-2009 Steve Tell")))
       (gtk-widget-show llab)
       (gtk-container-add vbox llab))
 
@@ -396,6 +396,25 @@
   (for-each (lambda (wp)
 	      (set-wavepanel-selected! wp #f))
 	    (wtable-wavepanels)))
+
+; return a list of all currently selected VisibleWaves in a wavepanel.
+(define-public (wavepanel-selected-waves wp)
+  (let ((wpwaves (wavepanel-visiblewaves wp)))
+    (filter VisibleWave-selected? wpwaves))
+)
+
+; return list of all currently selected VisibleWaves
+(define-public (all-selected-waves)
+  (let (( lst '()))
+    (for-each (lambda (wp)
+		(for-each (lambda (vws)
+;			    (display vws)(newline))
+			    (set! lst (cons vws lst)))
+			  (wavepanel-selected-waves wp)))
+	      (wtable-wavepanels))
+    lst))
+
+
 
 ;; Given a filename, return the GWDataFile object associated with
 ;; the data loaded from that file, or #f it there is no such file loaded.

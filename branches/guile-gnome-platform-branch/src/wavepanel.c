@@ -665,6 +665,24 @@ SCM_DEFINE(wavepanel_debug_x, "wavepanel-debug!", 1, 0, 0,
 #undef FUNC_NAME
 
 
+SCM_DEFINE(VisibleWave_selected_p, "VisibleWave-selected?", 1, 0, 0,
+	   (SCM visiblewave),
+	   "Returns true if VISIBLEWAVE has been selected by having its buttons pressed.")
+#define FUNC_NAME s_wavepanel_visiblewaves
+{
+	VisibleWave *vw;
+
+	VALIDATE_ARG_VisibleWave_COPY(1, visiblewave, vw);
+	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vw->button)))
+		return SCM_BOOL_T;
+	else
+		return SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+
+
+
 /*****************************************************************************
  * Standard stuff for the WavePanel SMOB */
 

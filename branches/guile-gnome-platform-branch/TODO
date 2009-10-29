@@ -27,10 +27,6 @@ write more plot backend scheme modules
 
 custom measurements
 
-waveform calculations
-	- display-functions of a single wavevar and scalars
-	- display-functions of wavevars sharing the same independent var
-	- more general stuff that computes a new wavevar
 
 Y zoom methods:
 	manual: type in min and max for panel DONE
@@ -72,6 +68,26 @@ Alternate ways of getting wavevars into panels
 hook to choose better short-tags for files
 	example based on regular expression on filename
 
+
+-----------------------------------------------------------------------------
+Tasks in progress:
+
+waveform calculations
+original spec
+	1. display-functions of a single wavevar and scalars
+	2. display-functions of wavevars sharing the same independent var
+	3. more general stuff that computes a new wavevar
+
+Started work on 3. 
+new procedure basicly working:
+	(new-wavevar-calc! newname procedure w1 w2)
+next:
+	add a UI dialog box
+		show the variable names (and ftags)
+		pull-down menu of procedures to apply
+		text entry for name of new variable
+	remove limitiation of same independent variable
+	allow users to write functions?
 
 -----------------------------------------------------------------------------
 tasks list items finished:
