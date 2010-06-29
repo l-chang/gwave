@@ -211,7 +211,7 @@ void setup_wavepanel_lmtable(WavePanel *wp, int showlabels)
 	gtk_widget_show(vbox);
 
 	wp->lmtable = gtk_table_new(1, 3, FALSE);
-	gtk_widget_set_usize(wp->lmtable, 150, -1);
+	gtk_widget_set_usize(wp->lmtable, 190, -1);
 	gtk_widget_show(wp->lmtable);
 
 	gtk_table_attach(GTK_TABLE(wp->lmtable), vbox,

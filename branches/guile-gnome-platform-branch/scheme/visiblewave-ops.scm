@@ -11,6 +11,7 @@
   :use-module (gnome-2)
   :use-module (gnome gtk)
   :use-module (gnome gtk gdk-event)
+  :use-module (app gwave utils)
   :use-module (app gwave gtk-helpers)
   :use-module (app gwave std-menus)
   :use-module (app gwave export)
@@ -61,9 +62,11 @@
 			      #f)))
 			      
    (gtk-tooltips-set-tip gwave-tooltips (visiblewave-button vw)
-			 (string-append (visiblewave-varname vw)
-			 "\nVisibleWave Button:\nClick button 1 to select wave.\nPress button 3 for options menu.") "")
-
+			 (string-append 
+			  (shorten-filename (wavefile-file-name (visiblewave-file vw)))
+			  ":\n"
+			  (visiblewave-varname vw)
+			  "\nVisibleWave Button:\nClick button 1 to select wave.\nPress button 3 for options menu.") "")
 ))
 
 (wavepanel-bind-mouse 1

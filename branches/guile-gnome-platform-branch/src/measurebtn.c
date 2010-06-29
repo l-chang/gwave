@@ -169,7 +169,8 @@ mbtn_update(MeasureBtn *mbtn, gpointer *d)
 	double csr_val, c2_val;
 	double mvalue;
 	int valid;
-	
+	char *tipfmt = NULL;
+
 	valid = 0;
 	switch (mbtn->measurefunc) {
 	case MBF_CURSOR0:
@@ -194,8 +195,10 @@ mbtn_update(MeasureBtn *mbtn, gpointer *d)
 		valid = wtable->cursor[0]->shown 
 			&& (mbtn->var->wv_iv->wds->min <= csr_val)
 			&& (csr_val <= mbtn->var->wv_iv->wds->max);
-		if(valid) 
+		if(valid) {
 			mvalue = wv_interp_value(mbtn->var, csr_val);
+			tipfmt = "%s\nmeasure: variable(cursor0)";
+		}
 		break;
 		
 	case MBF_VARC1:
@@ -203,8 +206,10 @@ mbtn_update(MeasureBtn *mbtn, gpointer *d)
 		valid = wtable->cursor[1]->shown 
 			&& (mbtn->var->wv_iv->wds->min <= csr_val)
 			&& (csr_val <= mbtn->var->wv_iv->wds->max);
-		if(valid) 
+		if(valid) {
 			mvalue = wv_interp_value(mbtn->var, csr_val);
+			tipfmt = "%s\nmeasure: variable(cursor0)";
+		}
 		break;
 
 	case MBF_VARDIFF:
@@ -216,9 +221,11 @@ mbtn_update(MeasureBtn *mbtn, gpointer *d)
 			&&   wtable->cursor[1]->shown 
 			&& (mbtn->var->wv_iv->wds->min <= c2_val)
 			&& (c2_val <= mbtn->var->wv_iv->wds->max);
-		if(valid)
+		if(valid) {
 			mvalue = wv_interp_value(mbtn->var, c2_val) - 
 				wv_interp_value(mbtn->var, csr_val);
+			tipfmt = "%s\nmeasure: variable(cursor1) - variable(cursor0)";
+		}
 		break;
 
 	case MBF_RECIPCURDIFF:
@@ -242,9 +249,18 @@ mbtn_update(MeasureBtn *mbtn, gpointer *d)
 	 */
 
 	if(valid) {
+		char *valstr = val2txt(mvalue, 0);
+		char tip[4096];
+
 		if(!GTK_WIDGET_VISIBLE(mbtn->button))
 			gtk_widget_show(mbtn->button);
-		gtk_label_set(GTK_LABEL(mbtn->label), val2txt(mvalue, 0));
+		gtk_label_set(GTK_LABEL(mbtn->label), valstr);
+		if(tipfmt) {
+			sprintf(tip, tipfmt, valstr);
+			gtk_tooltips_set_tip(GTK_TOOLTIPS(wtable->ttips),
+				     mbtn->button, tip, "");
+		}
+		
 	} else {
 		if(GTK_WIDGET_VISIBLE(mbtn->button))
 			gtk_widget_hide(mbtn->button);
