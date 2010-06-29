@@ -32,3 +32,15 @@
 	  (match:substring m 1)
 	#f)))
 
+; replace long pathname prefix with .../
+(define-public (shorten-filename s)
+  (let ((l (string-length s)))
+    (if (> l 30)
+	(let ((r (string-rindex s #\/)))
+	  (if r
+	      (string-append "..." (substring s r l))
+	      s)
+	  )
+	s
+	)
+))
