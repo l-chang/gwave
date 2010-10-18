@@ -39,7 +39,7 @@ pdf gwave.pdf: gwave.sgml
 SUFFIXES=.sgml .1 .5
 
 .sgml.1:
-	docbook-to-man $*.sgml > $@
+	docbook2man $*.sgml > $@
 
 .PHONY: html tex dvi ps pdf
 
