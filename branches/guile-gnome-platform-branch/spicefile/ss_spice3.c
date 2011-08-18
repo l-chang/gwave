@@ -155,7 +155,7 @@ sf_rdhdr_s3raw(char *name, FILE *fp)
 						
 				} else {
 					SpiceVar *dvar;
-					dvar = ss_spicevar_new(name, sf_str2type_s3raw(vtypestr), sf->ncols, dtype_complex ? 2 : 1);
+					dvar = ss_spicevar_new(vname, sf_str2type_s3raw(vtypestr), sf->ncols, dtype_complex ? 2 : 1);
 					g_ptr_array_add(sf->dvarp, dvar);
 					
 					sf->ncols += dvar->ncols;
