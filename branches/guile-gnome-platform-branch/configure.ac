@@ -71,7 +71,6 @@ ncurses")
 
 AC_SUBST(READLINE_LIB)
 
-
 dnl check for guile
 GUILE_FLAGS
 
@@ -95,6 +94,8 @@ GUILE_MODULE_EXPORTS(have_guile_gtk_menu_popup,(gnome-2)(gnome gtk),gtk-menu-pop
 if test "$have_guile_gtk_menu_popup" = yes; then
  AC_DEFINE(HAVE_GUILE_GTK_MENU_POPUP,1,"Defined if guile-gnome module (gnome gtk) already contains gtk-menu-popup")
 fi
+
+AC_CHECK_LIB(X11, XGetWindowAttributes)
 
 
 dnl doesn't work if prefix isn't specified.
