@@ -318,7 +318,7 @@ SCM_DEFINE(wavepanel_add_variable_x, "wavepanel-add-variable!", 2, 0, 0,
 {
 	WavePanel *wp;
 	WaveVar *wv;
-	VALIDATE_ARG_WavePanel_COPY(1,wavepanel,wp);
+	VALIDATE_ARG_WavePanel_COPY_USE_NULL(1,wavepanel,wp);
 	VALIDATE_ARG_WaveVar_COPY(1,var,wv);
 
 	if(wv)
