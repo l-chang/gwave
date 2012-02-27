@@ -7,6 +7,7 @@
   :use-module (gnome gtk)
   :use-module (app gwave cmds)
   :use-module (app gwave std-menus)
+  :use-module (app gwave wavelist-ls)
 )
 
 (debug-enable 'debug)
@@ -99,6 +100,12 @@
 				 (format #t " ~s = ~s\n" (car s) (cdr s)))
 				 (wavefile-sweeps df))
 		     ))
+
+       (add-menuitem menu "Show New Wavelist" 
+		     (lambda () 
+		       (show-wavelist-ls df)
+		     ))
+
 
        (add-menuitem menu #f #f)
        )))
