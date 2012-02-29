@@ -22,13 +22,20 @@
 ;; add data to the list store
 (define (populate-model store df)
   (let ((idx 0))
-    (for-each 
-     (lambda (wv)
-       (let ((iter (gtk-list-store-append store)))
-	 (set-value store iter 0 idx)
-	 (set-value store iter 1 (variable-signame wv))
-	 (set! idx (+ 1 idx))))
-       (wavefile-all-variables df))
+	 (for-each 
+	  (lambda (wv)
+	    (let ((iter (gtk-list-store-append store))
+		 (sweepname (variable-sweepname wv))
+		 (sweepval 0)
+		 (sweepno  (variable-sweepindex wv)))
+	      (set-value store iter 0 idx)
+	      (set-value store iter 1 (variable-signame wv))
+	      (set-value store iter 2 sweepname)
+	      (set-value store iter 3 sweepno)
+	      (set! idx (+ 1 idx))))
+	  (wavefile-all-variables df))
+
+
 ))
 
 (define (send-selected-to-wavewin treeview df)
@@ -43,7 +50,7 @@
 	   (let ((nxt (gtk-tree-model-iter-next model iter))
 		 (index (get-value model iter 0))
 		 (varname (get-value model iter 1))
-		 (sweepno 0)
+		 (sweepno (get-value model iter 3))
 		 )
 	     (if (gtk-tree-selection-iter-is-selected ts iter)
 		 (begin
@@ -65,6 +72,11 @@
 	 (renderer2 (make <gtk-cell-renderer-text>))
 	 (column2   (make <gtk-tree-view-column>
 		      :title "Name"))
+
+	 ;; column for sweep condition
+	 (renderer3 (make <gtk-cell-renderer-text>))
+	 (column3   (make <gtk-tree-view-column>
+		      :title "Sweep"))
 	 )
 
     (pack-start column1 renderer1 #f)
@@ -76,6 +88,11 @@
     (add-attribute column2 renderer2 "text" 1)
     (set-sort-column-id column2 1)
     (append-column treeview column2)
+
+    (pack-start column3 renderer3 #f)
+    (add-attribute column3 renderer3 "text" 2)
+    (set-sort-column-id column3 2)
+    (append-column treeview column3)
 ))
 
 (define-public (show-wavelist-ls df)
@@ -94,7 +111,9 @@
 		     :shadow-type 'etched-in))
 	 ;; create list store
 	 (model    (gtk-list-store-new (list <guint>
-					     <gchararray>)))
+					     <gchararray>
+					     <gchararray>
+					     <guint> )))
 	 ;; create tree view
 	 (treeview (make <gtk-tree-view> 
 		     :model model :rules-hint #t :search-column 3)))
@@ -115,6 +134,13 @@
     ;; add columns to the tree view
     (add-columns treeview)
 
-    (show-all window)))
+    (show-all window)
+
+    (if (> 0 (wavefile-nsweeps df)) ; hide sweep column if only one
+	(let ((c2 (gtk-tree-view-get-column treeview 2)))
+	  (display "toggle severity vis\n") 
+	  (gtk-tree-view-column-set-visible c2 #f)))
+
+))
 
 (dbprint "wavelist-ls.scm done\n")
