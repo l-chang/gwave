@@ -89,16 +89,42 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 	char nbuf[16];
 	char *cp;
 	int maxlines;
+	int postrev;
+	int valsize;
 
 	if(fgets(lbuf, sizeof(lbuf), fp) == NULL)
 		return NULL;
 	lineno++;
 	
 	/* version of post format */
+
 	if(strncmp(&lbuf[16], "9007", 4) != 0 
 	   && strncmp(&lbuf[16], "9601", 4) != 0
-	   && strncmp(&lbuf[16], "2001", 4) != 0 )
+	   && strncmp(&lbuf[20], "2001", 4) != 0 )
 		return NULL;
+
+/*	strncpy(nbuf, &lbuf[16], 8);
+	nbuf[8] = 0;
+	postrev = atoi(nbuf);
+	switch(postrev) {
+	case 9007:
+		valsize=11;
+		break;
+	case 9601:
+		valsize=11;
+		break;
+	case 2001:
+		valsize=13;
+		break;
+	default:
+		return NULL;
+	}
+*/
+	if(strncmp(&lbuf[20], "2001", 4) == 0)
+		valsize=13;
+	else
+		valsize=11;
+
 	strncpy(nbuf, &lbuf[0], 4);
 	nbuf[4] = 0;
 	nauto = atoi(nbuf);
@@ -114,10 +140,12 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 	if(fgets(lbuf, sizeof(lbuf), fp) == NULL) /* date, time etc. */
 		return NULL;
 	lineno++;
-	/* number of sweeps, possibly with cruft at the start of the line */
+	/* number of sweeps, possibly with text cruft at the start of the line. 
+	   look for several consecutive spaces */
 	if(fgets(lbuf, sizeof(lbuf), fp) == NULL)
 		return NULL;
-	cp = strchr(lbuf, ' ');
+//	cp = strchr(lbuf, ' ');
+	cp = strstr(lbuf, "    ");
 	if(!cp)
 		cp = lbuf;
 	ntables = atoi(cp);
@@ -175,6 +203,7 @@ sf_rdhdr_hsascii(char *name, FILE *fp)
 	sf->read_sweepparam = 0;
 	sf->readsweep = sf_readsweep_hsascii;
 	sf->lineno = lineno;
+	sf->avalsize = valsize;
 
 	ss_msg(DBG, "rdhdr_hsascii", "ntables=%d; expect %d columns", 
 	       sf->ntables, sf->ncols);
@@ -201,8 +230,11 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	int datasize;
 	int nauto, nprobe, nsweepparam, ntables;
 	char nbuf[16];
-	int ntable_offset;
+//	int ntable_offset;
+	char *ntable_cp;
+	char *varlist_cp;
 	struct hsblock_header hh;
+	int floatsize;
 	
 	do {
 		n = sf_readblock_hsbin(fp, &ahdr, &ahdrsize, ahdrend);
@@ -224,9 +256,9 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 		goto fail;
 
 	if(strncmp(&ahdr[20], "2001", 4) == 0)
-		ntable_offset = 187;
+		floatsize = sizeof(double);
 	else
-		ntable_offset = 176;
+		floatsize = sizeof(float);
 
 	strncpy(nbuf, &ahdr[0], 4);
 	nbuf[4] = 0;
@@ -240,11 +272,37 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	nbuf[4] = 0;
 	nsweepparam = atoi(nbuf);	/* number of sweep parameters */
 
-	ntables = atoi(&ahdr[ntable_offset]);
+//	ntables = atoi(&ahdr[ntable_offset]);
+	ntable_cp = strstr(ahdr, "Copyright");
+	if(!ntable_cp) {
+		ss_msg(DBG, "rdhdr_hsbin", "failed to find vendor string\n; ahdr=\n%.200s\n", ahdr);
+		goto fail;
+	}
+	ntable_cp = strstr(ntable_cp, "   ");
+	if(!ntable_cp) {
+		ss_msg(DBG, "rdhdr_hsbin", "failed to find end of vendor string\n; ahdr=\n%.200s\n", ahdr);
+		goto fail;
+	}
+	ntables = atoi(ntable_cp);
 	if(ntables == 0)
 		ntables = 1;
 
-	sf = hs_process_header(nauto, nprobe, nsweepparam, &ahdr[256], name);
+	ss_msg(DBG, "sf_rdhdr_hsbin", "nauto=%d nprobe=%d nsweepparam=%d ntables=%d floatsize=%d", 
+	       nauto, nprobe, nsweepparam, ntables, floatsize);
+
+	varlist_cp = strpbrk(ntable_cp, "0123456789"); // find ntables digits
+	if(!varlist_cp) {
+		goto fail;
+		ss_msg(DBG, "rdhdr_hsbin", "failed to find ntables digits\n; ahdr=\n%.200s\n", ahdr);
+	}
+	while(*varlist_cp && isdigit(*varlist_cp))
+		varlist_cp++;
+	if(!*varlist_cp) {
+		ss_msg(DBG, "rdhdr_hsbin", "failed to find end of ntables digits\n; ahdr=\n%.200s\n", ahdr);
+		goto fail;
+	}
+
+	sf = hs_process_header(nauto, nprobe, nsweepparam, varlist_cp, name);
 	if(!sf)
 		goto fail;
 	
@@ -263,7 +321,7 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	}
 
 	datasize = hh.block_nbytes;
-	sf->expected_vals = datasize / sizeof(float);
+	sf->expected_vals = datasize / floatsize;
 	sf->read_vals = 0;
 	
 	ss_msg(DBG, "sf_rdhdr_hsbin", "datasize=%d expect %d columns, %d values;\n  reading first data block at 0x%lx", datasize, sf->ncols, sf->expected_vals, (long)ftello64(fp));
@@ -277,6 +335,7 @@ sf_rdhdr_hsbin(char *name, FILE *fp)
 	sf->read_tables = 0;
 	sf->read_rows = 0;
 	sf->read_sweepparam = 0;
+	sf->floatsize = floatsize;
 
 	return sf;
  fail:
@@ -433,7 +492,7 @@ sf_readblock_hsbin(FILE *fp, char **bufp, int *bufsize, int offset)
 		swap_gint32((gint32*)&hh, sizeof(hh)/sizeof(gint32));
 	}
 	if(hh.h1 != 0x00000004 || hh.h3 != 0x00000004) {
-		ss_msg(DBG, "sf_readblock_hsbin", "unexepected values in block header");
+		ss_msg(DBG, "sf_readblock_hsbin", "unexpected values (0x%x,0x%x) in block header at offset 0x%x", hh.h1, hh.h3, (long)ftello64(fp));
 		return -1;
 	}
 	if(bufp == NULL) {   /* new buffer: exact fit */
@@ -480,10 +539,11 @@ sf_readblock_hsbin(FILE *fp, char **bufp, int *bufsize, int offset)
  * Returns 0 on EOF, 1 on success, negative on error.
  */
 static int
-sf_getval_hsbin(SpiceStream *sf, double *dval)
+sf_getval_hsbin(SpiceStream *sf, double *dvalp)
 {
 	off64_t pos;
-	float val;
+	float fval;
+	double dval;
 	struct hsblock_header hh;
 	gint32 trailer;
 
@@ -496,7 +556,7 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 		if(sf->flags & SSF_ESWAP) {
 			swap_gint32(&trailer, 1);
 		}
-		if(trailer != sf->expected_vals * sizeof(float)) {
+		if(trailer != sf->expected_vals * sf->floatsize) {
 			ss_msg(DBG, "sf_getval_hsbin", "block trailer mismatch at offset 0x%lx", (long) pos);
 			return -2;
 		}
@@ -517,20 +577,34 @@ sf_getval_hsbin(SpiceStream *sf, double *dval)
 			ss_msg(ERR, "sf_getval_hsbin", "unexepected values in block header at offset 0x%lx", pos);
 			return -1;
 		}
-		sf->expected_vals = hh.block_nbytes / sizeof(float);
+		sf->expected_vals = hh.block_nbytes / sf->floatsize;
 		sf->read_vals = 0;
 	}
-	if(fread(&val, sizeof(float), 1, sf->fp) != 1) {
-		pos = ftello64(sf->fp);
-		ss_msg(ERR, "sf_getval_hsbin", "unexepected EOF in data at offset 0x%lx", (long) pos);
-		return 0;
-	}
-	sf->read_vals++;
 
-	if(sf->flags & SSF_ESWAP) {
-		swap_gint32((gint32 *)&val, 1);
+	if(sf->floatsize == 4) {
+		if(fread(&fval, sizeof(float), 1, sf->fp) != 1) {
+			pos = ftello64(sf->fp);
+			ss_msg(ERR, "sf_getval_hsbin", "unexepected EOF in data at offset 0x%lx", (long) pos);
+			return 0;
+		}
+		if(sf->flags & SSF_ESWAP) {
+			swap_gint32((gint32 *)&fval, 1);
+		}
+		*dvalp = fval;
+	} else if(sf->floatsize == 8) {
+		if(fread(&dval, sf->floatsize, 1, sf->fp) != 1) {
+			pos = ftello64(sf->fp);
+			ss_msg(ERR, "sf_getval_hsbin", "unexepected EOF in data at offset 0x%lx", (long) pos);
+			return 0;
+		}
+		if(sf->flags & SSF_ESWAP) {
+			dval = GUINT64_SWAP_LE_BE(dval);
+			//swap_gint64((gint64 *)&dval, 1);
+		}
+		*dvalp = dval;
 	}
-	*dval = val;
+
+	sf->read_vals++;
 	return 1;
 }
 
@@ -572,12 +646,14 @@ sf_getval_hsascii(SpiceStream *sf, double *val)
 		return 0;
 	}
 
-	strncpy(vbuf, sf->linep, 11);
-	sf->linep += 11;
-	vbuf[11] = 0;
-	if(strlen(vbuf) != 11) {
+	strncpy(vbuf, sf->linep, sf->avalsize);
+	sf->linep += sf->avalsize;
+	vbuf[sf->avalsize] = 0;
+	if(strlen(vbuf) != sf->avalsize) {
 		/* incomplete float value - probably truncated or
 		   partialy-written file */
+		ss_msg(ERR, "sf_getval_hsascii", "unexepected number \"%s\" near offset 0x%lx", vbuf, (long)ftello64(sf->fp));
+		
 		return 0;
 	}
 	vp = vbuf;
@@ -620,7 +696,7 @@ sf_readrow_hsascii(SpiceStream *sf, double *ivar, double *dvars)
 	sf->read_rows++;
 	for(i = 0; i < sf->ncols-1; i++) {
 		if(sf_getval_hsascii(sf, &dvars[i]) == 0) {
-			ss_msg(WARN, "sf_readrow_hsascii", "%s: EOF or error reading data field %d in row %d of table %d; file is incomplete.", sf->filename, i, sf->read_rows, sf->read_tables);
+			ss_msg(WARN, "sf_readrow_hsascii", "%s: EOF or error reading data field %d in row %d of table %d; file is incomplete at offset 0x%x.", sf->filename, i, sf->read_rows, sf->read_tables, (long)ftello64(sf->fp));
 			return 0;
 		}
 	}
