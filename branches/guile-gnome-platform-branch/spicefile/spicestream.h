@@ -79,6 +79,8 @@ struct _SpiceStream {
 	int read_sweepparam;
 	char *linep;
 	double ivval;
+	int avalsize;	/* size of ascii numeric value in this ascii format */
+	int floatsize;  /* 4 or 8, size of the floating point values in a binary file */
 
 	/* following for nsout format */
 	double voltage_resolution;

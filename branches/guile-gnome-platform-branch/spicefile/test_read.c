@@ -87,14 +87,14 @@ main(int argc, char **argv)
 		fprintf(stderr, "test_read: unable to read file\n");
 		exit(1);
 	}
-	printf("filename: \"%s\" #tables=%d\n", 
-	       wf->wf_filename, wf->wf_ntables);
+	printf("filename: \"%s\"\n", wf->wf_filename);
+	printf("wf_ntables: %d\n", wf->wf_ntables);
 
 	for(i = 0; i < wf->wf_ntables; i++) {
 		printf("table %d", i);
 		wt = wf_wtable(wf, i);
 		if(wt->name) {
-			printf(" %s=%g", wt->name, wt->swval);
+			printf(" %s=%.3g", wt->name, wt->swval);
 		}
 		putchar('\n');
 		dump_table_info(wt);
@@ -131,7 +131,6 @@ main(int argc, char **argv)
 				      wds_get_point(&dv1->wds[0], j) -
 				      wds_get_point(&dv2->wds[0], j));
 		}
-		
 	}
 
 	if(l_flag) {
@@ -189,8 +188,8 @@ void dump_table_info(WvTable *wt)
 	printf("  name: \"%s\"\n", wt->iv->wv_name);
 	printf("  type: %s\n", vartype_name_str(wt->iv->wv_type));
 	printf("  npts: %d\n", wt->nvalues);
-	printf("  min: %g\n", wt->iv->wds->min);
-	printf("  max: %g\n", wt->iv->wds->max);
+	printf("  min: %.3g\n", wt->iv->wds->min);
+	printf("  max: %.3g\n", wt->iv->wds->max);
 	printf("  blocks: %d/%d\n", wt->iv->wds->bpused, wt->iv->wds->bpsize);
 	printf("  reallocs: %d\n", wt->iv->wds->nreallocs);
 
@@ -204,7 +203,7 @@ dump_wavevar(gpointer p, gpointer u)
 	WaveVar *wv = (WaveVar *)p;
 	int j;
 
-	printf(" dv %p \"%s\" ", wv, wv->wv_name);
+	printf(" dv \"%s\" ", wv->wv_name);
 	printf(" (type=%s)", vartype_name_str(wv->wv_type));
 
 	if(wv->wv_ncols > 1)
@@ -215,10 +214,10 @@ dump_wavevar(gpointer p, gpointer u)
 			printf("    col[%d] ", j);
 		printf("blocks=%d/%d ",
 		       wv->wds[j].bpused, wv->wds[j].bpsize);
-		printf("min=%g ",wv->wds[j].min);
-		printf("max=%g ", wv->wds[j].max);
-		printf("first=%g ", wds_get_point(&wv->wds[j], 0));
-		printf("last=%g\n", wds_get_point(&wv->wds[j],
+		printf("min=%.3g ",wv->wds[j].min);
+		printf("max=%.3g ", wv->wds[j].max);
+		printf("first=%.3g ", wds_get_point(&wv->wds[j], 0));
+		printf("last=%.3g\n", wds_get_point(&wv->wds[j],
 						  wv->wv_nvalues-1));
 	}
 }
