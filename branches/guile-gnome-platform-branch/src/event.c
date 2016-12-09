@@ -292,7 +292,7 @@ window_update_cursor(WavePanel *wp, VBCursor *csp, int x)
 }
 
 /*
- * button_press in any wave panel.
+ * mouse button_press in any wave panel.
  */
 gint
 button_press_handler(GtkWidget *widget, GdkEventButton *event, 
@@ -331,7 +331,12 @@ button_press_handler(GtkWidget *widget, GdkEventButton *event,
 			cursor = gdk_cursor_new(GDK_SB_H_DOUBLE_ARROW);
 			gdk_window_set_cursor(widget->window, cursor);
 			gdk_cursor_destroy(cursor);
-			wtable->drag_cursor = wtable->cursor[event->button-1];
+
+			if(event->button == 1 && (event->state & GDK_CONTROL_MASK))
+				wtable->drag_cursor = wtable->cursor[1];
+			else
+				wtable->drag_cursor = wtable->cursor[(event->button-1) & 1];
+
 			window_update_cursor(wp, wtable->drag_cursor, event->x);
 			break;
 		case M_SELRANGE_ARMED:
