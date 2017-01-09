@@ -1,5 +1,11 @@
 Gwave NEWS --- history of user-visible changes.  -*- text -*-
 
+New in 20170109
+- incorporate patches for various hspice file formats; files generated
+by newer versions work properly now.
+- add a binding 'control-button-1' to set cursor 1, for use when
+middle mouse button is missing or inoperative.
+
 New in 20090213
 - Fix warnings related to GtkTooltips 
 - fix reading of ascii spice3 rawfiles containing blank lines, like those 
