@@ -2,14 +2,14 @@
 20010327
 	Completed the basics of having two displayed measurements by adding
 	a guile function and some menu code to flip between the
-	built-in "val(cursor1)" and "val(cursor1)-val(cursor0)" functions 
+	built-in "val(cursor1)" and "val(cursor1)-val(cursor0)" functions
 	for the second measurement.
 
 20010822
 	Enhance file-reading to handle the spice3raw variant produced by
 	Silvaco's SmartSpice.
 	Handle log scales properly for plotting with GNU Graph.
-	
+
 20010911
 	Better handling of logscale-X, zooming and scrollbar due to a
 	patch from Paul Maurer
@@ -21,3 +21,9 @@
 20011021
 	Clean abort with better error message if we can't find the scheme
 	files or they're fouled up
+
+20170109
+	Integrate all patches for input file formats, and do some further
+	format-handling improvements.
+	add hardwired binding 'control-button-1' to set cursor 1,
+	for users with mice or laptops lacking a middle mouse button.
