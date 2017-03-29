@@ -1,0 +1,157 @@
+
+
+Building
+
+
+Q. Configure fails with:
+
+checking for guile... /usr/bin/guile
+checking for guile-config... no
+configure: error: guile-config required but not found
+
+A. Your may have installed a guile from a binary package that includes
+only the pieces needed for running pure-scheme programs and other
+compiled binary packages, but omits the development headers and
+libraries.  Linux distributions commonly require installing a seperate
+"guile-dev" or "guile-devel" package.  
+
+The exact command for installing these packages vary with OS and
+Distribution, but some examples include:
+
+	apt-get install guile-1.8-dev  (debian Sid)
+	yum install guile-devel (Fedora)
+
+
+Q. Configure spews error messages when guile and guile-gtk are installed
+in different prefixes.
+
+A. When running configure, one of the many lines printed might be:
+
+> checking for guile... /usr/bin/guile
+
+	(Here we see that your guile is installed in /usr/bin ...)
+
+And later:
+> checking for build-guile-gtk... /usr/local/bin/build-guile-gtk
+
+	(And here we find that guile-gtk's script "build-guile-gtk" is in 
+	/usr/local.  OK, but because its not in /usr, things are tricky. Then:)
+
+> checking for guile-gtk CFLAGS... Backtrace:
+> In /usr/local/bin/build-guile-gtk:
+>  105:  0* (define-module (build-guile-gtk) #{:use-module}# ...)
+>  105:  1  (eval-case (# #) (else #))
+> In unknown file:
+>     ...
+>    ?:  2  (let ((m (process-define-module #))) (set-current-module m) m)
+>    ?:  3* [process-define-module ((build-guile-gtk) #:use-module (#) ...)]
+>    ?:  4  (let* (# # # #) (beautify-user-module! module) (letrec # #) ...)
+>    ?:  5* (letrec ((loop (lambda # #))) (loop kws (quote ()) (quote ()) (quote 
+> ())))
+>    ?:  6  [loop (#:use-module ((gtk-1.2 config)) #:use-module ...) () ...]
+>     ...
+>    ?:  7  (let* ((interface-args #) (interface #)) (and (eq? # #) (or # #) 
+> ...) ...)
+>    ?:  8* [apply #<procedure resolve-interface (name . args)> ((gtk-1.2 
+> config))]
+>    ?:  9  [resolve-interface (gtk-1.2 config)]
+>     ...
+>    ?: 10  (let* (# # # #) (and # #) (if # public-i #))
+>    ?: 11* (and (or (not module) (not public-i)) (error "no code for module" 
+> name))
+>    ?: 12  [error "no code for module" (gtk-1.2 config)]
+>     ...
+>    ?: 13  [scm-error misc-error #f ...]
+> 
+> <unnamed port>: In procedure scm-error in expression (scm-error (quote 
+> misc-error) #f ...):
+> <unnamed port>: no code for module (gtk-1.2 config)
+
+And as soon as configure runs `build-guile-gtk cflags`, the guile script
+blows up.  (Likewise for `build-guile-gtk libs` later.)
+Try running 
+	build-guile-gtk cflags
+from the command line.
+
+> <unnamed port>: no code for module (gtk-1.2 config)
+
+This is real error, that build-guile-gtk is looking for a guile module
+named (gtk-1.2 config) and can't find it. Its is probably because guile
+doesn't know to look in /usr/local for to find the files of guile code
+that guile-gtk installed there.
+
+I think adding /usr/local/share/guile to your GUILE_LOAD_PATH environment 
+variable may fix things.
+(Likewise, LD_LIBRARY_PATH will need to contain /usr/local/lib, unless 
+you've add /usr/local/lib to /etc/ld.so.conf)
+
+I generally try to install guile-gtk in the same prefix as guile to avoid
+having to muck with the environment.  When on a redhat system, I do so by
+building a guile-gtk RPM.
+
+And like INSTALL says, I recommend making sure that the demo scripts
+shipped with guile-gtk itself work before trying to build gwave.
+
+
+Q. "undefined reference to sgtk_wrap_gtkobj"  errors linking gwave
+
+A. I can't be completely sure, since you don't include configure and 
+make output, but I can take a guess.  
+
+sgtk_wrap_gtkobj is certainly related to the guile-gtk package, which you
+do have installed, right?  
+
+What versions of guile and of guile-gtk do you have?  The Gwave readme 
+lists some combinations known to work.
+
+Most common thing that goes wrong with guile-gtk: installing it into a
+nonstandard location on your system, and then not patching up all of the
+necessary environment variables and configuration.  If, for example,
+guile-gtk was installed into /usr/local, is /usr/local/lib either in
+$LD_LIBRARY_PATH or /etc/ld.so.conf ?  
+Next common problem: installing guile-gtk into a different location from 
+guile itself, typical /usr/local vs. /usr.  In this case, $GUILE_LOAD_PATH 
+may need to be set.
+
+Most trouble-free way to install guile-gtk is to do it the same way you
+installed guile.  Either configure/make/install both from source, or
+install both from precompiled packages.
+
+Do the test programs supplied with guile-gtk work?
+
+---
+
+Q. Everything builds OK but when I try running gwave I get the following
+   message: "relocation error: undefined symbol: scm_root"
+
+A. Oh, the joy of shared libraries - nothing is fully done linking until you 
+actually run it.
+
+A tour through the guile-1.6.7 source yields what "scm_root" is all
+about and some hints as to fixing this problem.
+
+Guile's scm_root is either a global pointer or a macro that expands to
+somthing accessing thread-local data, depending on whether or not
+guile's configure decided to build with threads or not.
+
+That configure result gets communicated by the USE_THREADS #define in 
+libguile/scmconfig.h, which should get constructed and installed
+into $prefix/include at guile build time. This ghen gets used by
+the guile-gtk and gwave build process to do the right thing.
+
+This "scm_root" error means that somehow the USE_THREADS setting got
+miscommunicated from the guile build process to the guile-gtk and/or gwave
+builds.  Here are some things to check:
+
+1. Did the guile build+install process install its include files? 
+2. Did guile-gtk and gwave find the _right_ guile includes?  
+3. When you run gwave, is it finding the matching libguile.so shared libs?  
+("ldd gwave" will list what shared libraries it is finding. 
+  LD_LIBRARY_PATH can influence that) 
+4. Are there any other versions of guile laying around?
+	If, for example, you have a guile in /usr but installed another
+	version in /usr/local, preventing your compiler from seeing the
+	one in /usr first can be very difficult.
+
+Steve
+

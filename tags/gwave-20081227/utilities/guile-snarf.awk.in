@@ -1,0 +1,118 @@
+#!@AWK@ -f
+# -*- mode: awk -*-
+# Written by Greg J. Badros, <gjb@cs.washington.edu>
+# 12-Dec-1999
+
+BEGIN { FS="|"; 
+        dot_doc_file = ARGV[1]; ARGV[1] = "-";
+        std_err = "/dev/stderr";
+        # be sure to put something in the files to help make out
+        print "";
+        printf "" > dot_doc_file;
+}
+
+# Start of definition
+/^[ \t]*SCM__I/ { copy = $0; 
+               gsub(/[ \t]*SCM__I/, "", copy); 
+               gsub(/SCM__D.*$/, "", copy); 
+               gsub(/SCM__X.*$/, "", copy); 
+               print copy; } 
+
+# other types of documentation
+/SCM__X/,/SCM__S/ { copy = $0;
+		 doctype = "unknown SCM__X."; 
+                 if (match(copy,/SCM__XC/)) { doctype = "CONCEPT"; }
+                 if (match(copy,/SCM__XV/)) { doctype = "VARIABLE"; }
+
+                 gsub(/.*SCM__X./,"", copy); 
+                 gsub(/SCM__S.*/,"",copy); 
+                 gsub(/[ \t]+/," ", copy); 
+                 gsub(/\"/,"",copy); 
+		 gsub(/[ \t]*\|.*$/,"",copy);
+		 sub(/ \)/,")",copy);
+		 name = copy;
+
+#		 print "\nXname=" name > dot_doc_file ;
+
+		 location = $2;
+		 gsub(/\"/,"",location);
+		 sub(/^[ \t]*/,"",location);
+		 sub(/[ \t]*$/,"",location);
+		 sub(/: /,":",location);
+
+		 print "\n" doctype " " name > dot_doc_file ;
+		}
+
+# handle documentation part of procedure or hook definition.
+/SCM__D/,/SCM__S/ { copy = $0; 
+                 if (match(copy,/SCM__DR/)) { registering = 1; } 
+                 else {registering = 0; } 
+                 if (match(copy,/SCM__DH/)) { hook = 1; }
+		 else {hook = 0;}
+                 gsub(/.*SCM__D./,"", copy); 
+                 gsub(/SCM__S.*/,"",copy); 
+                 gsub(/[ \t]+/," ", copy); 
+		 sub(/^[ \t]*/,"(", copy);
+                 gsub(/\"/,"",copy); 
+		 sub(/\([ \t]*void[ \t]*\)/,"()", copy);
+		 sub(/ \(/," ",copy);
+		 numargs = gsub(/SCM /,"", copy);
+		 numcommas = gsub(/,/,"", copy);
+		 numactuals = $2 + $3 + $4;
+		 location = $5;
+		 gsub(/\"/,"",location);
+		 sub(/^[ \t]*/,"",location);
+		 sub(/[ \t]*$/,"",location);
+		 sub(/: /,":",location);
+		 # Now whittle copy down to just the $1 field
+		 #   (but do not use $1, since it hasn't been
+                 #    altered by the above regexps)
+		 gsub(/[ \t]*\|.*$/,"",copy);
+		 sub(/ \)/,")",copy);
+		 # Now `copy' contains the nice scheme proc "prototype", e.g.
+		 # (set-car! pair value)
+		 # print copy > "/dev/stderr";  # for debugging
+		 proc_and_args = copy;
+		 curr_function_proto = copy;
+		 sub(/[^ \n]* /,"",proc_and_args);
+		 sub(/\)[ \t]*/,"",proc_and_args);
+		 split(proc_and_args,args," ");
+		 # now args is an array of the arguments
+		 # args[1] is the formal name of the first argument, etc.
+		 if (numargs != numactuals && !registering) 
+		   { print location ":*** `" copy "' is improperly registered as having " numactuals " arguments" > std_err; }
+
+		 printf "\n" > dot_doc_file ;
+		 if(hook) {printf "HOOK "> dot_doc_file ; }
+ 		 print copy (registering?")":"") > dot_doc_file ;
+	}
+
+# copy block of documentation text to doc file
+/SCM__S/,/SCM__E.*$/ { copy = $0; 
+                      gsub(/.*SCM__S/,"",copy); 
+		      sub(/^[ \t]*"?/,"", copy);
+		      sub(/\"?[ \t]*SCM__E.*$/,"", copy);
+                      gsub(/\\n\\n"?/,"\n",copy);
+                      gsub(/\\n"?[ \t]*$/,"",copy);
+                      gsub(/\\\"[ \t]*$/,"\"",copy);
+                      gsub(/[ \t]*$/,"", copy);
+                      if (copy != "") { print copy > dot_doc_file }
+                }
+
+/SCM__E[ \t]/ { print "[" location "]" >> dot_doc_file; }
+
+/\*&\*&\*&\*SCM_ARG_BETTER_BE_IN_POSITION/ { copy = $0;
+         sub(/.*\*&\*&\*&\*SCM_ARG_BETTER_BE_IN_POSITION\([ \t]*/,"",copy);
+         if (copy ~ /\"/) { next }
+         gsub(/[ \t]*,[ \t]*/,":",copy);
+         sub(/[ \t]*\).*/,"",copy);
+         split(copy,argpos,":");
+         argname = argpos[1];
+         pos = argpos[2];
+         if (pos ~ /[A-Za-z]/) { next }
+         if (pos ~ /^[ \t]*$/) { next }
+         if (argname ~ / /) { next }
+         line = argpos[3];
+#         print pos " " args[pos] " vs. " argname > "/dev/stderr";
+         if (args[pos] != argname) { print filename ":" line ":*** Argument name/number mismatch in `" curr_function_proto "' -- " argname " is not formal #" pos > "/dev/stderr"; }
+      }

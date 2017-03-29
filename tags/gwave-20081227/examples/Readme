@@ -1,0 +1,33 @@
+
+example data files for demonstrating/testing gwave.
+
+name			format		description
+aoi.W			cazm		and-or-invert gate transient
+aoi.W.tr0		hspice		and-or-invert gate transient
+lpf.ac0			hspice		low pass filter
+nand.N.tr0		hspice		nand gate transient
+nisrc.N.sw0		hspice		nfet current source dc sweep
+pd1.N.tr0		hspice		differential driver, transient
+pd2.N			cazm		differential driver, transient
+quickAC.ac0		hspice
+quickINV.tr0		hspice
+quickTRAN.tr0		hspice
+test1.tr0.binary	hspice binary
+tlong.tr0.9601		hspice, new format
+tpwl.acs		ACS		transient
+rcsq.raw		spice3 ascii	squarewave into RC lowpass, transient
+diffpair.braw		spice3 binary
+
+
+A few of the examples now include the source file that generated them:
+
+
+file:			command to run:
+
+rcsq.sp			SPICE_ASCIIRAWFILE=1 ngspice -r rcsq.raw -b rcsq.sp
+diffpair.sp		ngspice -r diffpair.braw -b diffpair.sp
+lpf.sp			hspice lpf.sp
+
+rlc.sp	SPICE_ASCIIRAWFILE=1 ngspice -b -r rlc.raw rlc.sp
+	 ngspice -b -r rlc.braw rlc.sp
+
