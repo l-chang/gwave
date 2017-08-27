@@ -34,7 +34,7 @@
 (define-public (add-radio-button parent group label active proc)
   (let ((item (if label
 		  (gtk-radio-button-new-with-label group label)
-		  (gtk-radio button-new group))))
+		  (gtk-radio-button-new group))))
     (gtk-widget-show item)
     (if proc
 	(gtk-signal-connect item "clicked" (lambda (x) (proc))))
