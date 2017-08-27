@@ -60,7 +60,7 @@
 (define-public (add-radio-menuitem parent group label active proc)
   (let ((item (if label
 		  (gtk-radio-menu-item-new-with-label group label)
-		  (gtk-radio menu-item-new group))))
+		  (gtk-radio-menu-item-new group))))
     (gtk-widget-show item)
     (if proc
 	(gtk-signal-connect item "activate" (lambda (x) (proc))))
