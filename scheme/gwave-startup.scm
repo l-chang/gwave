@@ -17,7 +17,6 @@
 (use-modules 
  (gnome-2)
  (gnome gtk)
- (app gwave cmds)
 )
 (define gwave-std-toolbar-loaded #f)
 (define gwave-std-args-loaded #f)
