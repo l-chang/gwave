@@ -333,7 +333,7 @@
 	  (if (status:term-sig st)
 	      (format #t " terminated on signal ~d" (status:term-sig st)))
 	  (if (status:stop-sig st)
-	      (format #t " stopped on signal~d" (status:exit-sig st)))
+	      (format #t " stopped on signal ~d" (status:stop-sig st)))
 	  (display "\n"))
          ;(display "no child\n")
 	)))
