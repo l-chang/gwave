@@ -16,7 +16,7 @@ gwave_SOURCES = cmd.c wavewin.c draw.c gwave.c event.c \
 	GtkTable_indel.c GtkTable_indel.h  xsnarf.h
 
 gwave_LDADD = ../spicefile/libspicefile.a  @GTK_LIBS@ @GUILE_GNOME_LIBS@ 
-gwave_LDFLAGS =  @GUILE_LDFLAGS@
+gwave_LDFLAGS = -lm @GUILE_LDFLAGS@
 
 AM_CFLAGS = @GTK_CFLAGS@ @GUILE_CFLAGS@ @GUILE_GNOME_CFLAGS@ \
 	-DDATADIR=\"$(datadir)\" -DBINGWAVE=\"$(bindir)/gwave\"
