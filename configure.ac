@@ -1,8 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl ## Initialize autoconf ##
 
-AC_INIT(src/gwave.c)
-AM_INIT_AUTOMAKE(gwave2, 20170109)
+AC_INIT([gwave2], [201708027])
+AC_CONFIG_SRCDIR(src/gwave.c)
+AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AM_CONFIG_HEADER(config.h)
 
@@ -101,13 +102,18 @@ AC_CHECK_LIB(X11, XGetWindowAttributes)
 dnl doesn't work if prefix isn't specified.
 dnl AC_DEFINE_UNQUOTED(DATADIR,"${datadir}",Installation prefix for finding necessary guile code)
 
-AC_OUTPUT(Makefile \
-src/Makefile spicefile/Makefile scheme/Makefile \
-src/app/Makefile \
-remote/Makefile \
-utilities/Makefile \
-utilities/gwave-doc-snarf \
-utilities/doc-split \
-utilities/sweepsplit \
-gwave.spec  \
-scheme/gwave-config.scm)
+AC_CONFIG_FILES([
+Makefile
+src/Makefile
+spicefile/Makefile
+scheme/Makefile
+src/app/Makefile
+remote/Makefile
+utilities/Makefile
+utilities/gwave-doc-snarf
+utilities/doc-split
+utilities/sweepsplit
+gwave.spec
+scheme/gwave-config.scm
+])
+AC_OUTPUT
