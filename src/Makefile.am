@@ -3,7 +3,7 @@
 
 SUBDIRS=app
 
-INCLUDES=-I$(top_srcdir) -I$(top_srcdir)/spicefile -I$(top_srcdir)/src
+AM_CPPFLAGS=-I$(top_srcdir) -I$(top_srcdir)/spicefile -I$(top_srcdir)/src
 
 bin_PROGRAMS = gwave
 
@@ -42,7 +42,7 @@ SUFFIXES = .x .doc
 utils = $(top_srcdir)/utilities
 
 .c.x:
-	guile-snarf $(DEFS) $(INCLUDES) $(CPPFLAGS)  $(AM_CFLAGS) $(CFLAGS) $< > $@ \
+	guile-snarf $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS)  $(AM_CFLAGS) $(CFLAGS) $< > $@ \
 	|| { rm $@; false; }
 
 .c.doc:
