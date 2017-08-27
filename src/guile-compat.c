@@ -24,7 +24,7 @@
 #include <config.h>
 #endif
 #include <string.h>
-#include <guile/gh.h>
+#include <libguile.h>
 
 #include "guile-compat.h"
 
@@ -66,7 +66,7 @@ char *safe_scm_to_stringn (SCM str, size_t *lenp)
 			*lenp = 0;
 		return NULL;
 	}
-	len = scm_i_string_length (str);
+	len = scm_string_length (str);
 	res = scm_malloc (len + 1);
 	memcpy (res, scm_i_string_chars (str), len);
 	res[len] = '\0';   //unconditionaly null terminate

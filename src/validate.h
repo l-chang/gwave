@@ -192,20 +192,20 @@ NOTE: Assignments to the cvar in the error handling
 
 #define VALIDATE_ARG_STR_NEWCOPY(pos,scm,pch) \
   do { \
- if (SCM_NFALSEP (scm_string_p(scm))) pch = gh_scm2newstr(scm,NULL); \
+ if (SCM_NFALSEP (scm_string_p(scm))) pch = scm_to_locale_string(scm); \
   else { pch = NULL; scm_wrong_type_arg(FUNC_NAME,pos,scm); } \
   } while (0)
 
 #define VALIDATE_ARG_STR_NEWCOPY_LEN(pos,scm,pch,len) \
   do { \
- if (SCM_NFALSEP (scm_string_p(scm))) pch = gh_scm2newstr(scm,&len); \
+ if (SCM_NFALSEP (scm_string_p(scm))) pch = scm_to_locale_stringn(scm,&len); \
   else { pch = NULL; scm_wrong_type_arg(FUNC_NAME,pos,scm); } \
   } while (0)
 
 #define VALIDATE_ARG_STR_NEWCOPY_USE_NULL(pos,scm,pch) \
   do { \
   if (UNSET_SCM(scm)) pch = NULL; \
-  else if (SCM_NFALSEP (scm_string_p(scm))) pch = gh_scm2newstr(scm,NULL); \
+  else if (SCM_NFALSEP (scm_string_p(scm))) pch = scm_to_locale_string(scm); \
   else { pch = NULL; scm_wrong_type_arg(FUNC_NAME,pos,scm); } \
   } while (0)
 

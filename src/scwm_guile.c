@@ -31,7 +31,6 @@
 #include <limits.h>
 #include <assert.h>
 
-#include <guile/gh.h>
 #include <libguile.h>
 #include <libguile/fluids.h>
 
@@ -119,7 +118,7 @@ scwm_safe_apply (SCM proc, SCM args)
   apply_data.args = args;
 
   return scm_internal_stack_cwdr(scwm_body_apply, &apply_data,
-				 scwm_handle_error, prog_name,
+				 scm_handle_by_throw, prog_name,
 				 &stack_item);
 }
 
@@ -278,7 +277,7 @@ scwm_body_eval_x (void *body_data)
 static SCM 
 scwm_catching_eval_x (SCM expr) {
   return scm_internal_stack_catch (SCM_BOOL_T, scwm_body_eval_x, &expr,
-			  scwm_handle_error, prog_name);
+			  scm_handle_by_throw, prog_name);
 }
 
 static SCM 
@@ -312,60 +311,6 @@ scwm_body_eval_str (void *body_data)
   return scwm_catching_load_from_port (port);
 }
 
-
-SCM 
-scwm_handle_error (void *ARG_IGNORE(data), SCM tag, SCM throw_args)
-{
-#if 0 /* GJB:FIXME:: */
-  SCM port = scm_mkstrport(SCM_INUM0, 
-			   scm_make_string(SCM_MAKINUM(200), SCM_UNDEFINED),
-			   SCM_OPN | SCM_WRTNG,
-			   "error-handler");
-#else
-  SCM port =  scm_current_error_port();
-#endif
-
-  /* GJB:FIXME:MS: is this a guile compatibility test that can be dropped
-     now?  */
-  if (scm_ilength (throw_args) >= 3)
-    {
-      SCM fl;
-      fl = SCM_VARIABLE_REF (scm_the_last_stack_fluid_var);
-
-      /* GJB:FIXME:MS: This is a horrible hack,
-         but DEREF_LAST_STACK macro was throwing a wrong type 
-         argument at weird times, and I'm trying to avoid
-         a crash when I demo to RMS tomorrow, hence this
-         ugly hack --04/27/99 gjb */
-      if (SCM_NIMP (fl) && SCM_FLUIDP (fl)) {
-        SCM stack = DEREF_LAST_STACK;
-        SCM subr = SCM_CAR (throw_args);
-        SCM message = SCM_CADR (throw_args);
-        SCM args = SCM_CADDR (throw_args);
-        
-        scm_newline(port);
-        scm_display_backtrace (stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
-        scm_newline(port);
-        scm_display_error (stack, port, subr, message, args, SCM_EOL);
-      } else {
-/*        scwm_msg(ERR,"scwm_handle_error","scm_the_last_stack_fluid not holding a fluid!"); */
-      }
-    }
-  else
-    {
-      scm_puts ("uncaught throw to ", port);
-      scm_prin1 (tag, port, 0);
-      scm_puts (": ", port);
-      scm_prin1 (throw_args, port, 1);
-      scm_putc ('\n', port);
-      exit (2);
-    }
-  /* GJB:FIXME:MS: can the scheme code display a backtrace without the
-     stack argument? */
-  return scwm_run_hook_message_only(error_hook, scm_cons(tag, throw_args));
-}
-
-
 SCM_DEFINE(safe_load, "safe-load", 1, 0, 0,
            (SCM fname),
 "Load file FNAME while trapping and displaying errors."
@@ -398,7 +343,7 @@ SCM scwm_safe_eval_str (char *string)
 
 void init_scwm_guile()
 {
-  run_hook_proc = gh_lookup("run-hook");
+  run_hook_proc = scm_variable_ref(scm_c_lookup("run-hook"));
 
 #ifndef SCM_MAGIC_SNARF_INITS
 #include "scwm_guile.x"

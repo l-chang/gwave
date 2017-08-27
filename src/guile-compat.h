@@ -30,8 +30,6 @@
 extern "C" {
 #endif
 
-#define DEREF_LAST_STACK scm_fluid_ref(SCM_VARIABLE_REF (scm_the_last_stack_fluid_var))
-
 SCM make_output_strport(char *fname);
 extern char *safe_scm_to_stringn (SCM str, size_t *lenp);
 

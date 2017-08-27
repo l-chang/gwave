@@ -12,7 +12,7 @@
 #define SCWM_GUILE_H__
 
 #include "arg_unused.h"
-#include <guile/gh.h>
+#include <libguile.h>
 #include "validate.h"
 #include <xsnarf.h>
 
@@ -26,7 +26,6 @@
 
 #define SCWM_MAKE_HOOK(args) scm_permanent_object(scm_make_hook(scm_long2num(args)))
 
-SCM scwm_handle_error (void *handler_data, SCM tag, SCM throw_args);
 SCM scwm_safe_apply_message_only (SCM proc, SCM args);
 
 /* Individual callbacks. */

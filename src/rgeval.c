@@ -8,7 +8,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <guile/gh.h>
+#include <libguile.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
