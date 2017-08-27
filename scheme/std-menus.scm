@@ -32,8 +32,8 @@
     (if proc
 	(gtk-signal-connect item "activate" 
 			    (lambda (m) (proc))))
-    (cond ((gtk-menu? parent) (gtk-menu-append parent item))
-	  ((gtk-menu-bar? parent) (gtk-menu-bar-append parent item)))
+    (cond ((gtk-menu? parent) (gtk-menu-shell-append parent item))
+	  ((gtk-menu-bar? parent) (gtk-menu-shell-append parent item)))
     item))
 
 ;
@@ -66,8 +66,8 @@
 	(gtk-signal-connect item "activate" (lambda (x) (proc))))
     (if active
 	(gtk-check-menu-item-set-active item active))
-    (cond ((gtk-menu? parent) (gtk-menu-append parent item))
-	  ((gtk-menu-bar? parent) (gtk-menu-bar-append parent item)))
+    (cond ((gtk-menu? parent) (gtk-menu-shell-append parent item))
+	  ((gtk-menu-bar? parent) (gtk-menu-shell-append parent item)))
     (gtk-radio-menu-item-get-group item)
 ))
 
