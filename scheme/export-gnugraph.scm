@@ -108,7 +108,8 @@
 	 (idx 0))
 
     (set! args (append args (list "--height-of-plot" 
-		    (format #f "~f" (- (/ 0.9 ngraphs) 0.05)))))
+		    (format #f "~f" (- (/ 0.9 ngraphs) 0.05))
+        "--right-shift 0.05" "--upward-shift 0.05")))
     (set! args (append args '("--toggle-round-to-next-tick" "X"
 		    "--font-size" "0.03"
 		    "--grid-style" "3")))
